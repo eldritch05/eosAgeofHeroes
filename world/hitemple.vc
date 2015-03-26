@@ -1,0 +1,936 @@
+//- Minimap offset - (0,0)
+void Start() {
+     entity.x[0]-=8; entity.y[0]+=8;
+     if(!hero[0].level) {
+          NewGame();
+          return;
+     }
+     else if(hero[0].level==1 && hero[0].statpnt) {
+          Tutorial();
+          return;
+     }
+     else if(Quest_PartyOnStage("Expedition to Achiela",10)) {
+          TutorialFinale();
+          return;
+     }
+     else if(GetFlag("GraigorianCloister")==6) {
+          GraigorianEnd();
+          return;
+     }
+     Map_Initialize("High Temple","Sanctuary","Bach538.it","Human");
+}
+
+void Leave() {
+     if(Quest_PartyOnStage("An Epic Begins...",1)) {
+          HText(0,"\f2Graig\f0's looking for me.  I should meet with him first.");
+          return;
+     }
+     xdest=entity.x[hero[0].ent]+64;
+     Map_Switch("gelaham.map",0,34,1);
+}
+/*
+void HighPriest() {
+     int i;
+     string s=GetPartyName();
+     if(GetQuestStageLow(0)==50)
+          Text4("^High_Priest: Welcome back, "+s+". May",
+               "the Divine Light be with you in all of",
+               "your travels, and may you bring an end",
+               "to whatever it is that threatens Serinor.");
+     else if(OnQuestStage(0,0) && partyfact>4) {
+          if(!DoneQuestStage(0,1))
+               Text4("^High_Priest: Welcome, "+s+".  You",
+                    "wish to prove your undying loyalty to",
+                    "the Temple and Divine Light?  Very",
+                    "well.  There is a way to do so.");
+          else Text4("^High_Priest: More who wish to",
+                    "complete the pilgrimage?  Very well.",
+                    "You too may prove your loyalty to the",
+                    "Temple and Divine Light.");
+          Text4("^High_Priest: Journey to the fortress of",
+               "@Erelikoth and ask the ^chaplain there of",
+               "the ~Pilgrimage_of_Trulmaes`.  He will",
+               "tell you more about what you must do.");
+          Text4("^High_Priest: All who complete the tasks",
+               "required by the ~pilgrimage I will",
+               "acknowledge as true allies.","");
+          SetQuestStage(0,1,5);
+     }
+     else if(GetQuestStageLow(0)<4)
+          Text4("^High_Priest: I have given you your task,",
+               s+".  The ^chaplain at @Erelikoth will",
+               "give you further instructions.  Now go.","");
+     else if(partyfact<5)
+          Text4("^High_Priest: Welcome back, "+s+". May",
+               "the Divine Light be with you in all of",
+               "your travels, and may you bring an end",
+               "to whatever it is that threatens Serinor.");
+     if(OnQuestStage(0,4)) {
+          Text4("^High_Priest: I have received word that",
+               "you have completed the ~Pilgrimage_of",
+               "~Trulmaes.  Excellent work.  You truly",
+               "are devoted to the Divine Light.");
+          Text4("^High_Priest: As agreed, I acknowledge",
+               "all who completed the pilgrimage as true",
+               "allies.  Word of your deeds will spread",
+               "quickly to all human settlements.");
+          SetQuestComplete(0,4,5);
+          Text4("^High_Priest: Go now, "+s+", and bring",
+               "the Light to all of Serinor.","","");
+     }
+     if(GetFlag("GraigorianCloister")==4) {
+          Text4("^High_Priest: What?  The cloister at",
+               "Erelikoth has been taken by ^Shadowkin`?",
+               "Unforgivable!  I shall send a team of",
+               "paladins to retake the cloister.");
+          Text4("^High_Priest: But if it's true that the",
+               "necromancer has blocked itself in the",
+               "sacristy, we won't be able to cleanse",
+               "the area completely.  We'll need help.");
+          Text4("^High_Priest: Go to @Kognar, city of the",
+               "^Dwarves, and recruit a ^miner.  He'll be",
+               "able to dig a way into the necromancer.",
+               "That is our only option.");
+          Text4("^High_Priest: The @Tunnel_to_Kognar is in",
+               "the mountains to the east.  It will be a",
+               "long and dangerous journey, but it must",
+               "be made.  Good luck, "+s+".");
+          SetFlag("GraigorianCloister",5);
+     }
+}
+*/
+void Resurrect() {
+     GenericRevive("Cleric","Human",10);
+     entity.face[event.entity]=4;
+}
+
+void DivineShop() {
+     Text("Priestess","Greetings, faithful.  Are you looking for Divine spells?  "+
+          "If so, then this is the best place in all of \f3Serinor\f0 to get them.");
+     //Shop("1 2 3 4 6 7 8 9 11 12 13 14 16 17 18 19 21 22 23 24 26 27 28 29 0",1);
+     entity.face[event.entity]=2;
+}
+
+void UndeadShop() {
+     int i;
+     Text("Trainer","Welcome, "+Party_GetName()+"!  If you're looking for training, you've come to the right place.");
+     for(i=0; i<numchars; i++) {
+          Hero_Train(i);
+     }
+}
+
+void BasementGuard() {
+     if(Quest_PartyHas("A Hero Rises"))
+          Text("Paladin","Sorry, rookie.  You're not going anywhere without permission from \f2Graig\f0.");
+     else if(Quest_PartyOnStage("Expedition to Achiela",1)) {
+          Text("Paladin","You're finally awake.  \f2Graig\f0's waiting for you down at the \f3Journeyman's Rest\f0.  "+
+               "You wouldn't want to keep him waiting.");
+          Quest_Advance("Expedition to Achiela",1,"Meet \f2Graig\f0 at the \f3Journeyman's Rest\f0 in \f3Gelaham\f0","Amin",354,449);
+          EntityMove(1,"PD8L16R0T");
+          EntityMove(2,"PD8R16L0T");
+          PlayerMove("Y54");
+          WaitForEntity(1);
+          WaitForEntity(2);
+          EntityMove(1,"PR16U8D0T");
+          EntityMove(2,"PL16U8D0T");
+          WaitForEntity(1);
+          WaitForEntity(2);
+     }
+     else if(Quest_PartyHas("An Epic Begins..."))
+          Text("Paladin","\f2Graig\f0's downstairs.  He's given you full access to the basement.");
+     else Text("Paladin","Only those with special permission from the \f2High Priest\f0 may enter the temple basements.");
+     EntityMove(event.entity,"D0");
+}
+
+void AltarPriest() {
+     Text("Priest","We sell \f4Tiny Crosses\f0 to pilgrims needing quick passage back to \f3Gelaham\f0.");
+     //LoreItemMerchant("Priest",123,1000,7);
+     entity.face[event.entity]=2;
+}
+
+void PlaqueL() {
+     if(entity.face[GetPlayer()]!=1) return;
+     Text("","St. Syn of the Nightmares");
+}
+
+void PlaqueR() {
+     if(entity.face[GetPlayer()]!=1) return;
+     Text("","St. Eldritch the Builder");
+}
+
+void ShopSign() {
+     if(entity.face[GetPlayer()]!=1) return;
+     //Text("Service Wing","","Divine Spells","Resurrections",1);
+}
+
+void BasementSign() {
+     if(entity.face[GetPlayer()]!=1) return;
+     Text("","Living Quarters and Basements");
+}
+
+//---------------\\
+//- Misc People -\\
+//---------------\\
+
+void SpellGuy() {
+     Text("","Divine magic is the only true source of power, though the other psyche-based schools "+
+          "aren't bad.  Will magic, though, that's corrupt.  I'm glad it was banned.");
+}
+
+void Psionicist() {
+     Text("Psionicist","The Temple often frowns upon my order's reliance upon self over the Light, but the "+
+          "two do not exclude each other.  We too are devout.");
+     entity.face[event.entity]=1;
+}
+
+void SanctMan() {
+     Text("","I had family in \f3Achiela\f0.  I know that the people there must've done something to deserve "+
+          "being destroyed by demons, but...   I had family in \f3Achiela\f0.");
+     entity.face[event.entity]=1;
+}
+
+void SanctWoman() {
+     Text("","It's so good of you to be doing the work of the Divine Light.  So few people anymore have the "+
+          "drive and skills to become true heroes.  You'll do well.");
+     entity.face[event.entity]=1;
+}
+
+void SanctCleric() {
+     Text("Cleric","I've been preparing to go out to one of the Temple's cloisters in the continental interior.  "+
+          "It's a dangerous journey, but it's important work.");
+     entity.face[event.entity]=1;
+}
+
+void SanctThief() {
+     Text("Thief","What?  Thieves aren't allowed to be religious?  Where've you been? Everybody in \f3Gelaham\f0 is religious.");
+     entity.face[event.entity]=1;
+}
+
+void Wizard() {
+     Text("Wizard","It's been a bit touchy living in \f3Gelaham\f0 since the ban on will magic.  "+
+          "I hear some wizards are setting up a place out west until this blows over.");
+}
+
+void PlaqueWoman() {
+     Text("","I'm so pleased the fund-raiser went well.  The plain stone look is all well and good, but the "+
+          "High Temple should be an inviting place of beauty as well.");
+     entity.face[event.entity]=1;
+}
+
+void Samurai() {
+     Text("Samurai","I never return soon enough for my pilgrimage.  It seems every time I have to kill a paladin "+
+          "who insults my devotion.");
+}
+
+void HallCleric() {
+     Text("Cleric","Hundreds of pilgrims come to the High Temple, bringing their tithe.  The funds go to various "+
+          "evangelical works.  Mostly, at least.");
+}
+
+void HallGuy() {
+     Text("","The \f2hostel keeper\f0 always does such a good job finding heroes for the Temple.  "+
+          "I'm sure she'd be able to find more companions for you as well.");
+}
+
+void HallGirl() {
+     Text("","The High Temple is so much bigger inside than it looks like it could be from the outside.  "+
+          "It's because it's built through the mountain, of course.  The \f2Lukosians\f0 have their room-expanding "+
+          "enchantments, but we're above such foul practices.  Our buildings are all built solely with hard work and the Light.");
+}
+
+void ManPray() {
+     Text("","The man is praying.");
+}
+
+void WomanPray() {
+     Text("","The woman is praying.");
+}
+
+//------------------------------\\
+//- End of Graigorian Cloister -\\
+//------------------------------\\
+
+void GraigorianEnd() {
+     cameratracking=1;
+//     InitMap("hitemple.map","Divine_High_Temple","Bach538.it",1,"",0);
+     entity.x[GetPlayer()]+=8;
+     Render();
+     cameratracking=0; ywin=44;
+     FadeIn(30,1);
+     PlayerMove("Y10");
+     cameratracking=1;
+//     Text4("^High_Priest: This is a dark day,",
+//          GetPartyName()+".  The Light has no need of",
+//          "more martyrs.  The loss of ^Graig will,",
+//          "be felt deeply by all the devout.");
+//     Text4("^High_Priest: Nonetheless, his memory",
+//          "must be honored.  The cloister he gave",
+//          "his life defending will be reopened and",
+//          "renamed in his honor.");
+//     Text4("^High_Priest: The ~staff you recovered",
+//          "will be returned to the cloister to be",
+//          "enshrined as a lasting testament to",
+//          "^Graig`'s ultimate sacrifice.");
+//     Text4("^High_Priest: Go now, "+GetPartyName()+".",
+//          "May the Light bless you and keep you.","","");
+     SetFlag("GraigorianCloister",7);
+}
+
+//---------------------\\
+//- New Game Sequence -\\
+//---------------------\\
+
+void NewGame() {
+     int p,g;
+     int graigchr=EntitySpawn(50,24,"images\\chrs\\humpries.chr");
+     SetExecutionPaused(1);
+     SetEntitiesPaused(0);
+     entity.x[graigchr]+=8;
+     SetPlayer(graigchr);
+     Render();
+     cameratracking=0; ywin=8;
+     fadesong=0;
+     FreeSong(mainsong);
+     mainsong=LoadSong("sound\\Bach538.it");
+     mainsongname="Bach538.it";
+     SetSongVolume(mainsong,0);
+     PlaySong(mainsong);
+     Area_Change("High Temple","Sanctuary","");
+     FadeIn(150,1);
+     SetExecutionPaused(2);
+     EntityMove(graigchr,"Y10");
+     WaitForEntity(graigchr);
+     Text("Graig","You summoned me, Your Grace?");
+     Text("High Priest","Ah, \f2Graig\f0.  Yes.  We are in need of your services yet again.");
+     Text("Graig","My life for the Light.  What is required of me?");
+     Text("High Priest","A new \f4hero\f0 has been discovered among the ranks of the faithful.");
+     Text("Graig","Of course.  And you want me to train him.");
+     TextPlus("It is a him, right?",0);
+     SetPortrait(0,"\f2High Priest");
+     hero[0].gender=Prompt("The new \f4hero\f0 is:","Male","Female");
+     if(hero[0].gender==1) {
+          Text("High Priest","Yes, \f2Graig\f0.  He is.");
+          Text("Graig","Why don't you ever let me train women?");
+     }
+     else {
+          Text("High Priest","No, \f2Graig\f0.  She is not.");
+          Text("Graig","Why do we keep initiating all these women?");
+     }
+     Text("High Priest","Enough.  A new \f4hero\f0 requires guidance in the service of the Light, and it has been "+
+                        "decided that you will give that guidance.  You will find the novice at the \f3Journeyman's "+
+                        "Rest\f0 recovering from the ritual.");
+     Text("Graig","As the Light wishes.  What does "+GetGenderSub(hero[0].gender)+" look like?");
+     ShowTextbox();
+     hero[0].ent=EntitySpawn(0,0,"images\\chrs\\human.chr");
+     g=hero[0].gender-1*10;
+     TBlit(296,64,cur_arrl,sprite.image[textsprite[6]]);
+     TBlit(337,64,cur_arrr,sprite.image[textsprite[6]]);
+     PlaySound(sfx_prompt,100);
+     
+     while(!b1) {
+          Render();
+          RectFill(304,36,336,96,clear,sprite.image[textsprite[6]]);
+          BlitEntityFrame(304,32,hero[0].ent,g+p,sprite.image[textsprite[6]]);
+          if(left) {
+               PlaySound(sfx_click,100);
+               Unpress(7);
+               p--;
+               if(p<0) p=9;
+          }
+          if(right) {
+               PlaySound(sfx_click,100);
+               Unpress(8);
+               p++;
+               if(p>9) p=0;
+          }
+          ShowPage();
+     }
+     PlaySound(sfx_beep,100);
+     hero[0].chrimg=GetHeroChr("Human",hero[0].gender,p);
+     
+     Text("Graig","Hm.  Maybe this won't be so bad after all.  Is there anything else?");
+     Text("High Priest","This new \f4hero\f0 will be part of the expeditionary team going to \f3Achiela\f0.  "+
+                        "Your task is to prepare "+GetGenderObj(hero[0].gender)+" for that.");
+     SetPortrait(0,"\f2Graig");
+     Text_Main("Does that mean\n ",0,0,1,0,20);
+     SetPortrait(0,"\f2High Priest");
+     Text_Main("No.",1,1,1,0,10);
+     TextPlus("You will not be accompanying them.  Simply train the novice.",0);
+     SetPortrait(0,"\f2Graig");
+     Text_Main("But\n ",0,0,1,0,20);
+     SetPortrait(0,"\f2High Priest");
+     Text_Main("That is all, \f2Graig\f0.",1,1,1,0,10);
+     TextPlus("You can find your ward at the foot of the mountain.",0);
+     SetExecutionPaused(1);
+     SetPortrait(0,"\f2Graig");
+     Text_Main("...",0,0,80,0,1);
+     TextPlus("As the Light wishes.",0);
+     SetExecutionPaused(1);
+     SetEntitiesPaused(0);
+     EntityMove(graigchr,"Y24");
+     WaitForEntity(graigchr);
+     FadeOut(30,0);
+     Map("world\\gelaham.map");
+}
+
+void Tutorial() {
+     int p;
+     string s;
+     int graigchr=EntitySpawn(50,62,"images\\chrs\\humpries.chr");
+     SetExecutionPaused(2);
+     entity.obstruct[graigchr]=1;
+     entity.script[graigchr]="Graig_Equip";
+     entity.x[graigchr]+=8;
+     SetPlayer(graigchr);
+     hero[0].ent=EntitySpawn(50,62,"images\\chrs\\"+hero[0].chrimg+".chr");
+     EntityStalk(hero[0].ent,graigchr);
+     Render();
+     Area_Change("High Temple","Outer Halls","");
+     actfact="Human";
+     partyfact=7;
+     FadeIn(30,0);
+     SetExecutionPaused(2);
+     EntityMove(graigchr,"Y57X63Y53X71PR8TU0");
+     HSetPortrait(0);
+     Text_Main("Are you really sending me to \f3Achiela\f0?",0,0,1,0,0);
+     SetPortrait(0,"\f2Graig");
+     Text_Main("Yes.  What did you expect?",0,0,1,0,0);
+     HSetPortrait(0);
+     Text_Main("I didn't really expect anything.  I mean, I didn't come to "+
+               "\f3Gelaham\f0 expecting to become a \f4hero\f0.",0,0,1,0,0);
+     SetPortrait(0,"\f2Graig");
+     Text_Main("The Light obviously has greater plans for you.",0,0,1,0,0);
+     SetExecutionPaused(2);
+     WaitForEntity(graigchr);
+     Text("Paladin","Another one?  They're keeping you busy, father.");
+     Text("Graig","I am but an instrument of the Light.");
+     Text("Paladin","Oh, of course.");
+     SetExecutionPaused(2);
+     Area_Change("","Training Halls","");
+     EntityMove(1,"Y50X70R0");
+     EntityMove(2,"Y49D0");
+     EntityMove(graigchr,"Y50X74");
+     WaitForEntity(graigchr);
+     EntityMove(1,"X71Y52");
+     EntityMove(2,"Y52");
+     EntityMove(graigchr,"X84");
+     WaitForEntity(graigchr);
+     cameratracking=0;
+     EntityMove(graigchr,"X85L0");
+     WaitForEntity(graigchr);
+     EntityStalk(hero[0].ent,-1);
+     SetPlayer(hero[0].ent);
+     cameratracking=1;
+     Party_EarnGold(112);
+     Text("Graig","First things first.  We need to get you properly outfitted.  We can't have you "+
+          "representing the \f4Divine High Temple of the Light\f0 without proper equipment.");
+     HText(0,"I don't know how much I'll be able to afford.  I only have my tithe.");
+     Text("Graig","Keep it.  \f4Heroes\f0 tithe in service.  Besides, your basic equipment will be provided "+
+          "for you by the Temple.");
+     HText(0,"Really?");
+     Text("Graig","Of course.  What do you think we use those tithes for?");
+     HText(0,"Building temples, spreading the faith, and outfitting crusaders.");
+     TextPlus("Oh.",1);
+     TextPlus("That's me now, isn't it?",0);
+     Text("Graig","Yes.  You'll only get stock equipment now, I'm afraid.  You'll want to comission your own "+
+          "\f4custom-\f4forged gear\f0 at some point, but this will get you started.  So what would you like?");
+     HText(0,"I get to pick?");
+     Text("Graig","They're your weapons.  Remember, you're a \f4"+hero[0].class+"\f0 now, so choose accordingly.");
+     HSetPortrait(0);
+     s="Well, I've always been impressed by heroes with:";
+     switch(GetClassIndex(hero[0].class)) {
+          case 0:   p=Prompt(s,"Two swords","Spear and shield","A greataxe");
+                    if(p==1) {
+                         hero[0].equip[0].eqtype=2;
+                         hero[0].equip[1].eqtype=2;
+                    }
+                    else if(p==2) {
+                         hero[0].equip[0].eqtype=5;
+                         hero[0].equip[1].eqtype=23;
+                    }
+                    else hero[0].equip[0].eqtype=9;
+                    hero[0].equip[2].eqtype=18;
+          case 1:   p=Prompt(s,"Sword and shield","Mace and shield","Spear and shield");
+                    if(p==1) hero[0].equip[0].eqtype=2;
+                    else if(p==2) hero[0].equip[0].eqtype=3;
+                    else hero[0].equip[0].eqtype=5;
+                    hero[0].equip[1].eqtype=25;
+                    hero[0].equip[2].eqtype=19;
+          case 2:   p=Prompt(s,"A knife","A sling","Sword and shield");
+                    if(p==1) hero[0].equip[0].eqtype=1;
+                    else if(p==2) hero[0].equip[0].eqtype=6;
+                    else {
+                         hero[0].equip[0].eqtype=2;
+                         hero[0].equip[1].eqtype=23;
+                    }
+                    hero[0].equip[2].eqtype=17;
+          case 3:   p=Prompt(s,"Sword and shield","A staff","A sling");
+                    if(p==1) {
+                         hero[0].equip[0].eqtype=2;
+                         hero[0].equip[1].eqtype=22;
+                    }
+                    else if(p==2) hero[0].equip[0].eqtype=10;
+                    else hero[0].equip[0].eqtype=6;
+                    hero[0].equip[2].eqtype=17;
+          case 4:   p=Prompt(s,"Mace and shield","A maul","A staff");
+                    if(p==1) {
+                         hero[0].equip[0].eqtype=3;
+                         hero[0].equip[1].eqtype=24;
+                    }
+                    else if(p==2) hero[0].equip[0].eqtype=8;
+                    else hero[0].equip[0].eqtype=10;
+                    hero[0].equip[2].eqtype=18;
+          case 5:   p=Prompt(s,"A knife","A staff");
+                    if(p==1) hero[0].equip[0].eqtype=1;
+                    else hero[0].equip[0].eqtype=10;
+                    hero[0].equip[2].eqtype=16;
+     }
+     if(!hero[0].equip[1].eqtype) hero[0].equip[1].eqtype=21;
+     Text("Graig","Very good.  We can supply that.  Pick whatever appeals to you from the boxes over there.  "+
+          "There's also some basic \f4armor\f0 in there, so you should take a suit of that as well.");
+     Quest_Add("A Hero Rises",0,"Learn the basics of being a hero",
+               "Move to the boxes and press \f4Enter\f0 to search them","Amin",354,449);
+     HookButton(4,"");
+}
+
+void EquipmentCrates() {
+     if(GetFlag("Tutorial")) return;
+     CraftEquipment(hero[0].equip[0].eqtype,"Human",0,0);
+     FindItem(0);
+     CraftEquipment(hero[0].equip[1].eqtype,"Human",0,0);
+     FindItem(0);
+     CraftEquipment(hero[0].equip[2].eqtype,"Human",0,0);
+     FindItem(0);
+     SetFlag("Tutorial",1);
+     Quest_Advance("A Hero Rises",1,"Press \f4Space\f0 to open your menu and ready your equipment","Amin",354,449);
+     HookButton(4,"Menu_Info");
+}
+
+void Graig_Equip() {
+     if(!GetFlag("Tutorial")) {
+          Text("Graig","The boxes with the equipment are over there by the door.  It should be easy to find what you need.");
+          Quest_FlashTask("A Hero Rises");
+          HookButton(4,"");
+     }
+     else if(hero[0].numitems) {
+          Text("Graig","Did you just shove all of that in your backpack?  That won't do.  "+
+               "You need to actually wear your equipment.");
+          Quest_FlashTask("A Hero Rises");
+     }
+     else {
+          Text("Graig","Good.  Now you're starting to look like a \f4hero\f0.  "+
+               "Follow me downstairs and we'll start your training.");
+          HookButton(3,"");
+          HookButton(4,"");
+          cameratracking=0;
+          entity.obstructable[event.entity]=0;
+          EntityMove(event.entity,"Y48");
+          PlayerMove("X85Y49");
+          WaitForEntity(event.entity);
+          EntityStalk(hero[0].ent,event.entity);
+          EntityMove(event.entity,"Y46X87Y49");
+          WaitForEntity(event.entity);
+          entity.visible[event.entity]=0;
+          EntityMove(event.entity,"Y50");
+          WaitForEntity(event.entity);
+          entity.visible[hero[0].ent]=0;
+          FadeOut(30,0);
+          SetEntitiesPaused(0);
+          Training(event.entity);
+     }
+}
+
+void Training(int graigchr) {
+     int p;
+     entity.visible[graigchr]=1; entity.visible[hero[0].ent]=1;
+     entity.x[graigchr]=352;     entity.y[graigchr]=112;
+     entity.x[hero[0].ent]=352;  entity.y[hero[0].ent]=112;
+     EntityStalk(hero[0].ent,graigchr);
+     xwin=40; ywin=26;
+     RectFill(0,0,639,479,0,sprite.image[0]);
+     EntityMove(graigchr,"Y10PD8TX21R0");
+     FadeIn(30,0);
+     HookButton(3,"");
+     HookButton(4,"");
+     WaitForEntity(graigchr);
+     cameratracking=1;
+     EntityStalk(hero[0].ent,-1);
+     Text("Graig","Now.  It's time to prepare you for combat.");
+     HText(0,"I don't know if I'm ready for this.");
+     Text("Graig","We never truly are.  But the path of the \f4hero\f0 is soaked in blood, so that those without the "+
+          "\f4Hero Soul\f0 may live their mortal lives in peace.");
+     HText(0,"Is it too late to change my mind about this?");
+     Text("Graig","You have a \f4Hero Soul\f0.  It was too late by the time you were born.");
+     TextPlus("The first thing we need to do is put you through some basic training.  As a \f4hero\f0, "+
+              "you are naturally more apt than others.  Awakening yourself with the ritual and choosing a "+
+              "specialization should have activated further growth.",1);
+     HText(0,"I have felt more...");
+     TextPlus("Focused, I guess is the best word.",0);
+     TextPlus("Anticipation, too.  This is all overwhelming, but part of me can't wait to get started.",0);
+     Text("Graig","Good.  Focus on that.  As a \f4Human "+hero[0].class+"\f0, some of your growth is innate, but "+
+          "a trained \f4hero instructor\f0 can work with you to promote growth in areas you'd like to work on.");
+     TextPlus("We'll do what we can now, but you'll want to return to a \f4trainer\f0 as you continue "+
+              "to gain experience, as only they can help you reach your full potential.",0);
+     CreateCharacter(0,"Human");
+     
+     Text("Graig","Impressive.  This seems to come quite naturally to you.");
+     HText(0,"If you say so, father.  In my mind, I'm still just a pilgrim.");
+     Text("Graig","A pilgrim you may yet be again, but now as the \f4hero\f0 defending the caravan.");
+     HText(0,"No, not me.  Why, on the way here, our guard drove off an entire goblin raiding party "+
+          "all by herself.  I'd never be able to do something like that.");
+     Text("Graig","I think you'll be surprised what you're capable of, even now.  The ritual has awoken in you a "+
+          "deadly proficiency with your chosen weapons, but the true strength of the \f4hero\f0 lies in their "+
+          "ability to make the most of every strike.");
+     HText(0,"What do you mean?");
+     Text("Graig","For better or worse, you are now and forever a \f4"+hero[0].class+"\f0.  Your nature allows you "+
+          "to channel a portion of your power into each swing of your weapon.  You must now choose what aspect of "+
+          "your heroism will shine through in your attacks.");
+     TextPlus("The choice is significant, for the aspect you choose today will guide your future advancement.  "+
+              "The aspect you choose not to develop will be lost to you, for you can build only on what you know.",0);
+     TextPlus("So.",1);
+     TextPlus("Which attack will you choose?",0);
+     Unpress(1);
+     UI_CharGenBoxes(0);
+     CharGen_WriteAttackDesc(0,1,0);
+     while(!b1) {
+          Render();
+          ShowPage();
+          if(up || down) {
+               Unpress(5); Unpress(6);
+               PlaySound(sfx_click,100);
+               p++;
+               if(p>1) p=0;
+               CharGen_WriteAttackDesc(0,1,p);
+          }
+     }
+     UI_ClearCharGen();
+     Unpress(1);
+     PlaySound(sfx_beep,100);
+     Hero_LearnAttack(0,temphero[0].attack[p].idx);
+     if(GetClassIndex(hero[0].class)>2)
+          hero[0].spellslots=1;
+     
+     Text("Graig","This is stunning.  You have mastered immediately what it has taken some before you ages to even "+
+          "begin to understand.  And still you say you have no prior training?");
+     HText(0,"I swear it.  I work on a \f3small farm\f0 on the sunward side of the void mountains on the "+
+          "north bank of the \f3Radiant River\f0.  Once we've saved enough, I join a pilgrimage caravan in the "+
+          "outpost across the mountains to present our tithe to the Light.");
+     Text("Graig","You settled on the far bank of the \f3Radiant\f0?");
+     HText(0,"Yes, I know.  It's outside the glow from \f3Mount Gela\f0.  The paladins tell us that every "+
+          "time they stop by to check on us.  But the monster raids aren't as bad as you'd think.");
+     Text("Graig","I think I begin to understand why the \f4Hero Shrine\f0 called to you.");
+     HText(0,"You mean why the \f4Light\f0 called to me, right?");
+     Text("Graig","Yes, of course.  Excuse me.");
+     TextPlus("At any rate, your training is nearly complete.  Now is the time to put all you have learned "+
+              "to the true test: combat.",1);
+     HText(0,"I don't know about this.");
+     Text("Graig","You'll be fine.  You're at the heart of the \f3High \f3Temple\f0.  There's nothing that can happen "+
+          "to you that the priests here can't fix.");
+     HText(0,"I could die!");
+     Text("Graig","For as quickly as you learn, you really are quite dense.");
+     TextPlus("You're a \f4hero\f0.  You're immortal.  Even if we didn't resurrect you, which we can, you'd "+
+              "come back anyway.",0);
+     HText(0,"That's...");
+     TextPlus("reassuring, I guess.  Sort of.",0);
+     Text("Graig","Trust me.  You'll be fine.  Step into the sparring ring and we'll bring out your opponent.");
+     Quest_Advance("A Hero Rises",4,"Move into the \f4earthen sparring ring\f0 to begin your first \f3battle\f0","Amin",354,449);
+     entity.script[graigchr]="Graig_Combat";
+     EntityMove(graigchr,"D0");
+     entity.obstructable[GetPlayer()]=1;
+     SetFlag("Tutorial",2);
+}
+
+void Graig_Combat() {
+     if(GetFlag("Tutorial")<3) {
+          Text("Graig","What are you waiting for?  The sparring ring is right over there.  Step inside and we'll get started.");
+          Quest_FlashTask("A Hero Rises");
+          EntityMove(event.entity,"D0");
+     }
+     else {
+          Text("Graig","See?  That wasn't so bad, was it?");
+          HText(0,"How do you summon monsters from nothing like that?");
+          Text("Graig","We don't summon them.  They come.");
+          HText(0,"The basement of the \f3High Temple\f0 generates monsters?");
+          Text("Graig","When we lower the wards, yes.  It acts the same as anywhere else in the world.");
+          HText(0,"What do you mean, anywhere else?  I've never seen monsters materialize from nothing.");
+          Text("Graig","They appear more often around \f4heroes\f0.");
+          TextPlus("It's a difficult conundrum.  Mortals would see fewer monsters if \f4heroes\f0 stayed away "+
+                   "from them, but would surely die without their protection on the rare occasion a monster did come.",0);
+          HText(0,"Wait.  Are you saying I'm going to be plagued by monsters for the rest of my life?");
+          Text("Graig","Until the day the \f2Shadowkin\f0 finally succeed in stealing your immortal soul.  Yes.");
+          HText(0,"That's it.  I'm done.  I want out.  Thanks for your time, but I don't want any part of this.");
+          Text("Graig","You don't have a choice.  You're the one who let "+GetGenderObj(hero[0].gender)+"self be "+
+               "sacrificed in front of the \f4Hero Shrine\f0.  You brought it upon yourself.");
+          EntityMove(event.entity,"U0");
+          PlayerMove("Y8");
+          Wait(100,1);
+          HText(0,"The \f2Shadowkin\f0 will really hunt for me?");
+          Text("Graig","As surely as you now draw breath.  One day, in a moment of weakness, they will manage to "+
+               "spirit you away into the eternal gloom outside the \f4Divine Light\f0, and you will be no more.  It "+
+               "is the only death from which a \f4hero\f0 cannot return.");
+          TextPlus("But do not fear.  For now, you are safe.  The spiritual glow from \f3Holy Mount Gela\f0 "+
+                   "keeps them at bay.  There is a reason we encourage settlers to stay south of the \f3Radiant River\f0.",0);
+          PlayerMove("D0");
+          HText(0,"Yeah, sure.  It doesn't seem to do much to keep the monsters away, now does it?  If the "+
+               "\f4Light\f0 can't keep away a measly \f4goo\f0, how can it possibly keep away the \f2Shadowkin\f0?");
+          Text("Graig","You truly do adapt quickly.  Are you still able to remember when you would have considered "+
+               "such words to be heresy?");
+          PlayerMove("X21Y9PD8T");
+          HText(0,"What have you done to me?");
+          Text("Graig","I have trained you to be a tool of the \f4Divine High Temple of the Light\f0, and I have done "+
+               "so exceedingly well.  Already you begin to see the decay against which we as \f4heroes\f0 must stand "+
+               "guard.");
+          TextPlus("\f2Shadowkin\f0.",1);
+          TextPlus("Monsters.",0);
+          TextPlus("Demons, which you will experience soon enough.",0);
+          TextPlus("Something is wrong in \f3Serinor\f0.",0);
+          TextPlus("And you have a valid point.  I can remember when we would have to go as far afield as "+
+                   "\f3Thovas Island\f0 before a monster could pierce the glow of \f3Mount Gela\f0.  Now they can "+
+                   "appear within the \f3High Temple\f0 itself if our defenses slacken even the slightest bit.",1);
+          HText(0,"The...");
+          TextPlus("The \f4Light\f0 is fading?",0);
+          Text("Graig","Oh no.  No, not at all.  But the monsters grow stronger.  Did you not see reality bend and "+
+               "warp when the monster appeared?  We have need of \f4heroes\f0 now more than ever to correct what has "+
+               "gone wrong.  But so few are found anymore, and the \f2Shadowkin\f0 seem to take every one we find.");
+          PlayerMove("U0");
+          Wait(200,1);
+          PlayerMove("D0");
+          HText(0,"What can I do?");
+          Text("Graig","Now you are truly a \f4hero\f0.  Willing to put your immortal life on the line to make the "+
+               "world a better place for others.");
+          HText(0,"Having a death wish makes me a \f4hero\f0?");
+          Text("Graig","To a certain extent, yes.  But we digress.");
+          TextPlus("The \f2High Priest\f0 believes the \f2Lukosian\f0 magic that destroyed \f3Achiela\f0 has "+
+                   "something to do with the recent acceleration of the decay plauging \f3Serinor\f0.",1);
+          HText(0,"The \f2High Priest\f0 believes, not the \f4Light\f0 says?");
+          Text("Graig","Again, you persist in heresies.  But you are correct, and observant.  I believe you'll find "+
+               "your experiences as a \f4hero\f0 will begin to color your perspective somewhat more than your devotion "+
+               "to the Temple.");
+          TextPlus("\f3Achiela\f0 was home to the \f2Lukosians\f0 just as it was to the \f2Humans\f0.  Whatever "+
+                   "went wrong, it is unlikely that it was intentional.  And I believe the \f2High Priest\f0 has his "+
+                   "cause and effect backwards.  The demons are not causing the decay; the demons managed to enter "+
+                   "\f3Serinor\f0 because the decay has weakened the barrier that kept them out.",0);
+          HText(0,"So why are you going along with him?");
+          Text("Graig","Several reasons.  He is the \f2High Priest\f0, and I am still a priest of the Temple.  Also, "+
+               "something did destroy \f3Achiela\f0, and we need to send \f4heroes\f0 to investigate anyway.");
+          HText(0,"And that's where we come in, right?");
+          Text("Graig","Where you come in.  I won't be accompanying you.");
+          HText(0,"What?  Why not?");
+          Text("Graig","The \f2High Priest\f0 does not want me to leave \f3Gelaham\f0.  I am too valuable to the Temple, "+
+               "and the \f2Shadowkin\f0 cannot take me here.");
+          HText(0,"Are they that much of a threat?");
+          Text("Graig","They pursue the most experienced \f4heroes\f0 even more fervently than any others, and there "+
+               "are no \f2Human\f0 \f4heroes\f0 left that I have not trained personally.");
+          HText(0,"Oh.");
+          Text("Graig","Get some rest.  Meet me at the \f3Journeyman's Rest\f0 at the foot of the mountain when you "+
+               "wake.  I'll introduce you to your party and see you off.");
+          EntityMove(event.entity,"X22Y6");
+          WaitForEntity(event.entity);
+          entity.visible[event.entity]=0;
+          entity.x[event.entity]=0;
+          entity.y[event.entity]=0;
+          Wait(100,1);
+          HText(0,"So this is what it's like to be a hero.");
+          SetFlag("Tutorial",4);
+          Quest_Advance("A Hero Rises",6,"Use a nearby \f4bed\f0 to rest and recover","Amin",354,449);
+     }
+}
+
+void EnterBasement() {
+     Warp(22,7);
+}
+
+void ExitBasement() {
+     Warp(87,48);
+}
+
+void SparringRing() {
+     if(GetFlag("Tutorial")!=2) return;
+     PlayerMove("Y21U0");
+     HText(0,"Alright.  I guess I'm ready.");
+     Text("Graig","We are never truly ready.");
+     HText(0,"Wait, what?");
+     runflag=1;
+     Batt_LoadEnemy(2,0);
+     Battle();
+     HText(0,"By the Light!  Where did that thing even come from?");
+     Text("Graig","Even the weakest monster can strike without warning.  You must be always vigilant.");
+     HSetPortrait(0);
+     Text_Main("I really don't think that I'm",0,0,1,0,5);
+     Batt_LoadEnemy(2,0);
+     Battle();
+     runflag=0;
+     HText(0,"Stop it!");
+     Text("Graig","It is done.  Come.");
+     Quest_Advance("A Hero Rises",5,"Talk to \f2Graig\f0","Amin",354,449);
+     SetFlag("Tutorial",3);
+}
+
+void BasementBed() {
+     if(GetFlag("Tutorial")<4) return;
+     Quest_Complete("A Hero Rises",7,250);
+     PlayerMove("R0W125U0W125L0W125D0W125");
+     HText(0,"When I wake, I'll be heading out to slay demons.");
+     Wait(200,1);
+     HText(0,"Why am I excited?");
+     SetFadeSong("inn.s3m");
+     FadeOut(100,0);
+     timer=0;
+     while(timer<600) ShowPage();
+     SetFadeSong("Bach538.it");
+     FadeIn(100,0);
+     hero[0].curhp=hero[0].maxhp;
+     Quest_Add("Expedition to Achiela",0,"Investigate the destruction of Achiela",
+               "Leave the \f3High Temple Training Halls\f0","Amin",354,449);
+}
+
+void TutorialFinale() {
+     int h=Party_GetStoryHero(1)-1;
+     int a=Party_GetIndexFromName("Adain");
+     int g=Party_GetIndexFromName("Grace");
+     int x,y;
+     Map_Initialize("High Temple","Sanctuary","Bach538.it","Human");
+     SetExecutionPaused(2);
+     cameratracking=2;
+     cameratracker=hero[h].ent;
+     Quest_Complete("Expedition to Achiela",10,250);
+     PlayerMove("Y10");
+     Text("High Priest","Our heroes return.  Tell me, what news of \f3Achiela\f0?");
+     HText("Adain","The research performed there opened a rift to some Light-forsaken infernal "+
+           "domain, allowing demons to enter and destroy the city.  The \f2Lukosian\f0 scholar "+
+           "you commissioned theorized it was only possible because of the weakening of the "+
+           "interplanar barrier.");
+     Text("High Priest","I see.  So it but a symptom, and not the underlying cause.");
+     HText("Grace","That is correct, Your Grace.  It will take heroes stronger than us to purge "+
+           "the shadow from the ruins entirely.");
+     Text("High Priest","We do not have the heroes to spare.");
+     TextPlus("Let it be known that until such a time as \f3Serinor\f0 has mended itself, the "+
+              "practice of all magic not gifted directly from the Light is forbidden in all \f2Human\f0 "+
+              "lands, and practitioners thereof shall be exiled.  Such is the will of the Light.",1);
+     HText(h,"That's ridiculous!  The \f2Lukosians\f0 didn't do it!  The demons attacked them too.");
+     Text("High Priest","You would question the will of the Light?");
+     SetExecutionPaused(1);
+     HSetPortrait(h);
+     Text_Main("...",0,0,80,0,1);
+     TextPlus("No.",1);
+     TextPlus("As the Light wishes.",0);
+     Text("High Priest","Good.  \f2Adain\f0, you and \f2Grace\f0 will take the proceeds from this "+
+          "quest and return to your mission work among the \f2Orcs\f0.");
+     HText("Adain","As the Light wishes.");
+     SetExecutionPaused(2);
+     partygold=0;
+     entity.obstructable[hero[a].ent]=0;
+     entity.obstructable[hero[g].ent]=0;
+     EntityStalk(hero[h].ent,-1);
+     x=entity.x[hero[h].ent];
+     y=entity.y[hero[h].ent];
+     EntityMove(hero[a].ent,"PR16TY25");
+     EntityMove(hero[g].ent,"PL16TY25");
+     WaitForEntity(hero[g].ent);
+     Hero_Clear(Party_GetIndexFromName("Adain"));
+     Hero_Clear(Party_GetIndexFromName("Grace"));
+     guestchars-=2;
+     h=0;
+     SetPlayer(hero[h].ent);
+     entity.x[hero[h].ent]=x;
+     entity.y[hero[h].ent]=y;
+     PlayerMove("U0");
+     cameratracker=hero[h].ent;
+     HText(0,"What of me?");
+     Text("High Priest","\f3Serinor\f0 is weak and continues to fade further.  The Light offers "+
+          "no insight into why this happens or how to stop it.  As such, I am tasking you with "+
+          "answering both questions.");
+     HText(0,"What?  Me?");
+     Text("High Priest","Yes, you.  You're as immortal as any, and since the Light gives me neither "+
+          "guidance for you nor insight into the fate of the world, I will put you to use myself.");
+     HText(0,"The Light doesn't speak to you about me?");
+     Text("High Priest","Let it be known that the hero \f2"+hero[0].name+"\f0 is commissioned to "+
+          "determine the cause of \f3Serinor\f0's planar weakness and to put a permanent end to the "+
+          "condition.  Such is the will of the Light.");
+     SetExecutionPaused(1);
+     HSetPortrait(0);
+     Text_Main("...",0,0,80,0,1);
+     TextPlus("As the Light wishes.",0);
+     g=EntitySpawn(50,44,"images\\chrs\\humpries.chr");
+     SetExecutionPaused(2);
+     entity.obstructable[g]=0;
+     entity.obstruct[g]=1;
+     entity.script[g]="Graig_Books";
+     EntityMove(g,"PR8TU0");
+     PlayerMove("Y42");
+     cameratracking=1;
+     Text("Graig","That could have ended better.");
+     HText(0,"How in night's depths am I supposed to fix \f3Serinor\f0?  I don't even know where to start.");
+     Text("Graig","Calm down.  Meet me downstairs.  We'll get you as prepared as possible.");
+     SetExecutionPaused(2);
+     showtext=1;
+     EntityMove(g,"Y60");
+     EntityMove(1,"PD8L16D0T");
+     EntityMove(2,"PD8R16D0T");
+     HSetPortrait(0);
+     Text_Main("How do you prepare for this?  `The world's broke.  Go fix it.`  Yeah, thanks, "+
+               "I'll get right on that.  This green-as-grass rookie will save the day, no problem.  "+
+               "\f3AAARRGH!\f0",0,0,1,0,0);
+     WaitForEntity(g);
+     entity.x[g]=21*16;
+     entity.y[g]=10*16+8;
+     HText(0,"Deep breath, hero.  They'll saint you for this.");
+     TextPlus("They'd better, anyway.",0);
+     Quest_Add("An Epic Begins...",0,"Prepare for your quest to save \f3Serinor\f0",
+               "Meet \f2Graig\f0 in the \f3High Temple Training Halls\f0","Amin",354,449);
+}
+
+void Graig_Books() {
+     if(Quest_PartyOnStage("An Epic Begins...",2)) {
+          Text("Graig","Go.  \f3Serinor\f0 needs you.");
+          return;
+     }
+     HText(0,"So how do you plan to prepare me to save the world?");
+     Text("Graig","With a solid foundation.  Here.");
+     PlaySound(sfx_success,100);
+     Sign("","Received Party Journal!");
+     HText(0,"What's this?");
+     Text("Graig","Invaluable.  A well-kept \f4journal\f0 is the lifeblood of any adventuring party.");
+     HText(0,"Some party.  There's only one of me.");
+     Text("Graig","That's the first thing you should remedy.  Head down to the \f3Journeyman's Rest\f0 "+
+          "and find yourself some companions.  You'll never be able to do this alone.  If you record "+
+          "everything you learn in your \f4journal\f0, the \f4lore experience\f0 will be available "+
+          "to any you recruit.");
+     HText(0,"That's handy.  Why didn't you give this to me before?");
+     Text("Graig","\f2Adain\f0 already had one.  I take it he didn't see fit to share it with you.");
+     TextPlus("Anyway, it also has sections for an \f4atlas\f0 and \f4skill book\f0.  I've taken the "+
+              "liberty of adding some basic skills for you.  The maps you'll have to find on your own, "+
+              "I'm afraid.  Perhaps a pilgrim in town can help you.",0);
+     spellbook[0]=1;   spellbook[44]=1;
+     spellbook[83]=1;  spellbook[123]=1;
+     spellbook[165]=1; spellbook[207]=1;
+     HText(0,"That's amazing.  Thank you.");
+     Text("Graig","And here.  This is from my personal savings.  It should help you outfit your recruits.");
+     PlaySound(sfx_success,100);
+     Sign("","Recieved 1000$!");
+     partygold=1000;
+     HText(0,"I take it that means the Temple won't be supplying me from here out.");
+     Text("Graig","Sorry.  You'll need to learn self-sufficiency.  But don't worry too much.  The spoils "+
+          "you collect from fighting the monsters that will plague you are worth plenty on the open market.  "+
+          "You should be able to bankroll an adventuring party without too much difficulty.");
+     HText(0,"That's all well and good, but it doesn't save the world.  I don't even know where to begin.");
+     Text("Graig","If the Light is silent, then you'll need to listen to other voices.  I'd recommend "+
+          "checking with the \f2Halflings\f0 first.  They're our closest allies and will be more willing "+
+          "than most to help a \f2Human\f0 hero.");
+     HText(0,"\f2Halflings\f0?  Where can I find them?");
+     Text("Graig","In the north at their city on the banks of the great \f3Lake Amunash\f0.  There is a "+
+          "bridge across the \f3Radiant River\f0 east of \f3Erelikoth\f0.  Cross there and head north.  "+
+          "You should also purchase \f4map crystals\f0 from the outfitter.  They'll help you find it.");
+     HText(0,"And you think the \f2Halflings\f0 will know what to do?");
+     Text("Graig","I think all the races of \f3Serinor\f0 will need to work together to solve this.  I "+
+          "simply think \f3Amunash\f0 is the best place to start.");
+     HText(0,"Thank you, \f2Graig\f0.  I don't know what I'd do without you.");
+     Text("Graig","Die repeatedly and get taken by \f2Shadowkin\f0 most likely.  Make sure you stop in "+
+          "and see the \f4trainer\f0 in the west wing from time to time.  She'll be your source for "+
+          "training in the future.");
+     HText(0,"Not you?");
+     Text("Graig","I have other assignments, unfortunately.  The Light has plans for us all.");
+     HText(0,"Thanks again.  I hope we meet again.");
+     Text("Graig","I am sure we will.  Now go.  \f3Serinor\f0 needs you.");
+     Quest_Advance("An Epic Begins...",1,"Visit the \f2Halfling\f0 city of \f3Amunash\f0","Amin",280,149);
+}

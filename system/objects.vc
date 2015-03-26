@@ -1,0 +1,514 @@
+void CraftEquipment(int type, string race, int plus, int magic) {
+//- The item resulting from CraftEquipment() is stored in tempitem[0]
+//  BE SURE TO ASSIGN TEMPITEM TO AN INVENTORY UPON RETURN
+     int i;
+     string s;
+     int f=FileOpen("system\\equip.dat",FILE_READ);
+     FileSeekLine(f,GetRacialIndex(race)+35);
+     s=FileReadLn(f);
+     FileSeekLine(f,type-1);
+     Item_Clear(0,2,0);
+     tempitem[0].desc=FileReadToken(f);
+     tempitem[0].eqtype=type;
+     if(type<14) {
+          tempitem[0].stats[0][0]=val(FileReadToken(f));
+          tempitem[0].stats[0][1]=val(FileReadToken(f));
+     }
+     else if(type==14) {
+          tempitem[0].stats[0][0]=val(FileReadToken(f));
+          tempitem[0].stats[0][1]=val(GetToken(s," ",5));
+          FileReadToken(f);
+     }
+     else if(type==15) {
+          tempitem[0].stats[0][0]=val(FileReadToken(f));
+          tempitem[0].stats[0][1]=val(GetToken(s," ",6));
+          tempitem[0].stats[1][0]=val(FileReadToken(f));
+          tempitem[0].stats[1][1]=val(GetToken(s," ",6))+1;
+     }
+     else if(type<21) {
+          tempitem[0].stats[0][0]=val(FileReadToken(f));
+          tempitem[0].stats[0][1]=1;
+          tempitem[0].stats[1][0]=val(FileReadToken(f));
+          tempitem[0].stats[1][1]=2;
+     }
+     else if(type<27) {
+          tempitem[0].stats[0][0]=val(FileReadToken(f));
+          tempitem[0].stats[0][1]=1;
+          tempitem[0].stats[1][0]=tempitem[0].stats[0][0]/2;
+          FileReadToken(f);
+     }
+     else if(type<31) {
+          tempitem[0].stats[0][0]=val(FileReadToken(f));
+          tempitem[0].stats[0][1]=type-27*2+3;
+          tempitem[0].stats[1][0]=val(FileReadToken(f));
+          tempitem[0].stats[1][1]=type-27*2+4;
+     }
+     else if(type<36) {
+          tempitem[0].stats[0][0]=val(FileReadToken(f));
+          tempitem[0].stats[0][1]=type-30;
+          FileReadToken(f);
+     }
+     else Exit("ERROR: Invalid equipment type passed to CraftEquipment()");
+     tempitem[0].stats[2][0]=val(FileReadToken(f));
+     tempitem[0].name=" "+tempitem[0].desc;
+     tempitem[0].desc=race+" "+tempitem[0].desc;
+     if(magic) {
+          tempitem[0].name=GetToken(s," ",2)+tempitem[0].name;
+          tempitem[0].desc="Magical "+tempitem[0].desc;
+          i=val(FileReadToken(f))*plus;
+          tempitem[0].stats[0][0]+=i;
+          if(type>14 && type<31)
+               tempitem[0].stats[1][0]+=i;
+          tempitem[0].stats[3][0]=10;
+          tempitem[0].stats[4][0]=5;
+          if(type<15 || type>30) {
+               tempitem[0].stats[3][1]=val(GetToken(s," ",3))-1;
+               tempitem[0].stats[4][1]=val(GetToken(s," ",4))+23;
+          }
+          else {
+               tempitem[0].stats[3][1]=val(GetToken(s," ",3))+11;
+               tempitem[0].stats[4][1]=val(GetToken(s," ",4))+29;
+          }
+     }
+     else if(!plus) {
+          tempitem[0].name=GetToken(s," ",0)+tempitem[0].name;
+          tempitem[0].desc="Basic "+tempitem[0].desc;
+          FileReadToken(f);
+     }
+     else {
+          tempitem[0].name=GetToken(s," ",1)+tempitem[0].name;
+          tempitem[0].desc="Masterful "+tempitem[0].desc;
+          i=val(FileReadToken(f))*plus;
+          tempitem[0].stats[0][0]+=i;
+          if(type>14 && type<31)
+               tempitem[0].stats[1][0]+=i;
+          tempitem[0].stats[3][0]=5;
+          if(type<15 || type>30)
+               tempitem[0].stats[3][1]=val(GetToken(s," ",3))-1;
+          else tempitem[0].stats[3][1]=val(GetToken(s," ",3))+11;
+     }
+     tempitem[0].price=val(FileReadToken(f))*pow(2,plus);
+     if(magic) tempitem[0].price=tempitem[0].price*2;
+     if(type<16) {}
+     else if(type<21) tempitem[0].desc+=" Armor";
+     else if(type==21) {}
+     else if(type<27) tempitem[0].desc+=" Shield";
+     else if(type<31) {}
+     else tempitem[0].desc+=" Signet";
+     if(plus) {
+          tempitem[0].desc+=" (+"+str(plus)+")";
+          tempitem[0].lore="A piece of fine custom equipment from a \f2"+race+"\f0 smith.";
+     }
+     else tempitem[0].lore="A basic piece of \f2"+race+"\f0 equipment.";
+     tempitem[0].lore+="  Valued at "+str(tempitem[0].price)+"$.";
+     FileClose(f);
+}
+
+void CraftItem(string name, string desc, string lore, int use, int effect, int value) {
+     Item_Clear(0,2,0);
+     tempitem[0].name=name;
+     tempitem[0].use=use;
+     if(effect) {
+          Tech_LoadSpell(0,effect);
+          tempitem[0].effect=tempspell[0].effect;
+          tempitem[0].stats[0][0]=tempspell[0].attack;
+          tempitem[0].stats[0][1]=tempspell[0].accuracy;
+          tempitem[0].stats[1][0]=tempspell[0].damage;
+          tempitem[0].stats[1][1]=tempspell[0].power;
+          tempitem[0].stats[2][0]=tempspell[0].magnitude;
+          tempitem[0].stats[2][1]=tempspell[0].use;
+          tempitem[0].desc=tempspell[0].desc;
+     }
+     if(!len(desc) && !effect)
+          tempitem[0].desc="Useful adventuring gear";
+     else if(len(desc))
+          tempitem[0].desc=desc;
+     if(!len(lore) && !effect)
+          tempitem[0].lore="A valuable commodity.";
+     else if(!len(lore))
+          tempitem[0].lore=tempspell[0].lore;
+     else tempitem[0].lore=lore;
+     tempitem[0].price=value;
+     if(tempitem[0].stats[2][0]==1)
+          tempitem[0].lore+="  Lasts 1 round.";
+     else if(tempitem[0].effect==64 || tempitem[0].effect==65)
+          tempitem[0].lore+="  Instant effect.";
+     else if(tempitem[0].stats[2][0]>1)
+          tempitem[0].lore+="  Lasts "+str(tempitem[0].stats[2][0])+" rounds.";
+     else if(tempitem[0].effect)
+          tempitem[0].lore+="  Instant effect.";
+     tempitem[0].lore+="  Valued at "+str(value)+"$.";
+}
+
+int FindItem(int idx) {
+     int i;
+     SetExecutionPaused(1);
+     if(idx) {}     //- Set item from database to tempitem[0]
+     if(!Party_PackSpace()) {
+          Text_Main("Found \f4"+tempitem[0].name+"\f0, but nothing more can be carried.",0,0,0,0,0);
+          SetExecutionPaused(0);
+          return 0;
+     }
+     while(!Hero_PackSpace(i))
+          i++;
+     PlaySound(sfx_success,100);
+     ClearPortrait();
+     Text_Main("\f2"+hero[i].name+"\f0 acquires \f4"+tempitem[0].name+"\f0!",0,0,0,0,0);
+     Item_AssignTemp(0,0,hero[i].numitems);
+     SetExecutionPaused(0);
+     return 1;
+}
+
+void Item_AssignTemp(int h, int t, int s) {
+//- Item_AssignTemp() overwrites the data already stored in the destination
+//  h: hero to be assigned item
+//  t: 0=backpack; 1=equip; 2=fighter
+//  s: slot to overwrite
+     int i;
+     if(!t) {
+          hero[h].backpack[s].name=tempitem[0].name;
+          hero[h].backpack[s].desc=tempitem[0].desc;
+          hero[h].backpack[s].lore=tempitem[0].lore;
+          hero[h].backpack[s].use=tempitem[0].use;
+          hero[h].backpack[s].effect=tempitem[0].effect;
+          hero[h].backpack[s].eqtype=tempitem[0].eqtype;
+          hero[h].backpack[s].price=tempitem[0].price;
+          for(i=0; i<6; i++) {
+               hero[h].backpack[s].stats[i][0]=tempitem[0].stats[i][0];
+               hero[h].backpack[s].stats[i][1]=tempitem[0].stats[i][1];
+          }
+          if(len(tempitem[0].name) && s>=hero[h].numitems)
+               hero[h].numitems++;
+     }
+     else if(t==1) {
+          hero[h].equip[s].name=tempitem[0].name;
+          hero[h].equip[s].desc=tempitem[0].desc;
+          hero[h].equip[s].lore=tempitem[0].lore;
+          hero[h].equip[s].use=tempitem[0].use;
+          hero[h].equip[s].effect=tempitem[0].effect;
+          hero[h].equip[s].eqtype=tempitem[0].eqtype;
+          hero[h].equip[s].price=tempitem[0].price;
+          for(i=0; i<6; i++) {
+               hero[h].equip[s].stats[i][0]=tempitem[0].stats[i][0];
+               hero[h].equip[s].stats[i][1]=tempitem[0].stats[i][1];
+          }
+     }
+     else {
+          fighter[h].loot.name=tempitem[0].name;
+          fighter[h].loot.desc=tempitem[0].desc;
+          fighter[h].loot.lore=tempitem[0].lore;
+          fighter[h].loot.use=tempitem[0].use;
+          fighter[h].loot.effect=tempitem[0].effect;
+          fighter[h].loot.eqtype=tempitem[0].eqtype;
+          fighter[h].loot.price=tempitem[0].price;
+          for(i=0; i<6; i++) {
+               fighter[h].loot.stats[i][0]=tempitem[0].stats[i][0];
+               fighter[h].loot.stats[i][1]=tempitem[0].stats[i][1];
+          }
+     }
+     Item_Clear(0,2,0);
+}
+
+void Item_Clear(int h, int t, int s) {
+     int i;
+     if(!t) {
+          if(len(hero[h].backpack[s].name))
+               hero[h].numitems--;
+          Item_Delete(h,t,s);
+          Hero_CollapsePack(h);
+     }
+     else if(t==1) {
+          hero[h].equip[s].name="";
+          hero[h].equip[s].desc="";
+          hero[h].equip[s].lore="";
+          hero[h].equip[s].use=0;
+          hero[h].equip[s].effect=0;
+          hero[h].equip[s].eqtype=0;
+          hero[h].equip[s].price=0;
+          for(i=0; i<6; i++) {
+               hero[h].equip[s].stats[i][0]=0;
+               hero[h].equip[s].stats[i][1]=0;
+          }
+     }
+     else if(t==2) {
+          tempitem[0].name="";
+          tempitem[0].desc="";
+          tempitem[0].lore="";
+          tempitem[0].use=0;
+          tempitem[0].effect=0;
+          tempitem[0].eqtype=0;
+          tempitem[0].price=0;
+          for(i=0; i<6; i++) {
+               tempitem[0].stats[i][0]=0;
+               tempitem[0].stats[i][1]=0;
+          }
+     }
+     else Item_Delete(h,3,0);
+}
+
+void Item_Copy(int h, int t, int s) {
+//- Item_Copy() overwrites the data stored in tempitem[0]
+//  h: hero holding item
+//  t: 0=backpack; 1=equip; 2=fighter
+//  s: slot to copy
+     int i;
+     if(!t) {
+          tempitem[0].name=hero[h].backpack[s].name;
+          tempitem[0].desc=hero[h].backpack[s].desc;
+          tempitem[0].lore=hero[h].backpack[s].lore;
+          tempitem[0].use=hero[h].backpack[s].use;
+          tempitem[0].effect=hero[h].backpack[s].effect;
+          tempitem[0].eqtype=hero[h].backpack[s].eqtype;
+          tempitem[0].price=hero[h].backpack[s].price;
+          for(i=0; i<6; i++) {
+               tempitem[0].stats[i][0]=hero[h].backpack[s].stats[i][0];
+               tempitem[0].stats[i][1]=hero[h].backpack[s].stats[i][1];
+          }
+     }
+     else if(t==1) {
+          tempitem[0].name=hero[h].equip[s].name;
+          tempitem[0].desc=hero[h].equip[s].desc;
+          tempitem[0].lore=hero[h].equip[s].lore;
+          tempitem[0].use=hero[h].equip[s].use;
+          tempitem[0].effect=hero[h].equip[s].effect;
+          tempitem[0].eqtype=hero[h].equip[s].eqtype;
+          tempitem[0].price=hero[h].equip[s].price;
+          for(i=0; i<6; i++) {
+               tempitem[0].stats[i][0]=hero[h].equip[s].stats[i][0];
+               tempitem[0].stats[i][1]=hero[h].equip[s].stats[i][1];
+          }
+     }
+     else {
+          tempitem[0].name=fighter[h].loot.name;
+          tempitem[0].desc=fighter[h].loot.desc;
+          tempitem[0].lore=fighter[h].loot.lore;
+          tempitem[0].use=fighter[h].loot.use;
+          tempitem[0].effect=fighter[h].loot.effect;
+          tempitem[0].eqtype=fighter[h].loot.eqtype;
+          tempitem[0].price=fighter[h].loot.price;
+          for(i=0; i<6; i++) {
+               tempitem[0].stats[i][0]=fighter[h].loot.stats[i][0];
+               tempitem[0].stats[i][1]=fighter[h].loot.stats[i][1];
+          }
+     }
+}
+
+void Item_Delete(int h, int t, int s) {
+     int i;
+     if(!t) {
+          hero[h].backpack[s].name="";
+          hero[h].backpack[s].desc="";
+          hero[h].backpack[s].lore="";
+          hero[h].backpack[s].use=0;
+          hero[h].backpack[s].effect=0;
+          hero[h].backpack[s].eqtype=0;
+          hero[h].backpack[s].price=0;
+          for(i=0; i<6; i++) {
+               hero[h].backpack[s].stats[i][0]=0;
+               hero[h].backpack[s].stats[i][1]=0;
+          }
+     }
+     else if(t==1) {
+          hero[h].equip[s].name="";
+          hero[h].equip[s].desc="";
+          hero[h].equip[s].lore="";
+          hero[h].equip[s].use=0;
+          hero[h].equip[s].effect=0;
+          hero[h].equip[s].eqtype=0;
+          hero[h].equip[s].price=0;
+          for(i=0; i<6; i++) {
+               hero[h].equip[s].stats[i][0]=0;
+               hero[h].equip[s].stats[i][1]=0;
+          }
+     }
+     else if(t==2) {
+          tempitem[0].name="";
+          tempitem[0].desc="";
+          tempitem[0].lore="";
+          tempitem[0].use=0;
+          tempitem[0].effect=0;
+          tempitem[0].eqtype=0;
+          tempitem[0].price=0;
+          for(i=0; i<6; i++) {
+               tempitem[0].stats[i][0]=0;
+               tempitem[0].stats[i][1]=0;
+          }
+     }
+     else {
+          fighter[h].loot.name="";
+          fighter[h].loot.desc="";
+          fighter[h].loot.lore="";
+          fighter[h].loot.use=0;
+          fighter[h].loot.effect=0;
+          fighter[h].loot.eqtype=0;
+          fighter[h].loot.price=0;
+          for(i=0; i<6; i++) {
+               fighter[h].loot.stats[i][0]=0;
+               fighter[h].loot.stats[i][1]=0;
+          }
+     }
+}
+
+void Item_Equip(int h, int s) {
+//- Item_Equip() OVERWRITES the item in the destination equipment slot
+//  Using Item_Copy() to back up this item first is strongly recommended
+//  Note that the passed "s" here is the backpack slot to equip, not the equip slot
+     int e,i;
+     e=Item_EquipSlot(hero[h].backpack[s].eqtype);
+     if(!e && len(hero[h].equip[0].name) && !strcmp(hero[h].class,"Gladiator") &&
+        hero[h].equip[0].eqtype<7 && hero[h].backpack[s].eqtype<7)
+          e=1;
+     hero[h].equip[e].name=hero[h].backpack[s].name;
+     hero[h].equip[e].desc=hero[h].backpack[s].desc;
+     hero[h].equip[e].lore=hero[h].backpack[s].lore;
+     hero[h].equip[e].use=hero[h].backpack[s].use;
+     hero[h].equip[e].effect=hero[h].backpack[s].effect;
+     hero[h].equip[e].eqtype=hero[h].backpack[s].eqtype;
+     hero[h].equip[e].price=hero[h].backpack[s].price;
+     for(i=0; i<6; i++) {
+          hero[h].equip[e].stats[i][0]=hero[h].backpack[s].stats[i][0];
+          hero[h].equip[e].stats[i][1]=hero[h].backpack[s].stats[i][1];
+     }
+     Hero_SetDerivedStats(h);
+}
+
+string Item_EqTypeString(int t) {
+     switch(t) {
+          case 1:   return "Weapon (Knife)";
+          case 2:   return "Weapon (Sword)";
+          case 3:   return "Weapon (Mace)";
+          case 4:   return "Weapon (Hatchet)";
+          case 5:   return "Weapon (Spear)";
+          case 6:   return "Weapon (Thrown)";
+          case 7:   return "Weapon (Claymore)";
+          case 8:   return "Weapon (Maul)";
+          case 9:   return "Weapon (Axe)";
+          case 10:  return "Weapon (Staff)";
+          case 11:  return "Weapon (Bow)";
+          case 12:  return "Weapon (Katana)";
+          case 13:  return "Weapon (Unarmed)";
+          case 14:  return "Weapon (Wand)";
+          case 15:  return "Armor (Robe)";
+          case 16:  return "Armor (Cloth)";
+          case 17:  return "Armor (Leather)";
+          case 18:  return "Armor (Chain)";
+          case 19:  return "Armor (Scale)";
+          case 20:  return "Armor (Plate)";
+          case 21:  return "Shield (Bracer)";
+          case 22:  return "Shield (Buckler)";
+          case 23:  return "Shield (Target)";
+          case 24:  return "Shield (Heater)";
+          case 25:  return "Shield (Kite)";
+          case 26:  return "Shield (Tower)";
+          case 27:  return "Feature (Elemental)";
+          case 28:  return "Feature (Planar)";
+          case 29:  return "Feature (Magical)";
+          case 30:  return "Feature (Natural)";
+          case 31:  return "Signet (Physical)";
+          case 32:  return "Signet (Elemental)";
+          case 33:  return "Signet (Planar)";
+          case 34:  return "Signet (Magical)";
+          case 35:  return "Signet (Natural)";
+     }
+     Exit("ERROR: Invalid equipment type passed to Item_EqTypeString()");
+}
+
+int Item_EquipSlot(int eqtype) {
+     if(eqtype<15) return 0;
+     if(eqtype<21) return 2;
+     if(eqtype<27) return 1;
+     if(eqtype<31) return 3;
+     if(eqtype<36) return 4;
+     Exit("ERROR: Invalid equipment type passed to Item_EquipSlot()");
+}
+
+int Shop_Buy() {
+     int p;
+     SetPortrait(0,"\f2Merchant");
+     if(partygold<tempitem[0].price)
+          Text("Merchant","I'm afraid you don't have enough gold for that.");
+     else if(!Party_PackSpace())
+          Text("Merchant","I'm afriad you don't have space to carry that.");
+     else {
+          p=Prompt("That \f4"+tempitem[0].name+"\f0 will cost "+str(tempitem[0].price)+"$.  "+
+                   "Are you sure you want to purchase it?","Yes","No");
+          if(p==1) {
+               PlaySound(sfx_cash,100);
+               partygold-=tempitem[0].price;
+               p=0;
+               while(!p) {
+                    p=Prompt("Thank you.  Who will be carrying it?",
+                                  hero[0].name,hero[1].name,hero[2].name,hero[3].name,hero[4].name);
+                    if(!Hero_PackSpace(p-1)) {
+                         Text("Merchant","I'm sorry, but \f2"+hero[p-1].name+"\f0 doesn't have space to carry that.");
+                         p=0;
+                    }
+               }
+               Item_AssignTemp(p-1,0,hero[p-1].numitems);
+          }
+          else return 0;
+     }
+     return 1;
+}
+
+int Shop_Forge(int eqtype, int maxrank, string race) {
+     int i,p,m,done;
+     SetExecutionPaused(1);
+     ClearPortrait();
+     CraftEquipment(eqtype,race,0,0);
+     menuactive=2;
+     Party_RedrawDetailFrames();
+     for(i=0; i<numchars; i++)
+          sprite.x[heroframe+i]=0;
+     Text_Main("Select the equipment quality you would like.",0,0,1,0,1);
+     Text_Main("Party Gold: "+str(partygold)+"$",0,1,0,0,1);
+     Text_Main("\f1(Left and Right adjust quality.)",0,1,0,0,1);
+     UI_SmallBar(10,80,620,0,sprite.image[textsprite[6]]);
+     ShowTextbox();
+     Menu_RedrawFooter(1,0);
+     GrabRegion(8,8,632,89,8,82,ui_tempi,sprite.image[textsprite[6]]);
+     while(!done) {
+          Render();
+          ShowPage();
+          if(left && p) {
+               Unpress(7);
+               PlaySound(sfx_click,volume);
+               p--;
+               if(p==4 && m) {
+                    p=5; m=0;
+               }
+               CraftEquipment(eqtype,race,p,m);
+               Menu_RedrawFooter(1,0);
+               GrabRegion(8,8,632,89,8,82,ui_tempi,sprite.image[textsprite[6]]);
+          }
+          else if(right && p<maxrank) {
+               Unpress(8);
+               PlaySound(sfx_click,volume);
+               p++;
+               if(p==6 && !m) {
+                    p=5; m=1;
+               }
+               CraftEquipment(eqtype,race,p,m);
+               Menu_RedrawFooter(1,0);
+               GrabRegion(8,8,632,89,8,82,ui_tempi,sprite.image[textsprite[6]]);
+          }
+          if(b2) {
+               Unpress(2);
+               PlaySound(sfx_cancel,volume);
+               done=0-1;
+          }
+          else if(b1) {
+               Unpress(1);
+               PlaySound(sfx_beep,volume);
+               done=1;
+          }
+     }
+     for(i=0; i<numchars; i++)
+          sprite.x[heroframe+i]=0-128;
+     menuactive=0;
+     Party_RedrawDetailFrames();
+     SetExecutionPaused(0);
+     HideTextbox();
+     if(done<0) return 0;
+     return done;
+}

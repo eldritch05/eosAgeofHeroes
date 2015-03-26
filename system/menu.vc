@@ -1,0 +1,1578 @@
+int actheromenu, actpartymenu, menuactive, menumovetime,menusound;
+
+void Menu_Ability(int h) {
+     int p,q,done;
+     int cur=GetSprite();
+     sprite.image[cur]=LoadImage("images\\cur_arrr.png");
+     sprite.x[cur]=228; sprite.y[cur]=79;
+     sprite.sc[cur]=1; sprite.lucent[cur]=0;
+     Unpress(9);
+     PlaySound(sfx_click,volume);
+     Tech_CopySpell(h,0,0);
+     Menu_RedrawFooter(3,h);
+     while(!done) {
+          q=p;
+          Render();
+          ShowPage();
+          if(up) {
+               Unpress(5);
+               p--;
+               if(p<0) p=14;
+          }
+          else if(down) {
+               Unpress(6);
+               p++;
+               if(p>14) p=0;
+          }
+          else if(left || right) {
+               Unpress(7); Unpress(8);
+               if(sprite.x[cur]==228)
+                    sprite.x[cur]=396;
+               else sprite.x[cur]=228;
+               q=50;
+          }
+          if(p!=q) {
+               PlaySound(sfx_click,volume);
+               if(p<10) {
+                    sprite.y[cur]=p*18+79;
+                    if(sprite.x[cur]==228) {
+                         Tech_CopySpell(h,p,0);
+                         Menu_RedrawFooter(3,h);
+                    }
+                    else {
+                         Tech_CopyAbility(h,p,0);
+                         Menu_RedrawFooter(4,h);
+                    }
+               }
+               else {
+                    sprite.y[cur]=p*18+102;
+                    if(sprite.x[cur]==228) {
+                         Tech_CopyAttack(h,p-10,0);
+                         Menu_RedrawFooter(5,h);
+                    }
+                    else {
+                         Tech_CopyAbility(h,p-10,0);
+                         Menu_RedrawFooter(6,h);
+                    }
+               }
+          }
+          if(b1) {
+               Unpress(1);
+               if(p<10 && sprite.x[cur]==228) {
+                    if(!hero[h].next && tempspell[0].use>3 && tempspell[0].use<20) {}
+                    else if(!len(tempspell[0].name) && !tempspell[0].use) {}
+                    else if(!len(tempspell[0].name) && !spellbook[0]) {}
+                    else {
+                         PlaySound(sfx_beep,volume);
+                         if(len(tempspell[0].name))
+                              sprite.x[cur]=431;
+                         else sprite.x[cur]=488;
+                         sprite.y[cur]=457;
+                         while(!b1 && !b2) {
+                              Render();
+                              ShowPage();
+                              if(left && hero[h].next && len(tempspell[0].name)) {
+                                   PlaySound(sfx_click,volume);
+                                   Unpress(7);
+                                   if(sprite.x[cur]==431)
+                                        sprite.x[cur]=570;
+                                   else if(sprite.x[cur]==488)
+                                        sprite.x[cur]=431;
+                                   else sprite.x[cur]=488;
+                              }
+                              else if(right && hero[h].next && len(tempspell[0].name)) {
+                                   PlaySound(sfx_click,volume);
+                                   Unpress(8);
+                                   if(sprite.x[cur]==431)
+                                        sprite.x[cur]=488;
+                                   else if(sprite.x[cur]==488)
+                                        sprite.x[cur]=570;
+                                   else sprite.x[cur]=431;
+                              }
+                         }
+                         if(b1) {
+                              if(sprite.x[cur]==431 && tempspell[0].use>3) {PlaySound(sfx_cancel,volume);}
+                              else if(sprite.x[cur]==431 && hero[h].curmp<tempspell[0].cost) {PlaySound(sfx_buzz,volume);}
+                              else if(sprite.x[cur]==431) {      //- Use
+                                   hero[h].curmp-=tempspell[0].cost;
+                                   PlaySound(sfx_beep,volume);
+                                   if(tempspell[0].use==1)
+                                        Menu_ApplyEffect(tempspell[0].effect,h,tempspell[0].power*hero[h].combatstats[tempspell[0].damage-1]/1000+tempspell[0].power);
+                                   else if(tempspell[0].use==2) {
+                                        q=Menu_SelectTarget(h);
+                                        if(q) Menu_ApplyEffect(tempspell[0].effect,q-1,tempspell[0].power*hero[h].combatstats[tempspell[0].damage-1]/1000+tempspell[0].power);
+                                   }
+                                   else if(tempspell[0].use==3) {
+                                        for(q=0; q<numchars; q++) {
+                                             Menu_ApplyEffect(tempspell[0].effect,q,tempspell[0].power*hero[h].combatstats[tempspell[0].damage-1]/1000+tempspell[0].power);
+                                        }
+                                   }
+                                   Party_RedrawDetailFrames();
+                              }
+                              else if(sprite.x[cur]==488) {      //- Change
+                                   PlaySound(sfx_beep,volume);
+                                   q=Menu_Spellbook(h);
+                                   if(q) {
+                                        Hero_LearnSpell(h,tempspell[q-1].idx,p);
+                                        UI_HeroStatus(h,2,charframe+2);
+                                   }
+                                   Tech_CopySpell(h,p,0);
+                                   Menu_RedrawFooter(3,h);
+                              }
+                              else if(sprite.x[cur]==570) {      //- Forget
+                                   PlaySound(sfx_beep,volume);
+                                   Hero_ForgetSpell(h,p);
+                                   UI_HeroStatus(h,2,charframe+2);
+                                   Tech_CopySpell(h,p,0);
+                                   Menu_RedrawFooter(3,h);
+                              }
+                         }
+                         if(b2) PlaySound(sfx_click,volume);
+                         Unpress(1); Unpress(2);
+                         sprite.x[cur]=228;
+                         sprite.y[cur]=p*18+79;
+                    }
+               }
+               else if(p<10 && (tempspell[0].use<4 || tempspell[0].use>20) && len(tempspell[0].name)) {
+                    PlaySound(sfx_beep,100);
+                    sprite.x[cur]=431;
+                    sprite.y[cur]=457;
+                    while(!b1 && !b2) {
+                         Render();
+                         ShowPage();
+                    }
+                    if(b1) {
+                         if(hero[h].curmp<tempspell[0].cost) {PlaySound(sfx_buzz,volume);}
+                         else {
+                              hero[h].curmp-=tempspell[0].cost;
+                              PlaySound(sfx_beep,volume);
+                              if(tempspell[0].use==1)
+                                   Menu_ApplyEffect(tempspell[0].effect,h,tempspell[0].power*hero[h].combatstats[tempspell[0].damage-1]/1000+tempspell[0].power);
+                              else if(tempspell[0].use==2) {
+                                   q=Menu_SelectTarget(h);
+                                   if(q) Menu_ApplyEffect(tempspell[0].effect,q-1,tempspell[0].power*hero[h].combatstats[tempspell[0].damage-1]/1000+tempspell[0].power);
+                              }
+                              else if(tempspell[0].use==3) {
+                                   for(q=0; q<numchars; q++) {
+                                        Menu_ApplyEffect(tempspell[0].effect,q,tempspell[0].power*hero[h].combatstats[tempspell[0].damage-1]/1000+tempspell[0].power);
+                                   }
+                              }
+                              Party_RedrawDetailFrames();
+                         }
+                    }
+                    if(b2) PlaySound(sfx_click,volume);
+                    Unpress(1); Unpress(2);
+                    sprite.x[cur]=396;
+                    sprite.y[cur]=p*18+79;
+               }
+          }
+          else if(b2) {
+               Unpress(2);
+               PlaySound(sfx_click,volume);
+               done=1;
+          }
+     }
+     FreeImage(sprite.image[cur]);
+     sprite.image[cur]=0;
+     sprite.x[cur]=0; sprite.y[cur]=0;
+     Menu_SlideHero(h,16,h*64);
+}
+
+void Menu_ApplyEffect(int e, int h, int m) {
+     if(!hero[h].curhp && e!=75) return;
+     StopSound(menusound);
+     
+     if(e==60) {
+          menusound=PlaySound(sfx_recover,volume);
+          hero[h].curhp+=m;
+          if(hero[h].curhp>hero[h].maxhp)
+               hero[h].curhp=hero[h].maxhp;
+     }
+     else if(e==61) {
+          menusound=PlaySound(sfx_recover,volume);
+          hero[h].curmp+=m;
+          if(hero[h].curmp>hero[h].maxmp)
+               hero[h].curmp=hero[h].maxmp;
+     }
+     else if(e==81) {
+          menusound=PlaySound(sfx_miss,volume);
+          entity.speed[hero[0].ent]=100+m;
+     }
+     else if(e==90) {
+          menusound=PlaySound(sfx_damage[2],volume);
+          if(!isdark) return;
+          Lighting_SetSource(h,0,0,m);
+     }
+}
+
+void Menu_Info() {
+     int b,i,j,y,done;
+     menuactive=1;
+     SetExecutionPaused(1);
+     PlaySound(sfx_prompt,volume);
+     
+     //- Tutorial Quest Advancement
+     if(GetFlag("Tutorial")==1 && hero[0].numitems)
+          Quest_Advance("A Hero Rises",2,"Select \f2"+hero[0].name+"\f0 and equip the items in "+
+                        GetGenderPos(hero[0].gender)+" backpack","Amin",354,449);
+     if(Quest_PartyOnStage("Expedition to Achiela",3))
+          Quest_Advance("Expedition to Achiela",3,"Use the \f4Marching Order\f0 menu to recruit \f2Adain\f0 "+
+                        "and \f2Grace\f0","Amin",354,449);
+     
+     y=5; b=actpartymenu;
+     for(i=0; i<5; i++) {
+          sprite.y[charframe+i]=500;
+          sprite.y[partyframe+i]=41;
+          UI_HeroStatus(5,5+i,partyframe+i);
+     }
+     Party_RedrawDetailFrames();
+     Menu_RedrawFooter(0,0);
+     sprite.y[heroframe+5]=numchars*64;
+     
+     timer=0;
+     while(timer<16) {
+          j=timer;
+          Render();
+          for(i=0; i<numchars; i++)
+               sprite.x[heroframe+i]=j*8-128;
+          sprite.x[heroframe+5]=j*9-128;
+          for(i=0; i<5; i++) {
+               sprite.x[charframe+i]=j*80-1060+(i-actpartymenu*360);
+               sprite.x[partyframe+i]=j*80-1060+(i-actpartymenu*360);
+               if(i-actpartymenu<0-2) {
+                    sprite.x[charframe+i]+=1800;
+                    sprite.x[partyframe+i]+=1800;
+               }
+               else if(i-actpartymenu>2) {
+                    sprite.x[charframe+i]-=1800;
+                    sprite.x[partyframe+i]-=1800;
+               }
+          }
+          sprite.y[footframe]=511-(j*8);
+          ShowPage();
+     }
+     for(i=0; i<numchars; i++)
+          sprite.x[heroframe+i]=0;
+     sprite.x[heroframe+5]=16;
+     for(i=0; i<5; i++) {
+          sprite.x[charframe+i]=220+(i-actpartymenu*360);
+          sprite.x[partyframe+i]=220+(i-actpartymenu*360);
+          if(i-actpartymenu<0-2) {
+               sprite.x[charframe+i]+=1800;
+               sprite.x[partyframe+i]+=1800;
+          }
+          else if(i-actpartymenu>2) {
+               sprite.x[charframe+i]-=1800;
+               sprite.x[partyframe+i]-=1800;
+          }
+     }
+     sprite.y[footframe]=383;
+
+     while(!done) {
+          timer=0;
+          MenuSlides(y);
+          sprite.x[heroframe+y]=16;
+          Render();
+          ShowPage();
+          if(sprite.x[y/5*5+charframe+b]==220) {
+               if(up) {
+                    PlaySound(sfx_click,volume);
+                    Unpress(5);
+                    y--; 
+                    if(y<0) y=5;
+                    else if(y<5 && y>=numchars)
+                         y=numchars-1;
+                    if(y==5) {
+                         b=actpartymenu;
+                         for(j=0; j<10; j++) {
+                              if(j<5) sprite.y[charframe+j]=500;
+                              else sprite.y[charframe+j]=41;
+                         }
+                    }
+                    else {
+                         b=actheromenu;
+                         for(j=0; j<10; j++) {
+                              if(j<5) sprite.y[charframe+j]=41;
+                              else sprite.y[charframe+j]=500;
+                         }
+                    }
+                    if(y<numchars) Menu_RedrawStatusFrames(y);
+               }
+               else if(down) {
+                    PlaySound(sfx_click,volume);
+                    Unpress(6);
+                    y++;
+                    if(y>5) y=0;
+                    else if(y>=numchars && y<5)
+                         y=5;
+                    if(y==5) {
+                         b=actpartymenu;
+                         for(j=0; j<10; j++) {
+                              if(j<5) sprite.y[charframe+j]=500;
+                              else sprite.y[charframe+j]=41;
+                         }
+                    }
+                    else {
+                         b=actheromenu;
+                         for(j=0; j<10; j++) {
+                              if(j<5) sprite.y[charframe+j]=41;
+                              else sprite.y[charframe+j]=500;
+                         }
+                    }
+                    if(y<numchars) Menu_RedrawStatusFrames(y);
+               }
+               if(right) {
+                    PlaySound(sfx_click,volume);
+                    Unpress(7);
+                    if(b<2)
+                         sprite.x[y/5*5+charframe+b+3]+=1800;
+                    else sprite.x[y/5*5+charframe+b-2]+=1800;
+                    b++;
+                    if(b>4) b=0;
+                    if(y==5) actpartymenu=b;
+                    else actheromenu=b;
+                    menumovetime=systemtime;
+               }
+               else if(left) {
+                    PlaySound(sfx_click,volume);
+                    Unpress(8);
+                    if(b>2)
+                         sprite.x[y/5*5+charframe+b-3]-=1800;
+                    else sprite.x[y/5*5+charframe+b+2]-=1800;
+                    b--;
+                    if(b<0) b=4;
+                    if(y==5) actpartymenu=b;
+                    else actheromenu=b;
+                    menumovetime=systemtime;
+               }
+               if(b1) {
+                    Unpress(1);
+                    if(y<numchars && b==1) {
+                         if(hero[y].next) {
+                              PlaySound(sfx_beep,100);
+                              Menu_SlideHero(y,324,0);
+                              Menu_Inventory(y);
+                         }
+                         else PlaySound(sfx_buzz,100);
+                    }
+                    else if(y<numchars && b==2) {
+                         PlaySound(sfx_beep,100);
+                         Menu_SlideHero(y,324,0);
+                         Menu_Ability(y);
+                    }
+                    else if(y==5 && b==1) {
+                         PlaySound(sfx_beep,100);
+                         Menu_SlideHero(5,324,0);
+                         Menu_QuestLog();
+                    }
+                    else if(y==5 && b==4) {
+                         PlaySound(sfx_beep,100);
+                         Menu_SlideHero(5,324,0);
+                         Menu_Order();
+                    }
+                    Menu_RedrawFooter(0,0);
+               }
+               if(b2)
+                    done=1;
+               while(timer<1) {}
+          }
+     }
+     
+     //- Tutorial Quest Advancement
+     if(GetFlag("Tutorial")==1 && !hero[0].numitems)
+          Quest_Advance("A Hero Rises",3,"Talk to \f2Graig","Amin",354,449);
+     if(Quest_PartyOnStage("Expedition to Achiela",4) && numchars==3)
+          Quest_Advance("Expedition to Achiela",4,"Talk to \f2Graig\f0","Amin",354,449);
+     
+     PlaySound(sfx_done,volume);
+     for(i=0; i<numchars; i++) {
+          if(i!=y)
+               sprite.x[heroframe+i]=0;
+     }
+     if(y!=5) sprite.x[heroframe+5]=0;
+     timer=0;
+     while(timer<16) {
+          j=timer;
+          Render();
+          for(i=0; i<numchars; i++)
+               sprite.x[heroframe+i]=0-j*8;
+          sprite.x[heroframe+5]=0-j*8;
+          sprite.x[heroframe+y]+=16-j;
+          for(i=0; i<5; i++) {
+               sprite.x[charframe+i]=220-(j*80)+(i-actpartymenu*360);
+               sprite.x[partyframe+i]=220-(j*80)+(i-actpartymenu*360);
+               if(i-actpartymenu<0-2) {
+                    sprite.x[charframe+i]+=1800;
+                    sprite.x[partyframe+i]+=1800;
+               }
+               else if(i-actpartymenu>2) {
+                    sprite.x[charframe+i]-=1800;
+                    sprite.x[partyframe+i]-=1800;
+               }
+          }
+          sprite.y[footframe]=j*8+383;
+          ShowPage();
+     }
+     for(i=0; i<numchars; i++)
+          sprite.x[heroframe+i]=0-128;
+     sprite.x[heroframe+5]=0-128;
+     for(i=0; i<5; i++) {
+          sprite.x[charframe+i]=i-actpartymenu*360-1060;
+          sprite.x[partyframe+i]=i-actpartymenu*360-1060;
+          if(i-actpartymenu<0-2) {
+               sprite.x[charframe+i]+=1800;
+               sprite.x[partyframe+i]+=1800;
+          }
+          else if(i-actpartymenu>2) {
+               sprite.x[charframe+i]-=1800;
+               sprite.x[partyframe+i]-=1800;
+          }
+     }
+     sprite.y[footframe]=511;
+     SetExecutionPaused(0);
+     menuactive=0;
+}
+
+void Menu_Inventory(int h) {
+     int p,q,done;
+     int cur=GetSprite();
+     sprite.image[cur]=LoadImage("images\\cur_arrr.png");
+     sprite.x[cur]=228; sprite.y[cur]=79;
+     sprite.sc[cur]=1; sprite.lucent[cur]=0;
+     Unpress(9);
+     PlaySound(sfx_click,100);
+     Item_Copy(h,0,0);
+     Menu_RedrawFooter(1,h);
+     while(!done) {
+          Render();
+          ShowPage();
+          if(up) {
+               Unpress(5);
+               PlaySound(sfx_click,100);
+               p--;
+               if(sprite.x[cur]==228) {
+                    if(p<0) p=hero[h].packsize-1;
+                    sprite.y[cur]=p*15+79;
+                    Item_Copy(h,0,p);
+                    Menu_RedrawFooter(1,h);
+               }
+               else {
+                    if(p<0) p=4;
+                    sprite.y[cur]=p*35+85;
+                    Item_Copy(h,1,p);
+                    Menu_RedrawFooter(1,h);
+               }
+          }
+          else if(down) {
+               Unpress(6);
+               PlaySound(sfx_click,100);
+               p++;
+               if(sprite.x[cur]==228) {
+                    if(p>=hero[h].packsize) p=0;
+                    sprite.y[cur]=p*15+79;
+                    Item_Copy(h,0,p);
+                    Menu_RedrawFooter(1,h);
+               }
+               else {
+                    if(p>4) p=0;
+                    sprite.y[cur]=p*35+85;
+                    Item_Copy(h,1,p);
+                    Menu_RedrawFooter(1,h);
+               }
+          }
+          if(left && sprite.x[cur]==396) {
+               Unpress(7);
+               PlaySound(sfx_click,100);
+               sprite.x[cur]=228;
+               sprite.y[cur]=79;
+               p=0;
+               Item_Copy(h,0,0);
+               Menu_RedrawFooter(1,h);
+          }
+          else if(right && sprite.x[cur]==228) {
+               Unpress(8);
+               PlaySound(sfx_click,100);
+               sprite.x[cur]=396;
+               sprite.y[cur]=85;
+               p=0;
+               Item_Copy(h,1,0);
+               Menu_RedrawFooter(1,h);
+          }
+          if(b2) {
+               Unpress(2);
+               PlaySound(sfx_click,100);
+               done=1;
+          }
+          if(b1) {
+               Menu_RedrawFooter(2,h);
+               Unpress(1);
+               if(sprite.x[cur]==228 && !len(hero[h].backpack[p].name)) {}
+               else if(sprite.x[cur]==396 && !len(hero[h].equip[p].name)) {}
+               else {
+                    PlaySound(sfx_beep,100);
+                    if(sprite.x[cur]==396) p+=50;
+                    sprite.x[cur]=395; sprite.y[cur]=262;
+                    q=0;
+                    while(!done) {
+                         Render();
+                         ShowPage();
+                         if(up) {
+                              Unpress(5);
+                              PlaySound(sfx_click,100);
+                              q--;
+                              if(q<0) q=4;
+                              sprite.y[cur]=q*25+262;
+                         }
+                         else if(down) {
+                              Unpress(6);
+                              PlaySound(sfx_click,100);
+                              q++;
+                              if(q>4) q=0;
+                              sprite.y[cur]=q*25+262;
+                         }
+                         if(b2) {
+                              Unpress(2);
+                              PlaySound(sfx_click,volume);
+                              done=1;
+                         }
+                         if(b1) {
+                              Unpress(1);
+                              if(q==0) {
+                                   PlaySound(sfx_beep,100);
+                                   if(p<50 && hero[h].backpack[p].eqtype) {
+                                        if(hero[h].backpack[p].eqtype<15) {     //- Equipping a weapon
+                                             if(!hero[h].eqprof[hero[h].backpack[p].eqtype-1]) {
+                                                  PlaySound(sfx_buzz,volume);
+                                                  done=1;
+                                             }
+                                             else if(hero[h].backpack[p].eqtype<7 && hero[h].equip[0].eqtype && !strcmp(hero[h].class,"Gladiator")) {
+                                                  if(hero[h].equip[0].eqtype<7)
+                                                       Item_Copy(h,1,1);
+                                                  else Item_Copy(h,1,0);
+                                             }
+                                             else if(hero[h].backpack[p].eqtype>6 && hero[h].backpack[p].eqtype<15 &&
+                                                     hero[h].equip[1].eqtype && hero[h].equip[1].eqtype!=21) {
+                                                  if(!Hero_PackSpace(h)) {
+                                                       PlaySound(sfx_buzz,volume);
+                                                       done=1;
+                                                  }
+                                                  else {
+                                                       Item_Copy(h,1,1);
+                                                       Item_AssignTemp(h,0,hero[h].numitems);
+                                                       Item_Clear(h,1,1);
+                                                       Item_Copy(h,1,0);
+                                                  }
+                                             }
+                                             else Item_Copy(h,1,0);
+                                        }
+                                        else if(hero[h].backpack[p].eqtype>20 && hero[h].backpack[p].eqtype<27) {  //- Equipping a shield
+                                             if(!hero[h].eqprof[hero[h].backpack[p].eqtype-1]) {
+                                                  PlaySound(sfx_buzz,volume);
+                                                  done=1;
+                                             }
+                                             else if(hero[h].equip[0].eqtype>6 && hero[h].equip[0].eqtype<14 && hero[h].backpack[p].eqtype!=21) {
+                                                  if(!Hero_PackSpace(h)) {
+                                                       PlaySound(sfx_buzz,volume);
+                                                       done=1;
+                                                  }
+                                                  else {
+                                                       Item_Copy(h,1,0);
+                                                       Item_AssignTemp(h,0,hero[h].numitems);
+                                                       Item_Clear(h,1,0);
+                                                       Item_Copy(h,1,1);
+                                                  }
+                                             }
+                                             else Item_Copy(h,1,1);
+                                        }
+                                        else if(hero[h].backpack[p].eqtype<26) {
+                                             if(!hero[h].eqprof[hero[h].backpack[p].eqtype-1]) {
+                                                  PlaySound(sfx_buzz,volume);
+                                                  done=1;
+                                             }
+                                             else Item_Copy(h,1,Item_EquipSlot(hero[h].backpack[p].eqtype));
+                                        }
+                                        else Item_Copy(h,1,Item_EquipSlot(hero[h].backpack[p].eqtype));
+                                        if(!done) {
+                                             Item_Equip(h,p);
+                                             Item_AssignTemp(h,0,p);
+                                        }
+                                   }
+                                   else if(p<50 && hero[h].backpack[p].eqtype)
+                                        PlaySound(sfx_buzz,volume);
+                                   else if(p<50 && hero[h].backpack[p].use) {
+                                        if(hero[h].backpack[p].stats[2][1]%10==1) {
+                                             Menu_ApplyEffect(hero[h].backpack[p].effect,h,hero[h].backpack[p].stats[1][1]);
+                                             if(hero[h].backpack[p].use%10==1)
+                                                  Item_Clear(h,0,p);
+                                        }
+                                        else if(hero[h].backpack[p].stats[2][1]%10==2) {
+                                             q=Menu_SelectTarget(h);
+                                             if(q) {
+                                                  Menu_ApplyEffect(hero[h].backpack[p].effect,q-1,hero[h].backpack[p].stats[1][1]);
+                                                  if(hero[h].backpack[p].use%10==1)
+                                                       Item_Clear(h,0,p);
+                                             }
+                                        }
+                                        else if(hero[h].backpack[p].stats[2][1]%10==3) {
+                                             for(q=0; q<numchars; q++) {
+                                                  Menu_ApplyEffect(hero[h].backpack[p].effect,q,hero[h].backpack[p].stats[1][1]);
+                                             }
+                                             if(hero[h].backpack[p].use%10==1)
+                                                  Item_Clear(h,0,p);
+                                        }
+                                        Party_RedrawDetailFrames();
+                                   }
+                                   else if(p<50)
+                                        PlaySound(sfx_buzz,volume);
+                                   else if(Hero_PackSpace(h)) {
+                                        Item_Copy(h,1,p-50);
+                                        Item_AssignTemp(h,0,hero[h].numitems);
+                                        Item_Clear(h,1,p-50);
+                                        Hero_SetDerivedStats(h);
+                                   }
+                                   else PlaySound(sfx_buzz,volume);
+                                   Hero_CollapsePack(h);
+                                   Menu_RedrawStatusFrames(h);
+                                   done=1;
+                              }
+                              else if(q==1) {
+                                   PlaySound(sfx_beep,volume);
+                                   done=Menu_SelectTarget(h);
+                                   if(done && Hero_PackSpace(done-1)) {
+                                        if(p<50) {
+                                             Item_AssignTemp(done-1,0,hero[done-1].numitems);
+                                             Item_Clear(h,0,p);
+                                             Hero_CollapsePack(h);
+                                        }
+                                        Menu_RedrawStatusFrames(h);
+                                   }
+                                   else if(done && !Hero_PackSpace(done-1))
+                                        PlaySound(sfx_buzz,volume);
+                              }
+                              else if(q==4) {
+                                   PlaySound(sfx_beep,100);
+                                   done=1;
+                              }
+                         }
+                    }
+                    done=0;
+                    if(p>25) {
+                         p-=50;
+                         sprite.x[cur]=396; sprite.y[cur]=p*35+85;
+                         Item_Copy(h,1,p);
+                    }
+                    else {
+                         sprite.x[cur]=228; sprite.y[cur]=p*15+79;
+                         Item_Copy(h,0,p);
+                    }
+                    Menu_RedrawFooter(1,h);
+               }
+          }
+     }
+     FreeImage(sprite.image[cur]);
+     sprite.image[cur]=0;
+     sprite.x[cur]=0; sprite.y[cur]=0;
+     Menu_SlideHero(h,16,h*64);
+}
+
+int Menu_Load() {
+//- Only functions from title menu, and assumes all world/hero variables a clear.
+     int i,p,done;
+     int bg=DuplicateImage(screen);
+     menuactive=0;
+     SetExecutionPaused(1);
+     PlaySound(sfx_prompt,volume);
+     for(i=0; i<5; i++)
+          UI_SaveDetail(i+1,heroframe+i,0);
+     if(saveslot) p=saveslot-1;
+     
+     timer=0;
+     while(timer<16) {
+          Blit(0,0,bg,screen);
+          for(i=0; i<5; i++)
+               sprite.x[heroframe+i]=timer*8-128;
+          sprite.x[heroframe+p]+=timer;
+          ShowPage();
+     }
+     for(i=0; i<5; i++)
+          sprite.x[heroframe+i]=0;
+     sprite.x[heroframe+p]=16;
+     
+     while(!b1 && !b2) {
+          MenuSlides(p);
+          sprite.x[heroframe+p]=16;
+          Blit(0,0,bg,screen);
+          ShowPage();
+          if(up) {
+               Unpress(5);
+               PlaySound(sfx_click,100);
+               p--;
+               if(p<0) p==4;
+          }
+          else if(down) {
+               Unpress(6);
+               PlaySound(sfx_click,100);
+               p++;
+               if(p>4) p=0;
+          }
+     }
+     if(b2) {
+          Unpress(2);
+          PlaySound(sfx_cancel,100);
+     }
+     else {
+          Unpress(1);
+          PlaySound(sfx_done,100);
+          done=p+1;
+          saveslot=done;
+     }
+
+     timer=0;
+     while(timer<16) {
+          Blit(0,0,bg,screen);
+          for(i=0; i<5; i++)
+               sprite.x[heroframe+i]=0-(timer*8);
+          sprite.x[heroframe+p]+=16-timer;
+          ShowPage();
+     }
+     for(i=0; i<5; i++)
+          sprite.x[heroframe+i]=-128;
+     FreeImage(bg);
+     return done;
+}
+
+void Menu_Order() {
+     int i,j,p,q,x,done;
+     int cur=GetSprite();
+     PlaySound(sfx_click,volume);
+     sprite.image[cur]=cur_arrr;
+     sprite.x[cur]=233; sprite.y[cur]=78;
+     sprite.sc[cur]=1; sprite.lucent[cur]=0;
+     Unpress(9);
+     while(!done) {
+          Render();
+          ShowPage();
+          q=p;
+          if(up) {
+               Unpress(5);
+               p--;
+               if(p<0) p=numchars+inhostel-1;
+               if(p>=numchars && !hostelchars)
+                    p--;
+          }
+          else if(down) {
+               Unpress(6);
+               p++;
+               if(p>numchars+inhostel-1) p=0;
+               if(p>=numchars && !hostelchars)
+               p=0;
+          }
+          else if(b2) {
+               Unpress(2);
+               PlaySound(sfx_click,100);
+               done=1;
+          }
+          if(q!=p) {
+               PlaySound(sfx_click,100);
+               sprite.y[cur]=p*65+78;
+          }
+          if(b1 && !done) {
+               x=p;
+               if(!p && numchars==1) {}
+               else if(p<numchars) {
+                    Unpress(1);
+                    PlaySound(sfx_beep,100);
+                    PrintString(70,x*65+25,sprite.image[partyframe+4],fontb,"\f4"+hero[x].name);
+                    sprite.x[cur]=460;
+                    sprite.y[cur]=p*65+70;
+                    while(!b1 && !b2) {
+                         Render();
+                         ShowPage();
+                         if(inhostel && numchars-guestchars>1 && hero[p].next) {
+                              if(up || down) {
+                                   Unpress(9);
+                                   PlaySound(sfx_click,100);
+                                   if(sprite.y[cur]==p*65+70)
+                                        sprite.y[cur]+=15;
+                                   else sprite.y[cur]-=15;
+                              }
+                         }
+                    }
+                    if(b1 && sprite.y[cur]==p*65+70) {
+                         Unpress(1);
+                         PlaySound(sfx_beep,100);
+                         sprite.x[cur]=233;
+                         sprite.y[cur]=x*65+78;
+                         p=x;
+                         while(!b1 && !b2) {
+                              Render();
+                              ShowPage();
+                              if(up) {
+                                   Unpress(5);
+                                   PlaySound(sfx_click,100);
+                                   p--;
+                                   if(p<0) p=numchars-1;
+                                   sprite.y[cur]=p*65+78;
+                              }
+                              else if(down) {
+                                   Unpress(6);
+                                   PlaySound(sfx_click,100);
+                                   p++;
+                                   if(p>=numchars) p=0;
+                                   sprite.y[cur]=p*65+78;
+                              }
+                         }
+                         if(b1) {
+                              Unpress(1);
+                              PlaySound(sfx_beep,100);
+                              Party_SwapHeroes(x,p);
+                         }
+                         else if(b2) {
+                              Unpress(2);
+                              PlaySound(sfx_click,100);
+                         }
+                    }
+                    else if(b1) {
+                         Unpress(1);
+                         PlaySound(sfx_beep,100);
+                         Hero_Clear(p);
+                         Hero_Paste(hostelchars+5,1);
+                         hero[hostelchars+5].ent=0;
+                         hostelchars++;
+                         sprite.x[heroframe+numchars]=0-128;
+                    }
+                    else {
+                         Unpress(2);
+                         PlaySound(sfx_click,100);
+                    }
+                    UI_HeroStatus(0,9,partyframe+4);
+               }
+               else if(hostelchars) {
+                    Unpress(1);
+                    PlaySound(sfx_beep,100);
+                    j=0;
+                    while(j<16) {
+                         timer=0;
+                         Render();
+                         for(i=0; i<numchars; i++)
+                              sprite.x[heroframe+i]-=8;
+                         ShowPage();
+                         while(timer<1) {}
+                         j++;
+                    }
+                    Menu_RedrawHostelFrames(5);
+                    p=5;
+                    j=0;
+                    while(j<16) {
+                         timer=0;
+                         Render();
+                         for(i=0; i<5; i++)
+                              sprite.x[heroframe+i]+=8;
+                         sprite.x[heroframe+2]++;
+                         ShowPage();
+                         while(timer<1) {}
+                         j++;
+                    }
+                    while(!done) {
+                         timer=0;
+                         MenuSlides(5);
+                         sprite.x[heroframe+2]=16;
+                         Render();
+                         ShowPage();
+                         q=p;
+                         if(up) {
+                              Unpress(5);
+                              PlaySound(sfx_click,100);
+                              p--;
+                              sprite.x[heroframe+3]=16;
+                         }
+                         else if(down) {
+                              Unpress(6);
+                              PlaySound(sfx_click,100);
+                              p++;
+                              sprite.x[heroframe+1]=16;
+                         }
+                         while(p<5)
+                              p+=hostelchars;
+                         while(p>4+hostelchars)
+                              p-=hostelchars;
+                         if(p>104) p-=100;
+                         if(q!=p)
+                              Menu_RedrawHostelFrames(p);
+                         if(b2) {
+                              Unpress(2);
+                              PlaySound(sfx_click,100);
+                              done=1;
+                         }
+                         else if(b1) {
+                              Unpress(1);
+                              PlaySound(sfx_beep,100);
+                              done=2;
+                         }
+                         while(timer<1) {}
+                    }
+                    if(done==2) {
+                         Hero_Copy(p,0);
+                         Hero_Paste(numchars,0);
+                         Hero_Clear(p);
+                         if(hero[numchars].ent)
+                              ChangeCHR(hero[numchars].ent,"images\\chrs\\"+hero[numchars].chrimg+".chr");
+                         else hero[numchars].ent=EntitySpawn(entity.x[hero[numchars-1].ent]/16,entity.y[hero[numchars-1].ent]/16,"images\\chrs\\"+hero[numchars].chrimg+".chr");
+                         EntityStalk(hero[numchars].ent,hero[numchars-1].ent);
+                         numchars++;
+                         if(!hero[p].next) guestchars++;
+                         Party_SetFairies();
+                    }
+                    UI_HeroStatus(0,5,partyframe);
+                    UI_HeroStatus(0,9,partyframe+4);
+                    j=0;
+                    while(j<16) {
+                         timer=0;
+                         Render();
+                         for(i=0; i<5; i++)
+                              sprite.x[heroframe+i]-=8;
+                         sprite.x[heroframe+2]--;
+                         ShowPage();
+                         while(timer<1) {}
+                         j++;
+                    }
+                    Party_RedrawDetailFrames();
+                    j=0;
+                    while(j<16) {
+                         timer=0;
+                         Render();
+                         for(i=0; i<numchars; i++)
+                              sprite.x[heroframe+i]+=8;
+                         ShowPage();
+                         while(timer<1) {}
+                         j++;
+                    }
+                    done=0;
+               }
+               sprite.x[cur]=233;
+               sprite.y[cur]=x*65+78;
+               p=x;
+          }
+     }
+     if(inhostel) Party_UpdateAbilities();
+     sprite.image[cur]=0;
+     sprite.x[cur]=0; sprite.y[cur]=0;
+     Menu_SlideHero(5,16,numchars*64);
+}
+
+void Menu_QuestLog() {
+     int q;
+     int cur=GetSprite();
+     PlaySound(sfx_click,volume);
+     sprite.image[cur]=cur_arrr;
+     sprite.x[cur]=235; sprite.y[cur]=77;
+     sprite.sc[cur]=1;
+     Menu_RedrawFooter(7,q);
+     Unpress(9);
+     while(!b1 && !b2) {
+          Render();
+          ShowPage();
+          if(up && questlog[1].idx) {
+               Unpress(5);
+               PlaySound(sfx_click,volume);
+               q--;
+               if(q<0) q=5;
+               while(!len(questlog[q].name))
+                    q--;
+               if(!q) sprite.y[cur]=77;
+               else sprite.y[cur]=q-1*47+145;
+               Menu_RedrawFooter(7,q);
+          }
+          else if(down && questlog[1].idx) {
+               Unpress(6);
+               PlaySound(sfx_click,volume);
+               q++;
+               if(q==6) q=0;
+               if(!len(questlog[q].name))
+                    q=0;
+               if(!q) sprite.y[cur]=77;
+               else sprite.y[cur]=q-1*47+145;
+               Menu_RedrawFooter(7,q);
+          }
+     }
+     Unpress(1); Unpress(2);
+     PlaySound(sfx_click,volume);
+     sprite.image[cur]=0;
+     sprite.x[cur]=0; sprite.y[cur]=0;
+     sprite.sc[cur]=0;
+     Menu_SlideHero(5,16,numchars*64);
+}
+
+void Menu_RedrawFooter(int type, int h) {
+     int x;
+     string s;
+     RectFill(0,0,639,96,clear,ui_tempi);
+     UI_BigBox(0,0,640,97,ui_tempi);
+     if(!type) {
+          PrintCenter(320,13,ui_tempi,fontm,"Select a character using the up and down keys.");
+          PrintCenter(320,33,ui_tempi,fontm,"Navigate the menus for the active character using the left and right keys.");
+          PrintCenter(320,53,ui_tempi,fontm,"Interact with the central menu using the Enter key.");
+          PrintCenter(320,73,ui_tempi,fontm,"Close the information menus using the Alt key.");
+     }
+     else if(type<3) {
+          if(len(tempitem[0].name)) {
+               if(tempitem[0].eqtype) {
+                    PrintCenter(215,5,ui_tempi,fontb,tempitem[0].name);
+                    PrintCenter(215,25,ui_tempi,fontm,tempitem[0].desc);
+                    PrintString(10,40,ui_tempi,fontm,"Equip Class: "+Item_EqTypeString(tempitem[0].eqtype));
+                    if(tempitem[0].eqtype<15) {
+                         x=0;
+                         PrintString(10,52,ui_tempi,fontm,"Base Damage: "+str(tempitem[0].stats[0][0])+" "+GetDamageType(tempitem[0].stats[0][1]));
+                         if(tempitem[0].eqtype<7 || tempitem[0].eqtype==14)
+                              PrintString(10,64,ui_tempi,fontm,"Size: One-Handed");
+                         else PrintString(10,64,ui_tempi,fontm,"Size: Two-Handed");
+                         if(type==2)
+                              PrintString(425,22,ui_tempi,fontm,"Base Damage: "+str(hero[h].equip[0].stats[0][0])+" "+GetDamageType(hero[h].equip[0].stats[0][1]));
+                    }
+                    else if(tempitem[0].eqtype<21) {
+                         x=2;
+                         PrintString(10,52,ui_tempi,fontm,"Resistance: "+str(tempitem[0].stats[0][0])+"% "+GetDamageType(tempitem[0].stats[0][1]));
+                         PrintString(10,64,ui_tempi,fontm,"Resistance: "+str(tempitem[0].stats[1][0])+"% "+GetDamageType(tempitem[0].stats[1][1]));
+                         if(type==2) {
+                              PrintString(425,22,ui_tempi,fontm,"Resistance: "+str(hero[h].equip[2].stats[0][0])+"% "+GetDamageType(hero[h].equip[2].stats[0][1]));
+                              PrintString(425,33,ui_tempi,fontm,"Resistance: "+str(hero[h].equip[2].stats[1][0])+"% "+GetDamageType(hero[h].equip[2].stats[1][1]));
+                         }
+                    }
+                    else if(tempitem[0].eqtype<27) {
+                         x=1;
+                         PrintString(10,52,ui_tempi,fontm,"Physical Defense: "+str(tempitem[0].stats[0][0])+"%");
+                         PrintString(10,64,ui_tempi,fontm,"Other Defenses: "+str(tempitem[0].stats[1][0])+"%");
+                         if(type==2) {
+                              PrintString(425,22,ui_tempi,fontm,"Physical Defense: "+str(hero[h].equip[1].stats[0][0])+"%");
+                              PrintString(425,33,ui_tempi,fontm,"Other Defenses: "+str(hero[h].equip[1].stats[1][0])+"%");
+                         }
+                    }
+                    else if(tempitem[0].eqtype<31) {
+                         x=3;
+                         PrintString(10,52,ui_tempi,fontm,"Resistance: "+str(tempitem[0].stats[0][0])+"% "+GetDamageType(tempitem[0].stats[0][1]));
+                         PrintString(10,64,ui_tempi,fontm,"Resistance: "+str(tempitem[0].stats[1][0])+"% "+GetDamageType(tempitem[0].stats[1][1]));
+                         if(type==2) {
+                              PrintString(425,22,ui_tempi,fontm,"Resistance: "+str(hero[h].equip[3].stats[0][0])+"% "+GetDamageType(hero[h].equip[3].stats[0][1]));
+                              PrintString(425,33,ui_tempi,fontm,"Resistance: "+str(hero[h].equip[3].stats[1][0])+"% "+GetDamageType(hero[h].equip[3].stats[1][1]));
+                         }
+                    }
+                    else {
+                         x=4;
+                         PrintString(10,52,ui_tempi,fontm,"Accuracy: "+str(tempitem[0].stats[0][0])+"% "+GetAttackType(tempitem[0].stats[0][1]));
+                         if(type==2)
+                              PrintString(425,22,ui_tempi,fontm,"Accuracy: "+str(hero[h].equip[4].stats[0][0])+"% "+GetAttackType(hero[h].equip[4].stats[0][1]));
+                    }
+                    PrintString(10,76,ui_tempi,fontm,"Speed Mod: "+str(tempitem[0].stats[2][0])+"%");
+                    if(type==2)
+                         PrintString(425,44,ui_tempi,fontm,"Speed Mod: "+str(hero[h].equip[x].stats[2][0])+"%");
+                    UI_SmallBar(270,49,99,0,ui_tempi);
+                    PrintCenter(320,40,ui_tempi,fontm,"Enchantments");
+                    if(!tempitem[0].stats[3][0] && !tempitem[0].stats[4][0] && !tempitem[0].stats[5][0])
+                         PrintCenter(320,64,ui_tempi,fontm,"None");
+                    else {
+                         for(x=3; x<6; x++) {
+                              if(tempitem[0].stats[x][0])
+                                   PrintCenter(320,x*12+16,ui_tempi,fontm,"+"+str(tempitem[0].stats[x][0])+GetCombatStatName(tempitem[0].stats[x][1]));
+                         }
+                    }
+                    UI_SmallBar(420,9,0,79,ui_tempi);
+                    UI_SmallBar(461,18,134,0,ui_tempi);
+                    if(type==1) {
+                         PrintCenter(528,9,ui_tempi,fontm,"Item Lore");
+                         PrintString(425,22,ui_tempi,fontm,WrapText(fontm,tempitem[0].lore,200));
+                    }
+                    else PrintCenter(528,9,ui_tempi,fontm,"Current Equipment");
+               }
+               else {
+                    s="";
+                    PrintCenter(215,5,ui_tempi,fontb,tempitem[0].name);
+                    PrintCenter(215,25,ui_tempi,fontm,tempitem[0].desc);
+                    if(tempitem[0].effect) {
+                         PrintString(10,40,ui_tempi,fontm,"Type: "+GetUseString(tempitem[0].use));
+                         PrintString(10,60,ui_tempi,fontm,"Target: "+GetTargetString(tempitem[0].stats[2][1]));
+                         PrintString(10,75,ui_tempi,fontm,"Effect: "+str(tempitem[0].stats[1][1])+
+                                     Tech_GetEffectDesc(tempitem[0].effect)+" ("+GetDamageType(tempitem[0].stats[1][0])+")");
+                    }
+                    else PrintString(10,40,ui_tempi,fontm,"Use: Cannot be used");
+                    UI_SmallBar(420,9,0,79,ui_tempi);
+                    UI_SmallBar(461,18,134,0,ui_tempi);
+                    PrintCenter(528,9,ui_tempi,fontm,"Item Lore");
+                    PrintString(425,22,ui_tempi,fontm,WrapText(fontm,tempitem[0].lore+s,200));
+               }
+          }
+     }
+     else if(type<5) {
+          if(len(tempspell[h/10].name)) {
+               PrintCenter(215,5,ui_tempi,fontb,tempspell[h/10].name);
+               PrintCenter(215,25,ui_tempi,fontm,tempspell[h/10].desc);
+               PrintString(10,45,ui_tempi,fontm,"Mana Cost: \f4"+str(tempspell[h/10].cost));
+               PrintString(150,45,ui_tempi,fontm,"Target: "+GetTargetString(tempspell[h/10].use));
+               PrintString(10,60,ui_tempi,fontm,"Base Accuracy: "+str(tempspell[h/10].accuracy)+"% ("+GetAttackType(tempspell[h/10].attack)+")");
+               PrintString(10,75,ui_tempi,fontm,"Base Effect: "+str(tempspell[h/10].power)+Tech_GetEffectDesc(tempspell[h/10].effect)+" ("+GetDamageType(tempspell[h/10].damage)+")");
+
+               if(tempspell[h/10].magnitude==1)
+                    s=".  Lasts 1 round.";
+               else if(tempspell[h/10].effect==64 || tempspell[h/10].effect==65)
+                    s=".  Instant effect.";
+               else if(tempspell[h/10].magnitude>1)
+                    s=".  Lasts "+str(tempspell[h/10].magnitude)+" rounds.";
+               else s=".  Instant effect.";
+               if(!hero[h%10].next && type==3)
+                    s=s+"  \f3Cannot change guest's skills.\f0";
+               UI_SmallBar(420,9,0,79,ui_tempi);
+               UI_SmallBar(461,18,134,0,ui_tempi);
+               PrintCenter(528,9,ui_tempi,fontm,"Additional Notes");
+               if(type==3) {
+                    PrintString(425,22,ui_tempi,fontm,WrapText(fontm,GetSpellSchoolName(tempspell[h/10].school)+" skill.  "+
+                                "Requires "+str(tempspell[h/10].req)+" "+GetSpellSchoolName(tempspell[h/10].type+12)+s,200));
+                    if(hero[h%10].next) s="    Change    Forget";
+                    else s="    \f1Change    Forget";
+                    if(tempspell[h/10].use<4 || tempspell[h/10].use>20)
+                         PrintString(440,75,ui_tempi,fontm,"Use"+s);
+                    else PrintString(440,75,ui_tempi,fontm,"\f1Use\f0"+s);
+               }
+               else {
+                    PrintString(425,22,ui_tempi,fontm,WrapText(fontm,tempspell[h/10].lore+s,200));
+                    if(tempspell[h/10].use<4 || tempspell[h/10].use>20)
+                         PrintString(440,75,ui_tempi,fontm,"Use");
+                    else PrintString(440,75,ui_tempi,fontm,"\f1Use");
+               }
+          }
+          else if(tempspell[h/10].use) {
+               PrintCenter(215,5,ui_tempi,fontb,"Open Skill Slot");
+               UI_SmallBar(420,9,0,79,ui_tempi);
+               UI_SmallBar(461,18,134,0,ui_tempi);
+               PrintCenter(528,9,ui_tempi,fontm,"Additional Notes");
+               if(spellbook[0])
+                    PrintString(440,75,ui_tempi,fontm,"\f1Use\f0    Change    \f1Forget");
+               else {
+                    PrintString(440,75,ui_tempi,fontm,"\f1Use    Change    Forget");
+                    s="  \f3You do not yet have a skill book.";
+               }
+               PrintString(425,22,ui_tempi,fontm,WrapText(fontm,"You can fill this slot with any skill from your skill book."+s,200));
+          }
+     }
+     else if(type==5) {
+          if(len(tempspell[0].name)) {
+               PrintCenter(215,5,ui_tempi,fontb,tempspell[0].name);
+               PrintCenter(215,25,ui_tempi,fontm,tempspell[0].desc);
+          }
+     }
+     else if(type==6) {
+          if(len(tempspell[0].name)) {
+               PrintCenter(215,5,ui_tempi,fontb,tempspell[0].name);
+               PrintCenter(215,25,ui_tempi,fontm,tempspell[0].desc);
+          }
+     }
+     else if(type==7) {
+          PrintCenter(215,5,ui_tempi,fontb,questlog[h].name);
+          PrintCenter(215,25,ui_tempi,fontm,questlog[h].desc);
+          PrintString(10,45,ui_tempi,fontm,"Type: "+Quest_TypeString(questlog[h].idx));
+          if(questlog[h].idx>60)
+               PrintString(200,45,ui_tempi,fontm,"Repeatable: Yes");
+          else PrintString(200,45,ui_tempi,fontm,"Repeatable: No");
+          PrintString(10,64,ui_tempi,fontm,"Task:");
+          PrintString(55,64,ui_tempi,fontm,WrapText(fontm,questlog[h].task,360));
+          UI_SmallBar(420,9,0,79,ui_tempi);
+          PrintCenter(486,9,ui_tempi,fontm,"Location");
+          UI_SmallBar(454,18,63,0,ui_tempi);
+          PrintCenter(486,45,ui_tempi,fontm,GetContinentName(questlog[h].dest.name));
+          PrintCenter(591,37,ui_tempi,fontm,"No Maps\nAvailable");
+     }
+     UI_CreateAlpha(ui_tempi,8,footframe);
+}
+
+void Menu_RedrawHostelFrames(int c) {
+     int i,x;
+     for(i=0; i<5; i++) {
+          x=c+i-2;
+          while(x<5)
+               x+=hostelchars;
+          while(x>4+hostelchars)
+               x-=hostelchars;
+          if(x>104) x-=100;
+          UI_HeroDetail(x,heroframe+i);
+     }
+}
+
+void Menu_RedrawStatusFrames(int h) {
+     int i;
+     for(i=0; i<5; i++)
+          UI_HeroStatus(h,i,charframe+i);
+}
+
+int Menu_Save() {
+     int i,p,done;
+     string desc;
+     int top=GetSprite();
+     ClearPortrait();
+     Text_Main(" \n \nChoose a location for your record.",0,0,0,1,1);
+     ShowTextbox();
+     sprite.image[top]=NewImage(128,18);
+     RectFill(0,0,127,17,clear,sprite.image[top]);
+     sprite.sc[top]=1; sprite.x[top]=16;
+     menuactive=0;
+     SetExecutionPaused(1);
+     PlaySound(sfx_prompt,volume);
+     for(i=0; i<5; i++)
+          UI_SaveDetail(i+1,heroframe+i,0);
+     if(saveslot) p=saveslot-1;
+     
+     timer=0;
+     while(timer<16) {
+          Render();
+          for(i=0; i<5; i++)
+               sprite.x[heroframe+i]=timer*8-128;
+          sprite.x[heroframe+p]+=timer;
+          ShowPage();
+     }
+     for(i=0; i<5; i++)
+          sprite.x[heroframe+i]=0;
+     sprite.x[heroframe+p]=16;
+     
+     while(!done) {
+          MenuSlides(p);
+          sprite.x[heroframe+p]=16;
+          Render();
+          ShowPage();
+          if(up) {
+               Unpress(5);
+               PlaySound(sfx_click,100);
+               p--;
+               if(p<0) p==4;
+          }
+          else if(down) {
+               Unpress(6);
+               PlaySound(sfx_click,100);
+               p++;
+               if(p>4) p=0;
+          }
+          if(b2) {
+               Unpress(2);
+               PlaySound(sfx_cancel,100);
+               done=-1;
+          }
+          else if(b1) {
+               Unpress(1);
+               PlaySound(sfx_beep,100);
+               desc=UI_SaveDetail(p+1,heroframe+p,1);
+               sprite.y[top]=64*p;
+               while(!b1 && !b2) {
+                    Render();
+                    MenuSlides(p);
+                    RectFill(0,0,127,17,clear,sprite.image[top]);
+                    PrintCenter(64,5,sprite.image[top],fontm,desc+"|");
+                    ShowPage();
+                    desc=ProcessKeyboardInput(desc,112,fontm);
+                    if(b1 && !len(desc)) {
+                         b1=0;
+                         Unpress(1);
+                    }
+               }
+               if(b2) {
+                    Unpress(2);
+                    PlaySound(sfx_cancel,100);
+               }
+               else {
+                    Text_Main(" \nRecording.  Please Wait...",0,1,0,1,1);
+                    ShowTextbox();
+                    ShowPage();
+                    SaveGame(p+1,desc);
+                    saveslot=p+1;
+                    Unpress(1);
+                    PlaySound(sfx_success,100);
+                    done=1;
+               }
+               RectFill(0,0,127,17,clear,sprite.image[top]);
+               UI_SaveDetail(p+1,heroframe+p,0);
+               Render();
+               ShowPage();
+          }
+     }
+
+     timer=0;
+     while(timer<16) {
+          Render();
+          for(i=0; i<5; i++)
+               sprite.x[heroframe+i]=0-(timer*8);
+          sprite.x[heroframe+p]+=16-timer;
+          ShowPage();
+     }
+     for(i=0; i<5; i++)
+          sprite.x[heroframe+i]=-128;
+     FreeImage(sprite.image[top]);
+     sprite.image[top]=0;
+     SetExecutionPaused(0);
+     return done+1;
+}
+
+int Menu_SelectTarget(int p) {
+     int i,inith,initx,inity;
+     int cur=GetSprite();
+     sprite.image[cur]=cur_arrr;
+     sprite.x[cur]=8;
+     sprite.y[cur]=p*64+28;
+     sprite.sc[cur]=1;
+     if(numchars==1) return 1;
+     if(sprite.x[heroframe+p]>128) {
+          inith=p;
+          initx=sprite.x[heroframe+p];
+          inity=sprite.y[heroframe+p];
+          sprite.x[heroframe+p]=16;
+          sprite.y[heroframe+p]=p*64;
+     }
+     Unpress(1); Unpress(2);
+     PlaySound(sfx_prompt,volume);
+     while(!b1 && !b2) {
+          timer=0;
+          sprite.x[heroframe+p]=16;
+          MenuSlides(p);
+          if(up) {
+               Unpress(5);
+               PlaySound(sfx_click,volume);
+               p--;
+               if(p<0) p=numchars-1;
+               sprite.y[cur]=p*64+28;
+          }
+          else if(down) {
+               Unpress(6);
+               PlaySound(sfx_click,volume);
+               p++;
+               if(p>=numchars) p=0;
+               sprite.y[cur]=p*64+28;
+          }
+          while(timer<1) {ShowPage();}
+     }
+     sprite.x[cur]=0;  sprite.y[cur]=0;
+     sprite.sc[cur]=0; sprite.image[cur]=0;
+     for(i=0; i<numchars; i++)
+          sprite.x[heroframe+i]=0;
+     if(b2) {
+          Unpress(2);
+          PlaySound(sfx_cancel,volume);
+          if(initx) {
+               sprite.x[heroframe+inith]=initx;
+               sprite.y[heroframe+inith]=inity;
+          }
+          return 0;
+     }
+     Unpress(1);
+     PlaySound(sfx_beep,volume);
+     if(initx) {
+          sprite.x[heroframe+inith]=initx;
+          sprite.y[heroframe+inith]=inity;
+     }
+     return p+1;
+}
+
+void Menu_SlideHero(int h, int x, int y) {
+     int i;
+     int xstep=x-sprite.x[heroframe+h]/16;
+     int ystep=y-sprite.y[heroframe+h]/16;
+     int x1=sprite.x[heroframe+h];
+     int y1=sprite.y[heroframe+h];
+     timer=0;
+     while(timer<16) {
+          Render();
+          MenuSlides(h);
+          UI_PartyDetail(heroframe+5);
+          sprite.x[heroframe+h]=timer*xstep+x1;
+          sprite.y[heroframe+h]=timer*ystep+y1;
+          ShowPage();
+     }
+     sprite.x[heroframe+h]=x;
+     sprite.y[heroframe+h]=y;
+}
+
+int Menu_Spellbook(int h) {
+     int school,spell,done;
+     int cur=GetSprite();
+     sprite.image[cur]=LoadImage("images\\cur_arrr.png");
+     sprite.x[cur]=240; sprite.y[cur]=81;
+     sprite.sc[cur]=1;
+     if(h<5) UI_HeroStatus(h,8,charframe+2);
+     Unpress(1); Unpress(2);
+     while(!done) {
+          Render();
+          ShowPage();
+          if(up) {
+               Unpress(5);
+               PlaySound(sfx_click,volume);
+               sprite.y[cur]-=30;
+               if(sprite.y[cur]<81)
+                    sprite.y[cur]=351;
+               else if(sprite.y[cur]==171)
+                    sprite.y[cur]==141;
+          }
+          else if(down) {
+               Unpress(6);
+               PlaySound(sfx_click,volume);
+               sprite.y[cur]+=30;
+               if(sprite.y[cur]>351)
+                    sprite.y[cur]=81;
+               else if(sprite.y[cur]==171)
+                    sprite.y[cur]==201;
+          }
+          else if(left || right) {
+               Unpress(7); Unpress(8);
+               PlaySound(sfx_click,volume);
+               if(sprite.x[cur]==240)
+                    sprite.x[cur]=400;
+               else sprite.x[cur]=240;
+          }
+          else if(b1) {
+               Unpress(1);
+               if(sprite.y[cur]<171) school=(sprite.y[cur]-81/30*2)+(sprite.x[cur]-240/160)+13;
+               else school=(sprite.y[cur]-201/30*2)+(sprite.x[cur]-240/160);
+               if(h<5 && !Hero_HasSpellSchool(h,school)) {}
+               else {
+                    PlaySound(sfx_beep,volume);
+                    UI_HeroStatus(school+10,8,charframe+2);
+                    sprite.x[cur]=240; sprite.y[cur]=63;
+                    Menu_RedrawFooter(3,sprite.y[cur]-63/15+(sprite.x[cur]-240/160*21)*10+h);
+                    while(!b1 && !b2) {
+                         Render();
+                         ShowPage();
+                         if(up && len(tempspell[1].name)) {
+                              Unpress(5);
+                              PlaySound(sfx_click,volume);
+                              sprite.y[cur]-=15;
+                              if(sprite.y[cur]<63) {
+                                   sprite.y[cur]=363;
+                                   if(sprite.x[cur]==400)
+                                        sprite.y[cur]-=15;
+                                   while(!len(tempspell[sprite.y[cur]-63/15+(sprite.x[cur]-240/160*21)].name))
+                                        sprite.y[cur]-=15;
+                              }
+                              Menu_RedrawFooter(3,sprite.y[cur]-63/15+(sprite.x[cur]-240/160*21)*10+h);
+                         }
+                         else if(down && len(tempspell[1].name)) {
+                              Unpress(6);
+                              PlaySound(sfx_click,volume);
+                              sprite.y[cur]+=15;
+                              if(sprite.y[cur]==363 && sprite.x[cur]==400)
+                                   sprite.y[cur]=63;
+                              if(!len(tempspell[sprite.y[cur]-63/15+(sprite.x[cur]-240/160*21)].name))
+                                   sprite.y[cur]=63;
+                              else if(sprite.y[cur]>363)
+                                   sprite.y[cur]=63;
+                              Menu_RedrawFooter(3,sprite.y[cur]-63/15+(sprite.x[cur]-240/160*21)*10+h);
+                         }
+                         else if((left || right) && len(tempspell[21].name)) {
+                              Unpress(7); Unpress(8);
+                              PlaySound(sfx_click,volume);
+                              if(sprite.x[cur]==400)
+                                   sprite.x[cur]=240;
+                              else {
+                                   sprite.x[cur]=400;
+                                   if(sprite.y[cur]==363)
+                                        sprite.y[cur]-=15;
+                                   while(!len(tempspell[sprite.y[cur]-63/15+(sprite.x[cur]-240/160*21)].name))
+                                        sprite.y[cur]-=15;
+                              }
+                              Menu_RedrawFooter(3,sprite.y[cur]-63/15+(sprite.x[cur]-240/160*21)*10+h);
+                         }
+                    }
+                    if(b2) {
+                         Unpress(2);
+                         PlaySound(sfx_click,volume);
+                         UI_HeroStatus(h,8,charframe+2);
+                         sprite.x[cur]=240; sprite.y[cur]=81;
+                    }
+                    else {
+                         Unpress(1);
+                         if(h<5) {
+                              spell=sprite.y[cur]-63/15+(sprite.x[cur]-240/160*21);
+                              if(hero[h].stats[tempspell[spell].type-1]>=tempspell[spell].req) {
+                                   PlaySound(sfx_beep,volume);
+                                   done=spell+1;
+                              }
+                              else {
+                                   PlaySound(sfx_buzz,volume);
+                                   done=0-1;
+                              }
+                         }
+                         else {
+                              PlaySound(sfx_click,volume);
+                              UI_HeroStatus(h,8,charframe+2);
+                              sprite.x[cur]=240; sprite.y[cur]=81;
+                         }
+                    }
+               }
+          }
+          else if(b2) {
+               PlaySound(sfx_cancel,volume);
+               done=0-1;
+          }
+     }
+     sprite.x[cur]=0; sprite.y[cur]=0;
+     sprite.sc[cur]=0;
+     FreeImage(sprite.image[cur]);
+     sprite.image[cur]=0;
+     if(h<5) UI_HeroStatus(h,2,charframe+2);
+     if(done<0) return 0;
+     else return done;
+}
+
+void Menu_System() {
+     int p;
+     string s;
+     if(lastsaved+100<(hour*10000)+(minute*100)+second) 
+          s="\n\f3None of your progress will be saved.";
+     ClearPortrait();
+     p=Prompt("Would you like to stop playing?"+s,"No","Yes");
+     if(p==2) QuitGame("");
+}
+
+void MenuSlides(int act) {
+     int i,j;
+     for(i=0; i<5; i++) {
+          if(sprite.x[heroframe+i]>0 && i!=act)
+               sprite.x[heroframe+i]-=2;
+     }
+     if(sprite.x[heroframe+5]>0 && act!=5)
+          sprite.x[heroframe+5]-=2;
+     if(!menuactive) return;
+     j=systemtime-menumovetime;
+     if(j>20) j=20;
+     if(act==5) {
+          if(sprite.x[partyframe+actpartymenu]<220) {
+               for(i=0; i<5; i++) {
+                    sprite.x[partyframe+i]=j*18-140+(i-actpartymenu*360);
+                    if(i-actpartymenu<0-2)
+                         sprite.x[partyframe+i]+=1800;
+                    else if(i-actpartymenu>2)
+                         sprite.x[partyframe+i]-=1800;
+               }
+          }
+          else if(sprite.x[partyframe+actpartymenu]>220) {
+               for(i=0; i<5; i++) {
+                    sprite.x[partyframe+i]=580-(j*18)+(i-actpartymenu*360);
+                    if(i-actpartymenu<0-2)
+                         sprite.x[partyframe+i]+=1800;
+                    else if(i-actpartymenu>2)
+                         sprite.x[partyframe+i]-=1800;
+               }
+          }
+     }
+     else {
+          if(sprite.x[charframe+actheromenu]<220) {
+               for(i=0; i<5; i++) {
+                    sprite.x[charframe+i]=j*18-140+(i-actheromenu*360);
+                    if(i-actheromenu<0-2)
+                         sprite.x[charframe+i]+=1800;
+                    else if(i-actheromenu>2)
+                         sprite.x[charframe+i]-=1800;
+               }
+          }
+          else if(sprite.x[charframe+actheromenu]>220) {
+               for(i=0; i<5; i++) {
+                    sprite.x[charframe+i]=580-(j*18)+(i-actheromenu*360);
+                    if(i-actheromenu<0-2)
+                         sprite.x[charframe+i]+=1800;
+                    else if(i-actheromenu>2)
+                         sprite.x[charframe+i]-=1800;
+               }
+          }
+     }
+}

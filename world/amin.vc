@@ -1,0 +1,821 @@
+void Start() {
+//- areaname should be set by previous map.
+     int i;
+     string s="Amin Continent";
+     string m="amin";
+//     SetDarkness(0);
+     if(xdest>450 && ydest<25) {
+          s="Isle of Kognar";
+          m="kognar";
+     }
+     else if(xdest>390 && ydest<60) {
+          s="The Glacier";
+          m="glacier";
+//          SetDarkness(75);
+     }
+     else if(xdest<90 && ydest<90) {
+          s="Canid Archipelago";
+          m="kobold";
+     }
+     else if(xdest<150 && ydest>300) {
+          s="Elven Isles";
+          m="elf";
+     }
+     cameratracking=1;
+//     SetGates(1,0,0,"",0,0);
+     Lighting_SetDarkness(0);
+     Map_Initialize(s,areaname,"world.it","");
+     Batt_SetTimer(battleindex,30);
+//     FixGnolls();
+//     FixFairies();
+//     CopyMapToClipboard(500,500);
+
+     if(Quest_PartyHas("Expedition to Achiela")) {
+          if(Quest_PartyOnStage("Expedition to Achiela",6))
+               MarchToErelikoth();
+          if(Quest_PartyOnStage("Expedition to Achiela",7))
+               MarchToAchiela();
+     }
+}
+
+void Leave() {
+}
+
+void Swamp() {
+//     MapDamage(5,2,1);
+}
+
+//---------------------\\
+//- Gelaham Locations -\\
+//---------------------\\
+
+void Gelaham() {
+     Map_Switch("gelaham.map",44,101,1);
+}
+
+void Sign1() {
+//     Book("The sign reads:",
+//          "     East_-_Kognar_(Dangerous!)",
+//          "     Northwest_-_Amin_Mainland","",0);
+}
+
+void GelahamCave() {
+     Map_Switch("gelacave.map",40,51,1);
+}
+
+void GelahamHermit() {
+     Map_Switch("gelaherm.map",24,39,1);
+}
+
+void DwarfCave() {
+     Map_Switch("dwarfcav.map",13,11,1);
+}
+
+void HyeLiallaa() {
+     Map_Switch("hyeliall.map",15,12,1);
+}
+
+void Sign2() {
+//     Book("The sign reads:",
+//          "     North_-_Hye-Liallaa",
+//          "     Northwest_-_Erelikoth",
+//          "     Northeast_-_Vrarag",0);
+}
+
+void LostCairn() {
+     Map_Switch("fcairn.map",13,11,1);
+}
+
+//-----------------------\\
+//- Erelikoth Locations -\\
+//-----------------------\\
+
+void Erelikoth() {
+     Map_Switch("erelikot.map",27,91,1);
+}
+
+void Sign3() {
+//     Book("The sign reads:",
+//          "     Northwest_-_Erelikoth",
+//          "     West_-_Achiela",
+//          "     Northeast_-_Central_Plains",0);
+}
+
+void ThovasFerry() {
+     Map_Switch("trulferr.map",13,17,1);
+}
+
+void Thovas() {
+     Map_Switch("thovas.map",15,12,1);
+}
+
+void EreliCloister() {
+     if(GetFlag("GraigorianCloister")>6) Map_Switch("graigor.map",50,91,1);
+     Map_Switch("ereclois.map",50,91,1);
+}
+
+void AchielaFerryNorth() {
+     Map_Switch("achiferr.map",87,20,1);
+}
+
+void AchielaFerrySouth() {
+     Map_Switch("achiferr.map",12,20,1);
+}
+
+void Achiela() {
+     Map_Switch("achiela.map",50,82,1);
+}
+
+//-----------------------\\
+//- East Amin Locations -\\
+//-----------------------\\
+
+void Vrarag() {
+     Text("\f3Vrarag\f0, City of \f2Orcs","Currently Unavailable");
+}
+
+void Sign10() {
+//     Book("The sign reads:",
+//          "     Northeast_-_Vrarag",
+//          "     Northwest_-_Sheresar",
+//          "     South_-_Human_Lands",0);
+}
+
+void Pollicein() {
+     Text("\f3Pollicein Cavern","Currently Unavailable");
+}
+
+void TempleSouth() {
+     Map_Switch("amintems.map",37,41,1);
+}
+
+void Nemesian() {
+     Text("\f3Nemesian Grotto","Currently Unavailable");
+}
+
+//--------------------------\\
+//- Central Amin Locations -\\
+//--------------------------\\
+
+void Dulav() {
+     Map_Switch("dulav.map",15,12,1);
+}
+
+void Goblins() {
+     Map_Switch("gobvilla.map",38,65,1);
+}
+
+void KipexuEast() {
+     Map_Switch("kipexue.map",15,12,1);
+}
+
+void Sign4() {
+//     Book("The sign reads:",
+//          "     North_-_Amunash",
+//          "     North_-_Sheresar",
+//          "     Southwest_-_Erelikoth",0);
+}
+
+void Sign5() {
+//     Book("The sign reads:",
+//          "     North_-_Amunash",
+//          "     Northeast_-_Sheresar",
+//          "     East_-_Vrarag",0);
+}
+
+void Sign6() {
+//     Book("The sign reads:",
+//          "     North_-_Sheresar",
+//          "     Northeast_-_Vrarag",
+//          "     Northwest-_Amunash",0);
+}
+
+void Sign7() {
+//     Book("The sign reads:",
+//          "     North_-_Sheresar",
+//          "     Northwest_-_Amunash",
+//          "     Southeast_-_Vrarag",0);
+}
+
+//------------------------\\
+//- North Amin Locations -\\
+//------------------------\\
+
+void Sheresar() {
+     Map_Switch("sheresar.map",35,12,1);
+}
+
+void FixFairies() {
+//     if(GetPartyFaction(5)<4) {
+//          SetTile(352,215,3,0);
+//          SetZone(352,215,0);
+//     }
+//     else {
+//          SetTile(352,215,3,429);
+//          SetZone(352,215,16);
+//     }
+}
+
+void Amunash() {
+     Map_Switch("amunash.map",37,91,1);
+}
+
+void Sign8() {
+//     Book("The sign reads:",
+//          "     Northeast_-_Gwoharic",
+//          "     Southeast_-_Sheresar",
+//          "     Southwest_-_Alykin",0);
+}
+
+void Gwoharic() {
+     Map_Switch("gwoharic.map",24,39,1);
+}
+
+void HyeEirumaa() {
+     Map_Switch("hyeeirum.map",15,12,1);
+}
+
+void Gnolls() {
+     Map_Switch("gnolcamp.map",tempint[1],tempint[2],1);
+}
+
+void GnollsEast() {
+     tempint[1]=38;
+     tempint[2]=24;
+}
+
+void GnollsWest() {
+     tempint[1]=12;
+     tempint[2]=12;
+}
+
+void GnollsSouth() {
+     tempint[1]=17;
+     tempint[2]=38;
+}
+
+void FixGnolls() {
+     if(xdest==361 && ydest==125) GnollsEast();
+     else if(xdest==358 && ydest==125) GnollsWest();
+     else if(xdest==358 && ydest==127) GnollsSouth();
+}
+
+void NorthRuins() {
+     Text("\f3Northern Ruins","Currently Unavailable");
+}
+
+void CoastHut() {
+     Map_Switch("gem1hut.map",35,35,1);
+}
+
+void SeaCave() {
+     Text("\f3Seaside Cave","Currently Unavailable");
+     //MapSwitch("seacave.map",67,195,1,1);
+}
+
+void Sign9() {
+//     Book("The sign reads:",
+//          "     Northeast_-_Amunash",
+//          "     Southwest_-_Alykin","",0);
+}
+
+void Sign11() {
+//     Book("The sign reads:",
+//          "    North_-_Amunash",
+//          "    East_-_Sheresar",
+//          "    West_-_Alykin",0);
+}
+
+//-----------------------\\
+//- West Amin Locations -\\
+//-----------------------\\
+
+void Alykin() {
+     Map_Switch("alykin.map",35,9,1);
+}
+
+void Dravia() {
+     Map_Switch("dravia.map",24,90,1);
+}
+
+void KipexuWest() {
+     Text("\f3Kipexu, West Entrance","Currently Unavailable");
+}
+
+//-------------------------\\
+//- Elven Isles Locations -\\
+//-------------------------\\
+
+void ElvenDock() {
+     Map_Switch("elfdock.map",12,28,1);
+}
+
+void Celendir() {
+     Map_Switch("celendir.map",22,33,1);
+}
+
+void Leguviel() {
+     Map_Switch("leguviel.map",24,64,1);
+}
+
+void Beloril() {
+     Map_Switch("beloril.map",15,17,1);
+}
+
+void MoonGrove() {
+     Text("\f3Moonlit Grove","Currently Unavailable");
+}
+
+void TreeGuard() {
+     Map_Switch("arborean.map",18,18,1);
+}
+
+//--------------------\\
+//- Kognar Locations -\\
+//--------------------\\
+
+void KognarTunnel() {
+     Map_Switch("dwarfcav.map",37,184,1);
+}
+
+void Kognar() {
+     Map_Switch("kognar.map",49,91,1);
+}
+
+//-------------------------\\
+//- Archipelago Locations -\\
+//-------------------------\\
+
+void Grbok() {
+     Map_Switch("grbok.map",50,69,1);
+}
+
+void Yipyi() {
+     int i;
+//     if(PirateShip(14)) return;
+     Text("\f3Yipyi\f0, City of \f2Kobolds\f0.",
+           "\f3Yipyi Harbor\f0, offers passage to \f3Grbok\f0, City of \f2Kobolds\f0");
+     //MassTransit(7,10,0,0,0,0,8,14);
+}
+
+void ElderShaman() {
+/*     if(KoS()) return;
+     else if(GetPartyFaction(8)<6)
+          Text("^Elder: Outsiders I see before me and must ask myself: why would our spirits and  "+
+               "ancestors trust them when they be distrusted even by us dogs?");
+     else if(!flags[88]) {
+          Text("^Elder: The spirits have whispered much to me.  Much of that is about the ones "+
+               "whose help I need be asking for.  And here you be, right before me.");
+          Text("^Elder: I be knowing of your quest, "+GetPartyName()+".  The spirits be showing "+
+               "me much about you.  Maybe half I manage to understand.");
+          Text("^Elder: There be trouble.  That much I be certain of.  Maybe you be the ones to "+
+               "fix it.  Maybe not.  The spirits aren't quite clear on that.");
+          Text("^Elder: I would help you, but the old ways must be followed.  If you want the "+
+               "help of the spirits, then you must prove you be worth their aid.");
+          Text("^Elder: You must go to the @Rutoshen continent and into the ~wild ~zone at the heart "+
+               "of the rivers, south of @Kalad and west of @Zulman.");
+          Text("^Elder: There be an island there with a mountain rising above the dead trees.  "+
+               "A small path will lead you to a cave at the summit.");
+          Text("^Elder: It be there, where the magic runs wild, that the spirits can brush with "+
+               "mortals the closest.  It be there that you must be tested.");
+          Text("^Elder: If you can prove yourself worthy of the spirits atop the @Peak @of @Dreams, "+
+               "then I be helping you.  If not, I wait for others.");
+          flags[88]=1;
+          SetQuestStage(22,1,5);
+     }
+     else if(OnQuestStage(22,0)) {
+          Text("^Elder: More heroes be before me.  The spirits say you too should perform the vision "+
+               "quest.  So go.  The @Peak @of @Dreams awaits you.");
+          SetQuestStage(22,1,5);
+     }
+     else if(GetQuestStageHigh(22)<4) {
+          Text("^Elder: The spirits be waiting for you at the @Peak @of @Dreams.  Can you not find "+
+               "the ~wild ~zone in @Rutoshen`?  They be waiting.");
+     }
+     else if(OnQuestStage(22,4)) {
+          Text("^Elder: You have returned, and the spirits have told me of your success.  Maybe "+
+               "you be better able to understand their messages than me.");
+          Text("^Elder: But it be of little consequence.  You have completed your vision quest.  "+
+               "You be a friend of the spirits and of all the ^Kobolds.");
+          SetQuestComplete(22,4,5);
+          if(flags[88]<2) flags[88]=2;
+     }
+     else Text("^Elder: Rrr...  Welcome back, "+GetPartyName()+".  The spirits still whisper about "+
+               "you all the time.");
+     if(flags[88]==2) {
+          Text("^"+party[0].name+": Um, the spirits told us to ask you about something.  It was this "+
+               "frog, see, and I think it said '~the ~ribbit.'");
+          Text("^Elder: ~The ~ribbit, did he say.  Well, the spirits have always had their own "+
+               "sense of humor.");
+          if(!GetInventorySpace()) {
+               Text("^Elder: Come back after you've made some space in your packs and we'll talk more "+
+                    "about ~the ~ribbit.");
+          }
+          else {
+               Text("^Elder: But if you be told to ask of ~the ~ribbit, then I be obliged to give it "+
+                    "to you.");
+               PlaySound(sfx_success,volume);
+               Text("Found ~The_Rib_Bit`!");
+               GetItem(413);
+               flags[88]=3;
+               Text("^Elder: We don't know what that came from, but it must have been huge.  It also "+
+                    "holds great power among the spirits.");
+               Text("^Elder: Now go, "+GetPartyName()+".  Your quest be important, even if your true "+
+                    "purpose be hidden to us mortals.");
+          }
+     }*/
+}
+
+void SpiritEquipment() {
+     if(DenyServices()) return;
+     Text("","If you be headed into the \f3wild zone\f0, you'll be wanting some of my goods.  "+
+          "Guaranteed effective against any spirit.");
+     //Shop("598 599 600 0",0);
+}
+
+//---------------------\\
+//- Glacier Locations -\\
+//---------------------\\
+
+void GlacierDock() {
+     Map_Switch("icedock.map",15,10,1);
+}
+
+void LostTower() {
+     Text("@Forgotten_Tower","Currently Unavailable");
+}
+
+//--------------------\\
+//- Tutorial Scripts -\\
+//--------------------\\
+
+void MarchToErelikoth() {
+     int h=Party_GetIndexFromName(Party_GetStoryHeroName(1));
+     int a=Party_GetIndexFromName("Adain");
+     HText(a,"Before we get any farther, \f2"+hero[h].name+"\f0, do you know your way to \f3Erelikoth\f0?");
+     HText(h,"In a general sort of sense.  It's over on the west coast, right?");
+     if(hero[0].level==1) {
+          HText(a,"Okay.  Do you mind if I take point?");
+          HText(h,"That's probably for the best.");
+          if(!strcmp(hero[1].name,"Adain"))
+               Party_SwapHeroes(0,1);
+          else Party_SwapHeroes(0,2);
+     }
+     HText(0,"Alright then.  I'll just lead the way.  Try to keep up.");
+     PlayerMove("L4DL1X338UL15X320Y435");
+     Area_Change("","Southern Amin","");
+     PlayerMove("Y433X279UL6Y395");
+     Area_Change("","Erelikoth Area","");
+     PlayerMove("Y393UL3X260UL53Y317");
+     Erelikoth();
+}
+
+void MarchToAchiela() {
+     arefairies=1;
+     HookEntityRender(hero[4].ent,"ForeverWalk");
+     PlayerMove("Y374DR10Y385");
+     AchielaFerryNorth();
+}
+
+//----------------\\
+//- Battle Zones -\\
+//----------------\\
+
+void BZoneGelaham() {
+     Area_Change("","Gelaham Area","");
+     battleactive=1;
+     battleindex=1;
+}
+
+void BZoneSouth() {
+     Area_Change("","Human Lands","");
+     battleactive=1;
+     battleindex=2;
+}
+
+void BZoneDwarf() {
+     Area_Change("","Dwarven Lands","");
+     battleactive=1;
+     battleindex=4;
+}
+
+void BZoneErelikoth() {
+     Area_Change("","Erelikoth Area","");
+     battleactive=1;
+     battleindex=3;
+}
+
+void BZoneEast() {
+     Area_Change("","Orc Territory","");
+     battleactive=1;
+     battleindex=6;
+}
+
+void BZoneCenter() {
+     Area_Change("","Central Plains","");
+     battleactive=1;
+     battleindex=7;
+}
+
+void BZoneNorth() {
+     Area_Change("","North Reaches","");
+     battleactive=1;
+     battleindex=8;
+}
+
+void BZoneWest() {
+     Area_Change("","Dravia Peninsula","");
+     battleactive=1;
+     battleindex=9;
+}
+
+void BZoneGlacierS() {
+     Area_Change("","South Drifts","");
+     battleactive=1;
+     battleindex=10;
+}
+
+void BZoneGlacierN() {
+     Area_Change("","North Coast","");
+     battleactive=1;
+     battleindex=11;
+}
+
+void BZoneCelendir() {
+     Area_Change("","Celendir Isle","");
+     battleactive=1;
+     battleindex=12;
+}
+
+void BZoneLeguviel() {
+     Area_Change("","Leguviel Isle","");
+     battleactive=1;
+     battleindex=13;
+}
+
+void BZoneBeloril() {
+     Area_Change("","Beloril Isle","");
+     battleactive=1;
+     battleindex=14;
+}
+
+void BZoneShambler() {
+     Area_Change("","Ancient Grove","");
+     battleactive=1;
+     battleindex=16;
+}
+
+void Local_BattleSetup() {
+     int idx=Random(0,10);
+     runflag=0;
+     estring="";
+     switch(battleindex) {
+          
+          //- Gelaham Area
+          case 1:   switch(idx) {
+                         case 0:   estring="2 2 0";
+                         case 1:   estring="2 2 2 0";
+                         case 2:   estring="2 2 2 2 0";
+                         case 3:   estring="35 35 0";
+                         case 4:   estring="26 26 0";
+                         case 5:   estring="2 35 2 0";
+                         case 6:   estring="35 35 35 0";
+                         case 7:   estring="26 0";
+                         case 8:   estring="2 26 0";
+                         case 9:   estring="29 0";
+                         case 10:  estring="26 29 0";
+                    }
+          
+          //- Human Lands
+          case 2:   switch(idx) {
+                         case 0:   estring="29 0";
+                         case 1:   estring="38 38 0";
+                         case 2:   estring="32 0";
+                         case 3:   estring="47 47 47 0";
+                         case 4:   estring="38 47 0";
+                         case 5:   estring="29 29 0";
+                         case 6:   estring="29 38 0";
+                         case 7:   estring="47 32 47 0";
+                         case 8:   estring="38 38 0";
+                         case 9:   estring="38 41 38 0";
+                         case 10:  estring="47 47 0";
+                    }
+          
+          //- Erelikoth Area
+          case 3:   switch(idx) {
+                         case 0:   estring="38 41 38 0";
+                         case 1:   estring="47 47 47 0";
+                         case 2:   estring="47 47 0";
+                         case 3:   estring="41 44 41 0";
+                         case 4:   estring="38 44 41 0";
+                         case 5:   estring="50 50 0";
+                         case 6:   estring="50 50 50 0";
+                         case 7:   estring="50 50 50 50 0";
+                         case 8:   estring="53 32 53 0";
+                         case 9:   estring="41 53 41 0";
+                         case 10:  estring="53 53 53 0";
+                    }
+          /*
+          //- Dwarven Lands
+          case 4:   switch(idx) {
+                         case 0:   estring="29 34 0";
+                         case 1:   estring="29 29 0";
+                         case 2:   estring="34 34 0";
+                         case 3:   estring="33 33 0";
+                         case 4:   estring="32 0";
+                         case 5:   estring="29 32 0";
+                         case 6:   estring="36 36 0";
+                         case 7:   estring="34 33 34 0";
+                         case 8:   estring="33 36 33 0";
+                         case 9:   estring="29 36 0";
+                         case 10:  estring="32 36 0";
+                    }
+         */
+          //- Achiela Island
+          case 5:   switch(idx) {
+                         case 0:   estring="5 5 0";
+                         case 1:   estring="8 0";
+                         case 2:   estring="11 11 0";
+                         case 3:   estring="14 14 14 0";
+                         case 4:   estring="14 14 0";
+                         case 5:   estring="11 5 0";
+                         case 6:   estring="14 8 14 0";
+                         case 7:   estring="5 8 0";
+                         case 8:   estring="14 11 14 0";
+                         case 9:   estring="14 14 0";
+                         case 10:  estring="5 8 11 0";
+                    }
+          /*
+          //- Orc Territory
+          case 6:   switch(idx) {
+                         case 0:   estring="10 11 10 0";
+                         case 1:   estring="25 25 0";
+                         case 2:   estring="26 26 0";
+                         case 3:   estring="11 12 11 0";
+                         case 4:   estring="10 12 11 0";
+                         case 5:   estring="26 25 26 0";
+                         case 6:   estring="11 12 10 11 0";
+                         case 7:   estring="11 12 11 0";
+                         case 8:   estring="17 16 17 0";
+                         case 9:   estring="11 25 11 0";
+                         case 10:  estring="17 26 17 0";
+                    }
+          
+          //- Central Plains
+          case 7:   switch(idx) {
+                         case 0:   estring="10 11 10 0";
+                         case 1:   estring="25 25 0";
+                         case 2:   estring="26 26 0";
+                         case 3:   estring="11 12 11 0";
+                         case 4:   estring="10 12 11 0";
+                         case 5:   estring="26 25 0";
+                         case 6:   estring="11 10 11 0";
+                         case 7:   estring="11 12 11 0";
+                         case 8:   estring="12 16 12 0";
+                         case 9:   estring="10 25 10 0";
+                         case 10:  estring="11 26 0";
+                    }
+          
+          //- North Reaches
+          case 8:   switch(idx) {
+                         case 0:   estring="21 34 0";
+                         case 1:   estring="21 21 0";
+                         case 2:   estring="34 34 0";
+                         case 3:   estring="33 33 0";
+                         case 4:   estring="19 0";
+                         case 5:   estring="21 19 0";
+                         case 6:   estring="36 36 0";
+                         case 7:   estring="34 33 34 0";
+                         case 8:   estring="33 36 33 0";
+                         case 9:   estring="21 36 0";
+                         case 10:  estring="19 36 0";
+                    }
+          
+          //- Dravia Peninsula
+          case 9:   switch(idx) {
+                         case 0:   estring="10 11 10 0";
+                         case 1:   estring="25 25 0";
+                         case 2:   estring="26 26 0";
+                         case 3:   estring="11 12 11 0";
+                         case 4:   estring="10 12 11 0";
+                         case 5:   estring="26 25 26 0";
+                         case 6:   estring="11 12 10 11 0";
+                         case 7:   estring="11 12 11 0";
+                         case 8:   estring="17 16 17 0";
+                         case 9:   estring="11 25 11 0";
+                         case 10:  estring="17 26 17 0";
+                    }
+          
+          //- Southern Glacier
+          case 10:   switch(idx) {
+                         case 0:   estring="124 123 0";
+                         case 1:   estring="126 126 126 0";
+                         case 2:   estring="128 127 0";
+                         case 3:   estring="123 124 123 0";
+                         case 4:   estring="124 0";
+                         case 5:   estring="128 128 128 0";
+                         case 6:   estring="126 123 126 0";
+                         case 7:   estring="128 127 128 0";
+                         case 8:   estring="127 127 0";
+                         case 9:   estring="123 123 0";
+                         case 10:  estring="126 123 124 0";
+                    }
+          
+          //- Northern Glacier
+          case 11:   switch(idx) {
+                         case 0:   estring="125 123 0";
+                         case 1:   estring="126 126 126 0";
+                         case 2:   estring="128 127 0";
+                         case 3:   estring="123 125 123 0";
+                         case 4:   estring="125 0";
+                         case 5:   estring="128 125 128 0";
+                         case 6:   estring="126 123 126 0";
+                         case 7:   estring="128 127 128 0";
+                         case 8:   estring="127 127 0";
+                         case 9:   estring="123 123 0";
+                         case 10:  estring="126 125 123 0";
+                    }
+          
+          //- Celendir Isle
+          case 12:  switch(idx) {
+                         case 0:   estring="23 11 23 0";
+                         case 1:   estring="25 25 0";
+                         case 2:   estring="26 26 0";
+                         case 3:   estring="11 12 11 0";
+                         case 4:   estring="23 12 11 0";
+                         case 5:   estring="26 25 26 0";
+                         case 6:   estring="11 12 23 11 0";
+                         case 7:   estring="11 12 11 0";
+                         case 8:   estring="23 16 23 0";
+                         case 9:   estring="11 25 11 0";
+                         case 10:  estring="23 26 23 0";
+                    }
+
+          //- Leguviel Isle
+          case 13:  switch(idx) {
+                         case 0:   estring="23 22 23 0";
+                         case 1:   estring="25 25 0";
+                         case 2:   estring="26 26 0";
+                         case 3:   estring="11 12 11 0";
+                         case 4:   estring="23 12 11 0";
+                         case 5:   estring="26 25 26 0";
+                         case 6:   estring="11 12 23 11 0";
+                         case 7:   estring="11 12 11 0";
+                         case 8:   estring="23 22 23 0";
+                         case 9:   estring="11 25 11 0";
+                         case 10:  estring="23 22 23 0";
+                    }
+
+          //- Beloril Isle
+          case 14:  switch(idx) {
+                         case 0:   estring="23 11 23 0";
+                         case 1:   estring="25 25 0";
+                         case 2:   estring="26 26 0";
+                         case 3:   estring="11 12 11 0";
+                         case 4:   estring="23 12 11 0";
+                         case 5:   estring="26 25 26 0";
+                         case 6:   estring="11 12 23 11 0";
+                         case 7:   estring="11 12 11 0";
+                         case 8:   estring="23 16 23 0";
+                         case 9:   estring="11 25 11 0";
+                         case 10:  estring="23 26 23 0";
+                    }
+
+          //- Canid Archipelago
+          case 15:  switch(idx) {
+                         case 0:   estring="21 34 0";
+                         case 1:   estring="21 21 0";
+                         case 2:   estring="34 34 0";
+                         case 3:   estring="33 33 0";
+                         case 4:   estring="19 0";
+                         case 5:   estring="21 19 0";
+                         case 6:   estring="36 36 0";
+                         case 7:   estring="34 33 34 0";
+                         case 8:   estring="33 36 33 0";
+                         case 9:   estring="21 36 0";
+                         case 10:  estring="19 36 0";
+                    }
+          
+          //- Elven Sacred Grove
+          case 16:  estring="24 0";
+                    //battspecial=2;
+*/     }
+}
+
+void Local_BattleSpecial() {
+//     if(battleindex==16) {
+//          //- Ritual of the Oak processing
+//     }
+}
+
+void Local_BattleLoot() {
+     int f=dropflag%100;
+     int stealing=dropflag/100;
+     switch(battleindex) {
+          case 1:   if(fighter[f].index==26 && Random(0,99)<fighter[f].drop)
+                         CraftItem("Small Gold Ingot","Valuable metal","",0,0,500);
+                    else if(!Random(0,2))
+                         GenericCraftItem("Antidote Herb");
+                    else GenericCraftItem("Healing Salve");
+     }
+}

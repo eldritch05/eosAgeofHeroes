@@ -1,0 +1,116 @@
+Activate_Wand   Use_the_power_of_a_wand         11 6 100  0 100  64  14  10 Also grants proficiency with wands
+Adamant_Bulwark Guard_all_allies                13 6 100 12 100  45   1  25 Protects your allies from harm
+Alliance        Increase_faction_with_locals     0 0   0  0   1 101   0   0 _
+Animate_Corpse  _                                0 0   0  0   0  66   0   0 _
+Apocalypse      _                                0 0   0  0   0  67   0   0 _
+Armor_of_Faith  _                                0 0   0  0   0  43   0   0 _
+Assassinate     _                                0 0   0  0   0 102   0   0 _
+Atonement       _                                0 0   0  0 100 103   0   0 _
+Avatar_of_Death Chance_for_instant_kill          0 0   0  0   0  88   0   0 _
+Awareness       Gain_speed_and_crit_chance      11 4 100  8  20 104   5  12 Increased awareness gives you an extra edge
+Become_Flame    _                                0 0   0  0 100 105   0   0 _
+Become_Ice      _                                0 0   0  0 100 105   0   0 _
+Berserk         Lose_control_to_increase_damage  1 1 100  8  80  55   3  10 A berserk rage wreaks uncontrollable havok
+Blade_Dance     _                                0 0   0  0   4 106   0   0 _
+Brew_Potion     _                                0 0   0  0   1 107   0   0 Also grants proficiency with potions
+Cannibalize     Exchange_health_for_mana         1 1 100  9  25 108   0   0 You fuel your abilities with your lifeblood
+Cave_In         _                                0 0   0  0   0  60   0   0 _
+Challenge       Increase_encounter_rate         21 1 100 12 100 109 250   2 Provoke monsters to attack more frequently
+Chameleon       _                                0 0   0  0   0  57   0   0 _
+Commune         _                                0 0   0  0   1 110   0   0 _
+Convert         _                                0 0   0  0   1 111   0   0 _
+Counterspell    Negates_target's_next_ability    4 4  95  7 100  51   1   2 Completely seal away your foe's magic
+Cutpurse        Take_target's_gold               4 5  50  1 100  70   0   1 Swipe a foe's cash without having to kill it
+Death's_Touch   _                                0 0   0  0   0  88   0   0 _
+Deepest_Dark    _                                0 0   0  0   0  53   0   0 _
+Deepest_Fears   _                                0 0   0  0   0  56   0   0 _
+Defender_Gambit Powerful_mace_or_maul_attack     0 0   0  0   0  65   0   0 Also grants proficiency with maul
+Diamond_Shield  _                                0 0   0  0   0  43   0   0 _
+Disarm_Trap     _                                0 0   0  0   0  69   0   0 _
+Disenchant      _                                0 0   0  0   1 112   0   0 _
+Dragon_Breath   _                                0 0   0  0   0  60   0   0 _
+Dragon_Claw     A_powerful_unarmed_attack        4 1  95  0 225  65  13  15 Also grants proficiency with unarmed weapons
+Draw_Attention  _                                0 0   0  0   0  57   0   0 _
+Elemental_Nexus High_damage_to_all_foes          0 0   0  0   0  60   0   0 _
+Elven_Archery   A_powerful_bow_attack            4 1 120  0 175  65  11  15 Also grants proficiency with bows
+Elven_Step      _                                0 0   0  0 100 113   0   0 _
+Enchant         Create_trinkets                  0 0   0  0   1 114   0   0 Also grants proficiency with trinkets
+Enchant_Weapon  Change_weapon_damage_to_arcane  12 4 100  7  50  44   3  25 Empower an ally's weapon to deal arcane damage
+Endless_Health  Begin_regenerating              11 1 100  8  12  39  10  20 Tap a deep reserve of determination to heal
+Endure          Raise_own_resistances           11 6 100  8  15  43   5  15 Also grants proficiency with stronger armor
+Enthrall        _                                0 0   0  0   0  54   0   0 _
+Escape          Remove_party_from_combat        11 5 100 12 100  73   0   2 Sometimes it's just better to avoid the fight
+Eternal_Insight Vastly_increases_own_damage      0 0   0  0   0  42   0   0 _
+Evasion         Increase_own_defenses           11 1 100  1  50  41   1  10 A good dodge often surpasses good armor
+First_Aid       Restore_an_ally's_health         2 6 100  5  25  60   0   3 A small, mana-efficient healing ability
+Focus           Increase_damage_on_next_attack  11 6 100  8 100  42   1  12 Gathering focus leads to powerful action
+Force_the_Fight Stops_both_sides_from_fleeing    0 0   0  0   0 115   0   0 _
+Frenzy          _                                0 0   0  0   2 116   0   0 _
+Furious_Assault _                                0 0   0  0   0  65   0   0 Also grants proficiency with axe
+Grand_Theft     _                                0 0   0  0   0  72   0   0 _
+Guard           _                                0 0   0  0   0  45   0   0 _
+Guarded_Riposte Counter_any_attacks_taken        0 0   0  0   0  50   0   0 _
+Heroic_Psalm    _                                0 0   0  0   0 117   0   0 _
+Hide            Become_concealed                11 1 100  6  50  57   1   5 Slip away and avoid your foes for a turn
+Inner_Compass   Sense_layout_of_surroundings    21 6 100  8 100 118 250   8 Your keen senses assure you are never lost
+Intervention    _                                0 0   0  0 100 119   0   0 _
+Invisibility    Conceal_an_ally                 12 4 100  7 100  57   2  20 A powerful and durable concealment power
+Invoke_Ancestor Creates_a_spirit_pet             0 0   0  0   0  66   0   0 _
+Invoke_Plague   _                                0 0   0  0   0 120   0   0 _
+Killing_Blow    _                                0 0   0  0   0  88   0   0 _
+Last_Stand      Become_stronger_when_wounded    11 6 100 12 100 121   3  20 Your wounds serve only to make you stronger
+Lead_the_Charge Entire_party_attacks_target      0 0   0  0 110 122   0   0 _
+Lion_of_Battle  _                                0 0   0  0   0  56   0   0 _
+Linked_Portal   _                                0 0   0  0   1 123   0   0 _
+Lorekeeper      Increase_lore_experience_gain   11 5 100  8  50  85   0  10 No bit of lore escapes your notice
+Magic_Missiles  _                                0 0   0  0   0  65   0   0 Also grants proficiency with wands
+Martyr’s_Gift   Transfer_mana_to_an_ally         2 3 100  5  25  61   0  30 You give up your spiritual strength for an ally
+Master's_Cleave A_powerful_katana_attack         4 1  95  0 200  65  12  15 Also grants proficiency with katanas
+Meditation      Focus_to_restore_own_mana        0 0   0  0   0  61   0   0 Also permanently increases maximum mana
+Night_Blade     _                                0 0   0  0   0  89   0   0 _
+Paralyze        _                                0 0   0  0   0  52   0   0 _
+Parting_Blow    _                                0 0   0  0   0  59   0   0 _
+Phantom_Steed   Speed_overland_travel           23 6 100 12  50  81 200  15 Ghostly mounts speed your passage
+Pick_Lock       Open_a_locked_object            21 5 100 12  50  68   0  10 You can pop open nearly all locks
+Plunder         Increase_item_drop_rate          5 6 100 12  25  84   0   5 None will stand between you and your loot
+Primal_Ward     _                                0 0   0  0   0  47   0   0 _
+Primal_Wrath    _                                0 0   0  0   0  60   0   0 _
+Prize_Fight     Increase_gold_drop_rate         11 6 100 12  50  83   0   5 Reap extra spoils from victory in battle
+Quick_Learner   _                                0 0   0  0   0  86   0   0 _
+Radiant_Burst   _                                0 0   0  0 100 124   0   0 _
+Rain_of_Steel   _                                0 0   0  0  20 125   0   0 _
+Ranger's_Volley Make_multiple_bow_attacks        0 0   0  0   0  65   0   0 Also grants proficiency with bows
+Reaping_Strikes Attack_again_if_target_dies      0 0   0  0 125 126   0   0 _
+Reckless_Strike Lower_accuracy,_higher_damage    4 1  50  0 300  65   0  10 Though inaccurate, this is a powerful blow
+Remove_Ailment  Removes_a_harmful_effect         2 5  75 12   1  82   0  10 You try to remove an ailment from an ally
+Resuscitate     _                                0 0   0  0   0  75   0   0 _
+Retribution     Wrap_an_ally_in_a_damage_shield 12 3 100  5  10  48  10   2 The Light strikes at those who would harm you
+Sacrifice       _                                0 0   0  0 100 127   0   0 _
+Shadow_Dance    _                                0 0   0  0   0  89   0   0 _
+Shadow_Jaunt    _                                0 0   0  0  25 128   0   0 _
+Sharpshooter    _                                0 0   0  0   0  40   0   0 _
+Shield_Bash     A_stunning_shield_attack         0 0   0  0   0  65   0   0 Also grants proficiency with stronger shields
+Siphon_Soul     Drain_mana_from_target           4 3  90  6  25  76   0   5 You drain the spiritual essence of your enemy
+Slaying_Strike  _                                0 0   0  0 300 129   0   0 _
+Smite           _                                0 0   0  0 200 130   0   0 _
+Sneak           _                                0 0   0  0   0  80   0   0 _
+Soulburn        _                                0 0   0  0   0 131   0   0 _
+Steal           _                                0 0   0  0   0  71   0   0 _
+Stream_of_Life  _                                0 0   0  0   0  39   0   0 _
+Summon_Element  _                                0 0   0  0   0  66   0   0 _
+Swindle         _                                0 0   0  0   0 132   0   0 _
+Tail_Sweep      _                                0 0   0  0   0  63   0   0 Also grants proficiency with unarmed attacks
+Taunt           Attract_target's_attention       4 6 100  8  50  62   0   1 A reliable way to focus attacks on you
+Tinker          _                                0 0   0  0   1 133   0   0 Also grants proficiency with gadgets
+Tornado         _                                0 0   0  0   0  60   0   0 _
+Transformation  _                                0 0   0  0   0  55   0   0 _
+True_Strike     Increase_ally's_critical_rate   12 4 100  8  20  36  10   5 Your insights guide your ally's strikes
+Tsunami         _                                0 0   0  0   0  60   0   0 _
+Ultrablast      _                                0 0   0  0   0  60   0   0 _
+Underfoot       _                                0 0   0  0   0  41   0   0 _
+Unstoppable     Shrug_off_incoming_attacks      11 1 100  0  50  47   3  15 Also permanently increases maximum health
+Vengeance       _                                0 0   0  0  75 134   0   0 _
+Vital_Blow      _                                0 0   0  0  50 135   0   0 _
+Wild_Step       _                                0 0   0  0 100 113   0   0 _
+Winged_Leap     _                                0 0   0  0 125 136   0   0 _
+Wolf's_Ward     Use_the_power_of_a_robe         11 6 100 12 100  64  15  10 Also grants proficiency with robes

@@ -1,0 +1,2800 @@
+//- Item Information
+struct item {
+     string name, desc, lore;
+     int use, effect, eqtype, price;
+     int stats[6][2];
+};
+
+//- Technique Information
+struct tech {
+     string name, desc, lore;
+     int idx, cost;
+     int use, type, req, school;
+     int attack, accuracy;
+     int damage, power, effect, magnitude;
+};
+
+//- Character Information
+struct character {
+     string name, class, race, chrimg;
+     int curhp, maxhp, curmp, maxmp, stats[6];
+     int hpgain, mpgain, ent, story, retrain;
+     int exp, next, level, statpnt, gender;
+     int eqprof[26], combatstats[38];
+     int packsize, numitems, spellslots, autoaction;
+     int factions[10], questlist[30];
+     item backpack[20], equip[5];
+     tech attack[5],ability[10],spell[10],trait[5];
+     quest questlog[10];
+};
+
+item tempitem[2];
+
+tech tempspell[41];
+
+character hero[105];
+character temphero[2];
+
+//- Party Statistics
+int numchars, guestchars, hostelchars, inhostel;
+int maxlevel, lorexp, partygold, partyfact;
+int bindx, bindy;
+int recruits[10],spellbook[246],fieldeffect[8][2];
+string bindmap, bindmapname, bindareaname;
+quest questlog[6];
+location partyloc;
+
+int Calc_BaseDamage(int h, int base, int type) {
+     if(winflag) {
+          if(type==0) type=hero[h].equip[0].stats[0][1];
+          base+=base*hero[h].combatstats[type-1]/1000;
+     }
+     else {
+          if(type==0) type=fighter[h].damagetype;
+          base+=base*fighter[h].combatstats[type-1][0]/1000;
+     }
+     return base;
+}
+
+int Calc_StartLevel(int exp) {
+     int lvl=1;
+     while(lvl<maxlevel) {
+          exp-=lvl*1000;
+          if(exp<0) return lvl;
+          lvl++;
+     }
+     return maxlevel;
+}
+
+int Calc_XPReq(int lvl) {
+     return (500*lvl*lvl)+(500*lvl);
+}
+
+void CharGen_ChangeClass(int h, int o, int c) {
+//- h: index of hero to change class
+//  o: hero's original class
+//  c: hero's new class.
+     //hero[h].stats[o]-=hero[h].level;
+     switch(c) {
+          case 0:   hero[h].class="Gladiator";
+                    hero[h].hpgain=5; hero[h].mpgain=4;
+          case 1:   hero[h].class="Knight";
+                    hero[h].hpgain=6; hero[h].mpgain=3;
+          case 2:   hero[h].class="Rogue";
+                    hero[h].hpgain=5; hero[h].mpgain=4;
+          case 3:   hero[h].class="Adept";
+                    hero[h].hpgain=4; hero[h].mpgain=5;
+          case 4:   hero[h].class="Cleric";
+                    hero[h].hpgain=4; hero[h].mpgain=5;
+          case 5:   hero[h].class="Wizard";
+                    hero[h].hpgain=3; hero[h].mpgain=6;
+     }
+     //hero[h].stats[c]+=hero[h].level; //- This doesn't actually work this way anymore; characters gain 5 discretionary points at level 1.
+     Hero_SetBaseProficiencies(h,hero[h].class);
+     Hero_SetDerivedStats(h);
+     hero[h].curhp=hero[h].maxhp; hero[h].curmp=hero[h].maxmp;
+     Menu_RedrawStatusFrames(h);
+}
+
+void CharGen_WriteAttackDesc(int h, int l, int p) {
+     int w;
+     int f=FileOpen("system\\attack.dat",FILE_READ);
+     int idx=GetClassIndex(hero[h].class)+1*100+l-1;
+     if(!(l/10%2)) idx++;
+     FileSeekPos(f,FindAttackPos(idx),SEEK_SET);
+     temphero[0].attack[0].name=FileReadString(f);
+     temphero[0].attack[0].desc=FileReadString(f);
+     temphero[0].attack[0].idx=FileReadQuad(f);
+     temphero[0].attack[0].attack=FileReadQuad(f);
+     temphero[0].attack[0].accuracy=FileReadQuad(f);
+     temphero[0].attack[0].damage=FileReadQuad(f);
+     temphero[0].attack[0].power=FileReadQuad(f);
+     temphero[0].attack[0].effect=FileReadQuad(f);
+     temphero[0].attack[0].magnitude=FileReadQuad(f);
+     temphero[0].attack[0].lore=FileReadString(f);
+     if(l==11 || l==31) {
+          if((hero[h].attack[l/10-1].idx%10)==2)
+               idx++;
+     }
+     FileSeekPos(f,FindAttackPos(idx+1),SEEK_SET);
+     temphero[0].attack[1].name=FileReadString(f);
+     temphero[0].attack[1].desc=FileReadString(f);
+     temphero[0].attack[1].idx=FileReadQuad(f);
+     temphero[0].attack[1].attack=FileReadQuad(f);
+     temphero[0].attack[1].accuracy=FileReadQuad(f);
+     temphero[0].attack[1].damage=FileReadQuad(f);
+     temphero[0].attack[1].power=FileReadQuad(f);
+     temphero[0].attack[1].effect=FileReadQuad(f);
+     temphero[0].attack[1].magnitude=FileReadQuad(f);
+     temphero[0].attack[1].lore=FileReadString(f);
+     FileClose(f);
+
+     RectFill(0,0,335,342,clear,ui_tempi);
+     UI_BigBox(0,7,336,336,ui_tempi);
+     PrintCenter(168,-4,ui_tempi,fontb,"Attack Selection");
+
+//- First Option
+     PrintCenter(168,20,ui_tempi,fontb,"\f"+str(p)+temphero[0].attack[0].name);
+     PrintCenter(168,40,ui_tempi,fontm,"\f"+str(p)+temphero[0].attack[0].desc);
+
+     PrintCenter(70,62,ui_tempi,fontm,"\f"+str(p)+"Attack Type:");
+     PrintCenter(168,55,ui_tempi,fontb,"\f"+str(p)+GetAttackType(temphero[0].attack[0].attack));
+     PrintCenter(270,62,ui_tempi,fontm,"\f"+str(p)+"("+str(temphero[0].attack[0].accuracy)+"% acc)");
+
+     PrintCenter(70,95,ui_tempi,fontm,"\f"+str(p)+"Initial Damage:");
+     PrintCenter(168,80,ui_tempi,fontb,"\f"+str(p)+str(Calc_BaseDamage(h,hero[h].equip[0].stats[0][0],temphero[0].attack[0].damage)*temphero[0].attack[0].power/100));
+     PrintCenter(168,100,ui_tempi,fontm,"\f"+str(p)+GetDamageType(temphero[0].attack[0].damage));
+     PrintCenter(270,95,ui_tempi,fontm,"\f"+str(p)+"("+str(temphero[0].attack[0].power)+"% dmg)");
+
+     PrintCenter(70,135,ui_tempi,fontm,"\f"+str(p)+"Added Effect:");
+     PrintCenter(168,120,ui_tempi,fontb,"\f"+str(p)+str(Calc_BaseDamage(h,hero[h].equip[0].stats[0][0],temphero[0].attack[0].effect)*temphero[0].attack[0].magnitude/100));
+     PrintCenter(168,140,ui_tempi,fontm,"\f"+str(p)+GetDamageType(temphero[0].attack[0].effect));
+     PrintCenter(270,135,ui_tempi,fontm,"\f"+str(p)+"("+str(temphero[0].attack[0].magnitude)+"% dmg)");
+     PrintCenter(168,155,ui_tempi,fontm,"\f"+str(p)+temphero[0].attack[0].lore);
+
+     UI_SmallBar(10,175,316,0,ui_tempi);
+
+//- Second Option
+     PrintCenter(168,180,ui_tempi,fontb,"\f"+str(abs(p-1))+temphero[0].attack[1].name);
+     PrintCenter(168,200,ui_tempi,fontm,"\f"+str(abs(p-1))+temphero[0].attack[1].desc);
+
+     PrintCenter(70,222,ui_tempi,fontm,"\f"+str(abs(p-1))+"Attack Type:");
+     PrintCenter(168,215,ui_tempi,fontb,"\f"+str(abs(p-1))+GetAttackType(temphero[0].attack[1].attack));
+     PrintCenter(270,222,ui_tempi,fontm,"\f"+str(abs(p-1))+"("+str(temphero[0].attack[1].accuracy)+"% acc)");
+
+     PrintCenter(70,255,ui_tempi,fontm,"\f"+str(abs(p-1))+"Initial Damage:");
+     PrintCenter(168,240,ui_tempi,fontb,"\f"+str(abs(p-1))+str(Calc_BaseDamage(h,hero[h].equip[0].stats[0][0],temphero[0].attack[1].damage)*temphero[0].attack[1].power/100));
+     PrintCenter(168,260,ui_tempi,fontm,"\f"+str(abs(p-1))+GetDamageType(temphero[0].attack[1].damage));
+     PrintCenter(270,255,ui_tempi,fontm,"\f"+str(abs(p-1))+"("+str(temphero[0].attack[1].power)+"% dmg)");
+
+     PrintCenter(70,295,ui_tempi,fontm,"\f"+str(abs(p-1))+"Added Effect:");
+     PrintCenter(168,280,ui_tempi,fontb,"\f"+str(abs(p-1))+str(Calc_BaseDamage(h,hero[h].equip[0].stats[0][0],temphero[0].attack[1].effect)*temphero[0].attack[1].magnitude/100));
+     PrintCenter(168,300,ui_tempi,fontm,"\f"+str(abs(p-1))+GetDamageType(temphero[0].attack[1].effect));
+     PrintCenter(270,295,ui_tempi,fontm,"\f"+str(abs(p-1))+"("+str(temphero[0].attack[1].magnitude)+"% dmg)");
+     PrintCenter(168,315,ui_tempi,fontm,"\f"+str(abs(p-1))+temphero[0].attack[1].lore);
+
+     UI_CreateAlpha(ui_tempi,8,chargensprite+3);
+}
+
+void CharGen_WriteClassDesc(string c) {
+     string s,t,u,v,w;
+     RectFill(0,0,639,96,clear,sprite.image[chargensprite+1]);
+     UI_BigBox(0,0,640,97,sprite.image[chargensprite+1]);
+     switch(GetClassIndex(c)) {
+          case 0:   s="Gladiators are born to battle.  Proficient in nearly every type of weapon and";
+                    t="armor, they enjoy nothing more than using their \f4Strength\f0 to devasate and ";
+                    u="cripple their foes as they wade into the thick of combat.";
+                    v="Tireless Warrior";
+                    w="All physical actions have their mana cost reduced";
+          case 1:   s="Knights live to protect their allies.  They are the hardiest of heroes and";
+                    t="can wear the strongest armors in Serinor.  Standing at the front of combat,";
+                    u="their \f4Vitality\f0 inspires their allies to victory over their foes.";
+                    v="Stalwart Defender";
+                    w="All actions attract additional attention from every enemy affected";
+          case 2:   s="Rogues are the most versatile combatants.  Lightly armed and armored, they can";
+                    t="focus on striking from hiding to rapidly eliminate powerful foes or channel";
+                    u="their \f4Agility\f0 instead to separate that foe from its wealth.";
+                    v="Shadowed Striker";
+                    w="Every action will do additional damage if performed while concealed";
+          case 3:   s="Adepts thirst ever after \f4Wisdom\f0.  They have access to an array of skills";
+                    t="that they have picked up in their studies, from armed combat to ritual casting.";
+                    u="They strive to glean everything possible from each of their experiences.";
+                    v="Subtle Caster";
+                    w="All actions attract reduced attention from any enemy affected";
+          case 4:   s="Clerics strive forever towards perfection.  Though able to bear heavy arms";
+                    t="and armor, their true joy is healing and supporting their allies.  Many a";
+                    u="heroic quest failed solely for lacking the pure \f4Psyche\f0 of a cleric.";
+                    v="Sanctified Body";
+                    w="Any ailment suffered is reduced in duration";
+          case 5:   s="Wizards are the masters of mass destruction.  Their ability to lay down an";
+                    t="endless stream of devastation makes them feared by all.  They are frail of body";
+                    u="but strong of \f4Will\f0, and none can surpass their ability to manipulate mana.";
+                    v="Practiced Ritualist";
+                    w="All magical actions have their mana cost reduced";
+     }
+     PrintCenter(320,5,sprite.image[chargensprite+1],fontb,c);
+     PrintCenter(320,30,sprite.image[chargensprite+1],fontm,s);
+     PrintCenter(320,40,sprite.image[chargensprite+1],fontm,t);
+     PrintCenter(320,50,sprite.image[chargensprite+1],fontm,u);
+     PrintCenter(320,65,sprite.image[chargensprite+1],fontm,"\f4"+v);
+     PrintCenter(320,75,sprite.image[chargensprite+1],fontm,w);
+}
+
+void Class_LoadAbilityList(string c, int l) {
+     if(!strcmp(c,"Gladiator")) {
+          if(l<21) {
+               Tech_LoadAbility(1,10);
+               Tech_LoadAbility(2,13);
+               Tech_LoadAbility(3,18);
+               Tech_LoadAbility(4,32);
+               Tech_LoadAbility(5,35);
+               Tech_LoadAbility(6,39);
+               Tech_LoadAbility(7,68);
+               Tech_LoadAbility(8,78);
+               Tech_LoadAbility(9,84);
+               Tech_LoadAbility(10,103);
+               tempspell[11].idx=0;
+          }
+     }
+     else if(!strcmp(c,"Knight")) {
+          if(l<21) {
+               Tech_LoadAbility(1,10);
+               Tech_LoadAbility(2,18);
+               Tech_LoadAbility(3,40);
+               Tech_LoadAbility(4,45);
+               Tech_LoadAbility(5,46);
+               Tech_LoadAbility(6,61);
+               Tech_LoadAbility(7,67);
+               Tech_LoadAbility(8,73);
+               Tech_LoadAbility(9,103);
+               Tech_LoadAbility(10,111);
+               tempspell[11].idx=0;
+          }
+     }
+     else if(!strcmp(c,"Rogue")) {
+          if(l<21) {
+               Tech_LoadAbility(1,10);
+               Tech_LoadAbility(2,23);
+               Tech_LoadAbility(3,32);
+               Tech_LoadAbility(4,35);
+               Tech_LoadAbility(5,42);
+               Tech_LoadAbility(6,44);
+               Tech_LoadAbility(7,54);
+               Tech_LoadAbility(8,55);
+               Tech_LoadAbility(9,74);
+               Tech_LoadAbility(10,75);
+               tempspell[11].idx=0;
+          }
+     }
+     else if(!strcmp(c,"Adept")) {
+          if(l<21) {
+               Tech_LoadAbility(1,1);
+               Tech_LoadAbility(2,10);
+               Tech_LoadAbility(3,16);
+               Tech_LoadAbility(4,22);
+               Tech_LoadAbility(5,38);
+               Tech_LoadAbility(6,45);
+               Tech_LoadAbility(7,46);
+               Tech_LoadAbility(8,65);
+               Tech_LoadAbility(9,107);
+               Tech_LoadAbility(10,116);
+               tempspell[11].idx=0;
+          }
+     }
+     else if(!strcmp(c,"Cleric")) {
+          if(l<21) {
+               Tech_LoadAbility(1,1);
+               Tech_LoadAbility(2,10);
+               Tech_LoadAbility(3,32);
+               Tech_LoadAbility(4,38);
+               Tech_LoadAbility(5,40);
+               Tech_LoadAbility(6,45);
+               Tech_LoadAbility(7,85);
+               Tech_LoadAbility(8,87);
+               Tech_LoadAbility(9,103);
+               Tech_LoadAbility(10,116);
+               tempspell[11].idx=0;
+          }
+     }
+     else if(!strcmp(c,"Wizard")) {
+          if(l<21) {
+               Tech_LoadAbility(1,1);
+               Tech_LoadAbility(2,10);
+               Tech_LoadAbility(3,22);
+               Tech_LoadAbility(4,38);
+               Tech_LoadAbility(5,42);
+               Tech_LoadAbility(6,46);
+               Tech_LoadAbility(7,57);
+               Tech_LoadAbility(8,73);
+               Tech_LoadAbility(9,93);
+               Tech_LoadAbility(10,116);
+               tempspell[11].idx=0;
+          }
+     }
+}
+
+void CreateCharacter(int h, string r) {
+     int g,i,j,s,x,y;
+     int b_st,b_vt,b_ag,b_ws,b_ps,b_wl;
+     int intro;
+
+     if(!len(hero[h].name)) {
+          hero[h].name=" ";
+          hero[h].class="Gladiator";
+          hero[h].level=1; hero[h].next=1000;
+          hero[h].hpgain=5;   hero[h].mpgain=4;
+          hero[h].race=r;
+          Hero_SetBaseStatistics(h,r);
+          hero[h].stats[0]+=hero[h].level;
+          hero[h].maxhp=hero[h].stats[1]+(hero[h].stats[1]*hero[h].level/hero[h].hpgain);
+          hero[h].maxmp=hero[h].stats[0]+(hero[h].stats[0]*hero[h].level/hero[h].mpgain);
+          hero[h].curhp=hero[h].maxhp; hero[h].curmp=hero[h].maxmp;
+          Hero_SetBaseProficiencies(h,"Gladiator");
+          hero[h].statpnt=3;
+          hero[h].chrimg=GetHeroChr(hero[h].race,hero[h].gender,0);
+          Hero_EarnExp(h,lorexp);
+          UI_CharGenBoxes(h);
+          s=3; j=-1;
+     }
+     else {
+          UI_CharGenBoxes(h);
+          j=2; intro=1;
+          s=hero[h].statpnt;
+          x=GetClassIndex(hero[h].class);
+          TBlit(j/5*158+150,j-2%3*61+24,cur_ptrl,sprite.image[chargensprite+3]);
+     }
+
+
+     while(j<15) {
+          Render();
+          ShowPage();
+          if(j<0) {
+               if(up || down) {
+                    Unpress(5); Unpress(6);
+                    if(hero[h].gender==1) {
+                         PlaySound(sfx_click,volume);
+                         hero[h].gender=2;
+                    }
+                    else if(hero[h].gender==2) {
+                         PlaySound(sfx_click,volume);
+                         hero[h].gender=1;
+                    }
+                    hero[h].chrimg=GetHeroChr(hero[h].race,hero[h].gender,g);
+                    UI_HeroDetail(h,chargensprite+5);
+               }
+               else if(left) {
+                    Unpress(7);
+                    PlaySound(sfx_click,100);
+                    g--;
+                    if(g<0) g=9;
+                    hero[h].chrimg=GetHeroChr(hero[h].race,hero[h].gender,g);
+                    UI_HeroDetail(h,chargensprite+5);
+               }
+               else if(right) {
+                    Unpress(8);
+                    PlaySound(sfx_click,100);
+                    g++;
+                    if(g>9) g=0;
+                    hero[h].chrimg=GetHeroChr(hero[h].race,hero[h].gender,g);
+                    UI_HeroDetail(h,chargensprite+5);
+               }
+               PrintRight(96,5,sprite.image[chargensprite+5],fontm,GetGenderName(hero[h].gender)+" Hero");
+               TBlit(88,16,cur_arrl,sprite.image[chargensprite+5]);
+               TBlit(120,16,cur_arrr,sprite.image[chargensprite+5]);
+               if(hero[h].gender==1 || hero[h].gender==2) {
+                    TBlit(102,1,cur_arru,sprite.image[chargensprite+5]);
+                    TBlit(102,37,cur_arrd,sprite.image[chargensprite+5]);
+               }
+          }
+          else if(!j) {
+               hero[h].name=ProcessKeyboardInput(left(hero[h].name,len(hero[h].name)-3),86,fontb)+"\f0|";
+               UI_HeroDetail(h,chargensprite+5);
+          }
+          else if(j==1) {
+               if(left || right) {
+                    PlaySound(sfx_click,volume);
+                    y=GetClassIndex(hero[h].class);
+                    x=y;
+                    if(left) {
+                         Unpress(7);
+                         x--;
+                         if(x<0) x=5;
+                    }
+                    else {
+                         Unpress(8);
+                         x++;
+                         if(x>5) x=0;
+                    }
+                    CharGen_ChangeClass(h,y,x);
+                    UI_HeroDetail(h,chargensprite+5);
+                    UI_HeroStatus(h,0,chargensprite+3);
+               }
+               TBlit(12,23,cur_arrl,sprite.image[chargensprite+5]);
+               TBlit(86,23,cur_arrr,sprite.image[chargensprite+5]);
+          }
+          else if(j<8) {
+               y=0;
+               if(up) {
+                    PlaySound(sfx_click,volume);
+                    Unpress(5);
+                    j--; y=1;
+                    if(j==1) j=4;
+                    else if(j==4) j=7;
+               }
+               else if(down) {
+                    PlaySound(sfx_click,volume);
+                    Unpress(6);
+                    j++; y=1;
+                    if(j==5) j=2;
+                    else if(j==8) j=5;
+               }
+               else if(left) {
+                    PlaySound(sfx_click,volume);
+                    Unpress(7);
+                    j-=3; y=1;
+                    if(j<2) j+=6;
+               }
+               else if(right) {
+                    PlaySound(sfx_click,volume);
+                    Unpress(8);
+                    j+=3; y=1;
+                    if(j>7) j-=6;
+               }
+               if(y) {
+                    UI_HeroStatus(h,0,chargensprite+3);
+                    TBlit(j/5*158+150,j-2%3*61+25,cur_ptrl,sprite.image[chargensprite+3]);
+               }
+          }
+          else if(j<14) {
+               y=0;
+               if(up && hero[h].statpnt && hero[h].stats[j-8]<Race_GetMaximumStat(hero[h].race,j-8)) {
+                    PlaySound(sfx_click,volume);
+                    Unpress(5);
+                    hero[h].stats[j-8]++;
+                    hero[h].statpnt--;
+                    switch(j) {
+                         case 8:   b_st++;
+                         case 9:   b_vt++;
+                         case 10:  b_ag++;
+                         case 11:  b_ws++;
+                         case 12:  b_ps++;
+                         case 13:  b_wl++;
+                    }
+                    y=1;
+               }
+               else if(down) {
+                    Unpress(6);
+                    if(j==8 && b_st) {
+                         PlaySound(sfx_click,volume);
+                         b_st--; hero[h].stats[0]--;
+                         hero[h].statpnt++; y=1;
+                    }
+                    else if(j==9 && b_vt) {
+                         PlaySound(sfx_click,volume);
+                         b_vt--; hero[h].stats[1]--;
+                         hero[h].statpnt++; y=1;
+                    }
+                    else if(j==10 && b_ag) {
+                         PlaySound(sfx_click,volume);
+                         b_ag--; hero[h].stats[2]--;
+                         hero[h].statpnt++; y=1;
+                    }
+                    else if(j==11 && b_ws) {
+                         PlaySound(sfx_click,volume);
+                         b_ws--; hero[h].stats[3]--;
+                         hero[h].statpnt++; y=1;
+                    }
+                    else if(j==12 && b_ps) {
+                         PlaySound(sfx_click,volume);
+                         b_ps--; hero[h].stats[4]--;
+                         hero[h].statpnt++; y=1;
+                    }
+                    else if(j==13 && b_wl) {
+                         PlaySound(sfx_click,volume);
+                         b_wl--; hero[h].stats[5]--;
+                         hero[h].statpnt++; y=1;
+                    }
+               }
+               if(y) {
+                    hero[h].maxhp=hero[h].stats[1]+(hero[h].stats[1]*hero[h].level/hero[h].hpgain);
+                    hero[h].maxmp=hero[h].stats[x]+(hero[h].stats[x]*hero[h].level/hero[h].mpgain);
+                    hero[h].curhp=hero[h].maxhp; hero[h].curmp=hero[h].maxmp;
+                    UI_HeroDetail(h,chargensprite+5);
+                    UI_HeroStatus(h,0,chargensprite+3);
+                    TBlit(j/11*158+150,j-8%3*61+23,cur_arru,sprite.image[chargensprite+3]);
+                    TBlit(j/11*158+150,j-8%3*61+31,cur_arrd,sprite.image[chargensprite+3]);
+               }
+          }
+          else {
+               PrintCenter(275,216,sprite.image[chargensprite+3],fontb,"\f2Done!");
+               TBlit(238,221,cur_arrr,sprite.image[chargensprite+3]);
+               TBlit(302,221,cur_arrl,sprite.image[chargensprite+3]);
+          }
+          if(b1) {
+               PlaySound(sfx_beep,100);
+               Unpress(1);
+               if(j<0) {
+                    j++;
+                    hero[h].name="|";
+               }
+               else if(!j) {
+                    j++;
+                    if(len(hero[h].name)<4) j--;
+                    else hero[h].name=left(hero[h].name,len(hero[h].name)-1);
+               }
+               else if(j==1) {
+                    j++;
+                    TBlit(j/5*158+150,j-2%3*61+24,cur_ptrl,sprite.image[chargensprite+3]);
+               }
+               else if(j<8) {
+                    j+=6;
+                    UI_HeroDetail(h,chargensprite+5);
+                    UI_HeroStatus(h,0,chargensprite+3);
+                    TBlit(j/11*158+150,j-8%3*61+23,cur_arru,sprite.image[chargensprite+3]);
+                    TBlit(j/11*158+150,j-8%3*61+31,cur_arrd,sprite.image[chargensprite+3]);
+               }
+               else if(j<14) {
+                    if(!hero[h].statpnt) j=14;
+                    else j-=6;
+                    UI_HeroStatus(h,0,chargensprite+3);
+                    TBlit(j/5*158+150,j-2%3*61+24,cur_ptrl,sprite.image[chargensprite+3]);
+               }
+               else j=15;
+               UI_HeroDetail(h,chargensprite+5);
+          }
+          else if(b2) {
+               Unpress(2);
+               if(j<0) {
+                    if(recruits[0]) {
+                         PlaySound(sfx_cancel,volume);
+                         j=16;
+                    }
+               }
+               else if(!j) {
+                    PlaySound(sfx_cancel,volume);
+                    j--;
+                    hero[h].name=" ";
+               }
+               else if(j==1) {
+                    PlaySound(sfx_cancel,volume);
+                    j--;
+                    if(!j) hero[h].name=hero[h].name+"|";
+                    UI_HeroDetail(h,chargensprite+5);
+               }
+               else if(j<8 || j==14) {
+                    PlaySound(sfx_cancel,volume);
+                    hero[h].statpnt=s;
+                    hero[h].stats[0]-=b_st; b_st=0;
+                    hero[h].stats[1]-=b_vt; b_vt=0;
+                    hero[h].stats[2]-=b_ag; b_ag=0;
+                    hero[h].stats[3]-=b_ws; b_ws=0;
+                    hero[h].stats[4]-=b_ps; b_ps=0;
+                    hero[h].stats[5]-=b_wl; b_wl=0;
+                    hero[h].maxhp=hero[h].stats[1]+(hero[h].stats[1]*hero[h].level/hero[h].hpgain);
+                    hero[h].maxmp=hero[h].stats[x]+(hero[h].stats[x]*hero[h].level/hero[h].mpgain);
+                    hero[h].curhp=hero[h].maxhp; hero[h].curmp=hero[h].maxmp;
+                    UI_HeroDetail(h,chargensprite+5);
+                    UI_HeroStatus(h,0,chargensprite+3);
+                    if(j<8 && !intro) j=1;
+                    else {
+                         j=2;
+                         TBlit(j/5*158+150,j-2%3*61+24,cur_ptrl,sprite.image[chargensprite+3]);
+                    }
+               }
+               else if(j<14) {
+                    if(!hero[h].statpnt) j=14;
+                    else j-=6;
+                    UI_HeroStatus(h,0,chargensprite+3);
+                    TBlit(j/5*158+150,j-2%3*61+24,cur_ptrl,sprite.image[chargensprite+3]);
+               }
+          }
+          if(j<14) {
+               if(b_st) PrintString(112,20,sprite.image[chargensprite+3],fontb,"\f2"+str(hero[h].stats[0]));
+               if(b_vt) PrintString(112,81,sprite.image[chargensprite+3],fontb,"\f2"+str(hero[h].stats[1]));
+               if(b_ag) PrintString(112,142,sprite.image[chargensprite+3],fontb,"\f2"+str(hero[h].stats[2]));
+               if(b_ws) PrintString(270,20,sprite.image[chargensprite+3],fontb,"\f2"+str(hero[h].stats[3]));
+               if(b_ps) PrintString(270,81,sprite.image[chargensprite+3],fontb,"\f2"+str(hero[h].stats[4]));
+               if(b_wl) PrintString(270,142,sprite.image[chargensprite+3],fontb,"\f2"+str(hero[h].stats[5]));
+          }
+     }
+     UI_ClearCharGen();
+     if(j==15) {
+          Hero_SetDerivedStats(h);
+          Party_RecruitRace(GetRacialIndex(r));
+          if(!intro) {
+               if(GetClassIndex(hero[h].class)>2) {
+                    hero[h].spellslots++;
+                    hero[h].spell[0].use=1;
+               }
+               Hero_Train(h);
+          }
+     }
+     else if(j==16) Hero_Clear(h);
+     if(h>4) hostelchars++;
+}
+
+int GetClassIndex(string c) {
+     if(!strcmp(c,"Gladiator"))
+          return 0;
+     if(!strcmp(c,"Knight"))
+          return 1;
+     if(!strcmp(c,"Rogue"))
+          return 2;
+     if(!strcmp(c,"Adept"))
+          return 3;
+     if(!strcmp(c,"Cleric"))
+          return 4;
+     if(!strcmp(c,"Wizard"))
+          return 5;
+     Exit("ERROR: Invalid Class passed to GetClassIndex(): "+c);
+}
+
+string GetGenderName(int g) {
+     if(!g) return "Neuter";
+     if(g==1) return "Male";
+     if(g==2) return "Female";
+     if(g==3) return "Fay";
+     if(g==4) return "Undead";
+}
+
+string GetGenderObj(int g) {
+     if(g==1) return "him";
+     if(g==2) return "her";
+     return "it";
+}
+
+string GetGenderPos(int g) {
+     if(g==1) return "his";
+     if(g==2) return "her";
+     return "its";
+}
+
+string GetGenderSub(int g) {
+     if(g==1) return "he";
+     if(g==2) return "she";
+     return "it";
+}
+
+string GetHeroChr(string r, int g, int idx) {
+     string ch=ToLower(left(r,2));
+     if(g==1) ch=ch+"m";
+     else if(g==2) ch=ch+"f";
+     if(idx==0) ch=ch+"fight";
+     else if(idx==1) ch=ch+"thief";
+     else if(idx==2) ch=ch+"cleri";
+     else if(idx==3) ch=ch+"wizar";
+     else {
+          switch(GetRacialIndex(r)) {
+               case 0:   if(idx==4) ch=ch+"pries";
+                         else if(idx==5) ch=ch+"palad";
+                         else if(idx==6) ch=ch+"psion";
+                         else if(idx==7) ch=ch+"samur";
+                         else if(idx==8) ch=ch+"comm3";
+                         else if(idx==9 && g==1) ch=ch+"merch";
+                         else if(idx==9 && g==2) ch=ch+"comm2";
+          }
+     }
+     return ch;
+}
+
+int GetRacialIndex(string r) {
+     if(!strcmp(r,"Human"))
+          return 0;
+     if(!strcmp(r,"Elf"))
+          return 1;
+     if(!strcmp(r,"Dwarf"))
+          return 2;
+     if(!strcmp(r,"Halfling"))
+          return 3;
+     if(!strcmp(r,"Fairy"))
+          return 4;
+     if(!strcmp(r,"Lizardman"))
+          return 5;
+     if(!strcmp(r,"Orc"))
+          return 6;
+     if(!strcmp(r,"Kobold"))
+          return 7;
+     if(!strcmp(r,"Shadowkin"))
+          return 8;
+     if(!strcmp(r,"Lukosian"))
+          return 9;
+     return -1;
+}
+
+string GetRaceName(int r) {
+     if(r==0) return "Human";
+     if(r==1) return "Elf";
+     if(r==2) return "Dwarf";
+     if(r==3) return "Halfling";
+     if(r==4) return "Fairy";
+     if(r==5) return "Lizardman";
+     if(r==6) return "Orc";
+     if(r==7) return "Kobold";
+     if(r==8) return "Shadowkin";
+     if(r==9) return "Lukosian";
+     Exit("ERROR: Invalid Racial Index passed to GetRaceName()");
+}
+
+int Hero_CanEquip(int h, int eqtype) {
+     return hero[h].eqprof[eqtype];
+}
+
+void Hero_Clear(int h) {
+     int i,j;
+     if(h<4) {
+          for(i=h; i<numchars-1; i++)
+               Party_SwapHeroes(i+1,i);
+          Hero_Delete(i);
+          numchars--;
+     }
+     else if(h==4) {
+          Hero_Copy(4,1);
+          Hero_Delete(4);
+          numchars--;
+     }
+     else if(h<104) {
+          for(i=h; i<hostelchars+5; i++) {
+               Hero_Copy(i+1,1);
+               Hero_Paste(i,1);
+          }
+          Hero_Delete(i);
+          hostelchars--;
+     }
+     else if(h==104) {
+          Hero_Delete(104);
+          hostelchars--;
+     }
+     else Exit("ERROR: Invalid hero index passed to Hero_Clear()");
+}
+
+void Hero_CollapsePack(int h) {
+     int i,n;
+     for(i=0; i<hero[h].packsize-1; i++) {
+          if(!len(hero[h].backpack[i].name)) {
+               Item_Copy(h,0,i+1);
+               Item_AssignTemp(h,0,i);
+               Item_Delete(h,0,i+1);
+          }
+     }
+     for(i=0; i<hero[h].packsize; i++) {
+          if(len(hero[h].backpack[i].name))
+               n++;
+     }
+     hero[h].numitems=n;
+}
+
+void Hero_Copy(int h, int t) {
+     int i,j;
+     temphero[t].name=hero[h].name;
+     temphero[t].class=hero[h].class;
+     temphero[t].race=hero[h].race;
+     temphero[t].chrimg=hero[h].chrimg;
+     temphero[t].curhp=hero[h].curhp;
+     temphero[t].maxhp=hero[h].maxhp;
+     temphero[t].curmp=hero[h].curmp;
+     temphero[t].maxmp=hero[h].maxmp;
+     for(i=0; i<6; i++)
+          temphero[t].stats[i]=hero[h].stats[i];
+     temphero[t].hpgain=hero[h].hpgain;
+     temphero[t].mpgain=hero[h].mpgain;
+     temphero[t].ent=hero[h].ent;
+     temphero[t].story=hero[h].story;
+     temphero[t].exp=hero[h].exp;
+     temphero[t].next=hero[h].next;
+     temphero[t].level=hero[h].level;
+     temphero[t].statpnt=hero[h].statpnt;
+     temphero[t].gender=hero[h].gender;
+     temphero[t].packsize=hero[h].packsize;
+     temphero[t].numitems=hero[h].numitems;
+     temphero[t].spellslots=hero[h].spellslots;
+     temphero[t].autoaction=hero[h].autoaction;
+     for(i=0; i<10; i++)
+          temphero[t].factions[i]=hero[h].factions[i];
+     for(i=0; i<26; i++)
+          temphero[t].eqprof[i]=hero[h].eqprof[i];
+     for(i=0; i<30; i++)
+          temphero[t].questlist[i]=hero[h].questlist[i];
+     for(i=0; i<38; i++)
+          temphero[t].combatstats[i]=hero[h].combatstats[i];
+     for(i=0; i<20; i++) {
+          temphero[t].backpack[i].name=hero[h].backpack[i].name;
+          temphero[t].backpack[i].desc=hero[h].backpack[i].desc;
+          temphero[t].backpack[i].lore=hero[h].backpack[i].lore;
+          temphero[t].backpack[i].use=hero[h].backpack[i].use;
+          temphero[t].backpack[i].effect=hero[h].backpack[i].effect;
+          temphero[t].backpack[i].eqtype=hero[h].backpack[i].eqtype;
+          temphero[t].backpack[i].price=hero[h].backpack[i].price;
+          for(j=0; j<6; j++) {
+               temphero[t].backpack[i].stats[j][0]=hero[h].backpack[i].stats[j][0];
+               temphero[t].backpack[i].stats[j][1]=hero[h].backpack[i].stats[j][1];
+          }
+     }
+     for(i=0; i<5; i++) {
+          temphero[t].equip[i].name=hero[h].equip[i].name;
+          temphero[t].equip[i].desc=hero[h].equip[i].desc;
+          temphero[t].equip[i].lore=hero[h].equip[i].lore;
+          temphero[t].equip[i].use=hero[h].equip[i].use;
+          temphero[t].equip[i].effect=hero[h].equip[i].effect;
+          temphero[t].equip[i].eqtype=hero[h].equip[i].eqtype;
+          temphero[t].equip[i].price=hero[h].equip[i].price;
+          for(j=0; j<6; j++) {
+               temphero[t].equip[i].stats[j][0]=hero[h].equip[i].stats[j][0];
+               temphero[t].equip[i].stats[j][1]=hero[h].equip[i].stats[j][1];
+          }
+     }
+     for(i=0; i<5; i++) {
+          temphero[t].attack[i].name=hero[h].attack[i].name;
+          temphero[t].attack[i].desc=hero[h].attack[i].desc;
+          temphero[t].attack[i].lore=hero[h].attack[i].lore;
+          temphero[t].attack[i].idx=hero[h].attack[i].idx;
+          temphero[t].attack[i].attack=hero[h].attack[i].attack;
+          temphero[t].attack[i].accuracy=hero[h].attack[i].accuracy;
+          temphero[t].attack[i].damage=hero[h].attack[i].damage;
+          temphero[t].attack[i].power=hero[h].attack[i].power;
+          temphero[t].attack[i].effect=hero[h].attack[i].effect;
+          temphero[t].attack[i].magnitude=hero[h].attack[i].magnitude;
+     }
+     for(i=0; i<10; i++) {
+          temphero[t].ability[i].name=hero[h].ability[i].name;
+          temphero[t].ability[i].desc=hero[h].ability[i].desc;
+          temphero[t].ability[i].lore=hero[h].ability[i].lore;
+          temphero[t].ability[i].idx=hero[h].ability[i].idx;
+          temphero[t].ability[i].cost=hero[h].ability[i].cost;
+          temphero[t].ability[i].use=hero[h].ability[i].use;
+          temphero[t].ability[i].attack=hero[h].ability[i].attack;
+          temphero[t].ability[i].accuracy=hero[h].ability[i].accuracy;
+          temphero[t].ability[i].damage=hero[h].ability[i].damage;
+          temphero[t].ability[i].power=hero[h].ability[i].power;
+          temphero[t].ability[i].effect=hero[h].ability[i].effect;
+          temphero[t].ability[i].magnitude=hero[h].ability[i].magnitude;
+     }
+     for(i=0; i<10; i++) {
+          temphero[t].spell[i].name=hero[h].spell[i].name;
+          temphero[t].spell[i].desc=hero[h].spell[i].desc;
+          temphero[t].spell[i].lore=hero[h].spell[i].lore;
+          temphero[t].spell[i].idx=hero[h].spell[i].idx;
+          temphero[t].spell[i].cost=hero[h].spell[i].cost;
+          temphero[t].spell[i].use=hero[h].spell[i].use;
+          temphero[t].spell[i].type=hero[h].spell[i].type;
+          temphero[t].spell[i].req=hero[h].spell[i].req;
+          temphero[t].spell[i].school=hero[h].spell[i].school;
+          temphero[t].spell[i].attack=hero[h].spell[i].attack;
+          temphero[t].spell[i].accuracy=hero[h].spell[i].accuracy;
+          temphero[t].spell[i].damage=hero[h].spell[i].damage;
+          temphero[t].spell[i].power=hero[h].spell[i].power;
+          temphero[t].spell[i].effect=hero[h].spell[i].effect;
+          temphero[t].spell[i].magnitude=hero[h].spell[i].magnitude;
+     }
+     for(i=0; i<5; i++) {
+          temphero[t].trait[i].name=hero[h].trait[i].name;
+          temphero[t].trait[i].desc=hero[h].trait[i].desc;
+          temphero[t].trait[i].lore=hero[h].trait[i].lore;
+          temphero[t].trait[i].idx=hero[h].trait[i].idx;
+          temphero[t].trait[i].use=hero[h].trait[i].use;
+          temphero[t].trait[i].damage=hero[h].trait[i].damage;
+          temphero[t].trait[i].power=hero[h].trait[i].power;
+          temphero[t].trait[i].effect=hero[h].trait[i].effect;
+          temphero[t].trait[i].magnitude=hero[h].trait[i].magnitude;
+     }
+     for(i=0; i<10; i++) {
+          temphero[t].questlog[i].name=hero[h].questlog[i].name;
+          temphero[t].questlog[i].desc=hero[h].questlog[i].desc;
+          temphero[t].questlog[i].task=hero[h].questlog[i].task;
+          temphero[t].questlog[i].stage=hero[h].questlog[i].stage;
+          temphero[t].questlog[i].idx=hero[h].questlog[i].idx;
+          temphero[t].questlog[i].dest.name=hero[h].questlog[i].dest.name;
+          temphero[t].questlog[i].dest.x=hero[h].questlog[i].dest.x;
+          temphero[t].questlog[i].dest.y=hero[h].questlog[i].dest.y;
+     }
+}
+
+void Hero_Delete(int h) {
+     //- BE VERY CAREFUL HERE.
+     //- This will completely wipe the passed hero with no subsequent checks or updates.
+     //- Hero_Clear() is probably the function you're actually looking for.
+     int i,j;
+     if(h<5) {
+          entity.x[hero[h].ent]=0;
+          entity.y[hero[h].ent]=0;
+          entity.visible[hero[h].ent]=0;
+     }
+     hero[h].name="";
+     hero[h].class="";
+     hero[h].race="";
+     hero[h].chrimg="";
+     hero[h].curhp=0;
+     hero[h].maxhp=0;
+     hero[h].curmp=0;
+     hero[h].maxmp=0;
+     for(i=0; i<6; i++)
+          hero[h].stats[i]=0;
+     hero[h].hpgain=0;
+     hero[h].mpgain=0;
+     hero[h].story=0;
+     hero[h].ent=0;
+     hero[h].exp=0;
+     hero[h].next=0;
+     hero[h].level=0;
+     hero[h].statpnt=0;
+     hero[h].gender=0;
+     hero[h].packsize=0;
+     hero[h].numitems=0;
+     hero[h].spellslots=0;
+     hero[h].autoaction=0;
+     for(i=0; i<10; i++)
+          hero[h].factions[i]=0;
+     for(i=0; i<26; i++)
+          hero[h].eqprof[i]=0;
+     for(i=0; i<30; i++)
+          hero[h].questlist[i]=0;
+     for(i=0; i<38; i++)
+          hero[h].combatstats[i]=0;
+     for(i=0; i<20; i++) {
+          hero[h].backpack[i].name="";
+          hero[h].backpack[i].desc="";
+          hero[h].backpack[i].lore="";
+          hero[h].backpack[i].use=0;
+          hero[h].backpack[i].effect=0;
+          hero[h].backpack[i].eqtype=0;
+          hero[h].backpack[i].price=0;
+          for(j=0; j<6; j++) {
+               hero[h].backpack[i].stats[j][0]=0;
+               hero[h].backpack[i].stats[j][1]=0;
+          }
+     }
+     for(i=0; i<5; i++) {
+          hero[h].equip[i].name="";
+          hero[h].equip[i].desc="";
+          hero[h].equip[i].lore="";
+          hero[h].equip[i].use=0;
+          hero[h].equip[i].effect=0;
+          hero[h].equip[i].eqtype=0;
+          hero[h].equip[i].price=0;
+          for(j=0; j<6; j++) {
+               hero[h].equip[i].stats[j][0]=0;
+               hero[h].equip[i].stats[j][1]=0;
+          }
+     }
+     for(i=0; i<5; i++) {
+          hero[h].attack[i].name="";
+          hero[h].attack[i].desc="";
+          hero[h].attack[i].lore="";
+          hero[h].attack[i].idx=0;
+          hero[h].attack[i].cost=0;
+          hero[h].attack[i].use=0;
+          hero[h].attack[i].type=0;
+          hero[h].attack[i].req=0;
+          hero[h].attack[i].school=0;
+          hero[h].attack[i].attack=0;
+          hero[h].attack[i].accuracy=0;
+          hero[h].attack[i].damage=0;
+          hero[h].attack[i].power=0;
+          hero[h].attack[i].effect=0;
+          hero[h].attack[i].magnitude=0;
+     }
+     for(i=0; i<10; i++) {
+          hero[h].ability[i].name="";
+          hero[h].ability[i].desc="";
+          hero[h].ability[i].lore="";
+          hero[h].ability[i].idx=0;
+          hero[h].ability[i].cost=0;
+          hero[h].ability[i].use=0;
+          hero[h].ability[i].type=0;
+          hero[h].ability[i].req=0;
+          hero[h].ability[i].school=0;
+          hero[h].ability[i].attack=0;
+          hero[h].ability[i].accuracy=0;
+          hero[h].ability[i].damage=0;
+          hero[h].ability[i].power=0;
+          hero[h].ability[i].effect=0;
+          hero[h].ability[i].magnitude=0;
+     }
+     for(i=0; i<10; i++) {
+          hero[h].spell[i].name="";
+          hero[h].spell[i].desc="";
+          hero[h].spell[i].lore="";
+          hero[h].spell[i].idx=0;
+          hero[h].spell[i].cost=0;
+          hero[h].spell[i].use=0;
+          hero[h].spell[i].type=0;
+          hero[h].spell[i].req=0;
+          hero[h].spell[i].school=0;
+          hero[h].spell[i].attack=0;
+          hero[h].spell[i].accuracy=0;
+          hero[h].spell[i].damage=0;
+          hero[h].spell[i].power=0;
+          hero[h].spell[i].effect=0;
+          hero[h].spell[i].magnitude=0;
+     }
+     for(i=0; i<5; i++) {
+          hero[h].trait[i].name="";
+          hero[h].trait[i].desc="";
+          hero[h].trait[i].lore="";
+          hero[h].trait[i].idx=0;
+          hero[h].trait[i].cost=0;
+          hero[h].trait[i].use=0;
+          hero[h].trait[i].type=0;
+          hero[h].trait[i].req=0;
+          hero[h].trait[i].school=0;
+          hero[h].trait[i].attack=0;
+          hero[h].trait[i].accuracy=0;
+          hero[h].trait[i].damage=0;
+          hero[h].trait[i].power=0;
+          hero[h].trait[i].effect=0;
+          hero[h].trait[i].magnitude=0;
+     }
+     for(i=0; i<10; i++) {
+          hero[h].questlog[i].name="";
+          hero[h].questlog[i].desc="";
+          hero[h].questlog[i].task="";
+          hero[h].questlog[i].stage=0;
+          hero[h].questlog[i].idx=0;
+          hero[h].questlog[i].dest.name="";
+          hero[h].questlog[i].dest.x=0;
+          hero[h].questlog[i].dest.y=0;
+     }
+}
+
+int Hero_EarnExp(int h, int exp) {
+     int hp,mp;
+     if(!hero[h].next) return 0;
+     hero[h].exp+=exp;
+     if(hero[h].exp>=hero[h].next) {
+          if(hero[h].level==maxlevel) {
+               hero[h].exp=hero[h].next;
+               if(!firstmaxedlevel && hero[h].level<10)
+                    firstmaxedlevel=1;
+          }
+          else {
+               while(hero[h].exp>=hero[h].next && hero[h].level<maxlevel) {
+                    hero[h].level++;
+                    hero[h].next+=hero[h].level*1000;
+                    hero[h].statpnt+=3;
+                    if(hero[h].stats[Race_GetStatForLevel(hero[h].race,hero[h].level)]<Race_GetMaximumStat(hero[h].race,Race_GetStatForLevel(hero[h].race,hero[h].level)))
+                         hero[h].stats[Race_GetStatForLevel(hero[h].race,hero[h].level)]++;
+                    else hero[h].statpnt++;
+                    if(hero[h].stats[GetClassIndex(hero[h].class)]<Race_GetMaximumStat(hero[h].race,GetClassIndex(hero[h].class)))
+                         hero[h].stats[GetClassIndex(hero[h].class)]++;
+                    else hero[h].statpnt++;
+                    if(hero[h].level%10==0)
+                         hero[h].retrain++;
+                    if(hero[h].level%10==1 && GetClassIndex(hero[h].class)>2) {
+                         hero[h].spell[hero[h].spellslots].use=1;
+                         hero[h].spellslots++;
+                    }
+                    if(hero[h].level%10==5) {
+                         hero[h].spell[hero[h].spellslots].use=1;
+                         hero[h].spellslots++;
+                    }
+                    hp=hero[h].maxhp; mp=hero[h].maxmp;
+                    Hero_SetDerivedStats(h);
+                    hero[h].curhp+=hero[h].maxhp-hp;
+                    fighter[h].curhp+=hero[h].maxhp-hp;
+                    hero[h].curmp+=hero[h].maxmp-mp;
+                    fighter[h].curmp+=hero[h].maxmp-mp;
+               }
+               if(hero[h].exp>=hero[h].next)
+                    hero[h].exp=hero[h].next;
+               return 1;
+          }
+     }
+     return 0;
+}
+
+void Hero_ForgetSpell(int h, int slot) {
+     hero[h].spell[slot].idx=0;
+     hero[h].spell[slot].name="";
+     hero[h].spell[slot].desc="";
+     hero[h].spell[slot].type=0;
+     hero[h].spell[slot].req=0;
+     hero[h].spell[slot].school=0;
+     hero[h].spell[slot].use=1;
+     hero[h].spell[slot].attack=0;
+     hero[h].spell[slot].accuracy=0;
+     hero[h].spell[slot].damage=0;
+     hero[h].spell[slot].power=0;
+     hero[h].spell[slot].effect=0;
+     hero[h].spell[slot].magnitude=0;
+     hero[h].spell[slot].cost=0;
+     hero[h].spell[slot].lore="";
+}
+
+int Hero_GetStrongestArmor(int h) {
+     int i;
+     for(i=16; i<20; i++) {
+          if(!hero[h].eqprof[i])
+               return i;
+     }
+     return 20;
+}
+
+int Hero_GetStrongestShield(int h) {
+     int i;
+     for(i=21; i<26; i++) {
+          if(!hero[h].eqprof[i])
+               return i;
+     }
+     return 26;
+}
+
+int Hero_HasAbility(int h, string a) {
+     int i;
+     for(i=0; i<10; i++) {
+          if(!strcmp(hero[h].ability[i].name,a))
+               return 1;
+     }
+     return 0;
+}
+
+int Hero_HasSpellSchool(int h, int s) {
+     if(s>12 && GetClassIndex(hero[h].class)+13==s)
+          return 1;
+     return 0;
+}
+
+int Hero_HasTrait(int h, string t) {
+     int i;
+     for(i=0; i<5; i++) {
+          if(!strcmp(hero[h].trait[i].name,t))
+               return 1;
+     }
+     return 0;
+}
+
+int Hero_HateMod(int h) {
+     switch(GetClassIndex(hero[h].class)) {
+          case 0:   return hero[h].level/2;
+          case 1:   return hero[h].level;
+          case 2:   return hero[h].level/3;
+          case 3:   return hero[h].level/4;
+          case 4:   return hero[h].level/3;
+          case 5:   return hero[h].level/5;
+     }
+}
+
+void Hero_LearnAbility(int h, int idx) {
+//- WARNING: This will shatter if called when a hero already knows 10 abilities.
+     int a;
+     int f=FileOpen("system\\ability.dat",FILE_READ);
+     while(hero[h].ability[a].idx) a++;
+     FileSeekPos(f,idx-1*128,SEEK_SET);
+     hero[h].ability[a].idx=idx;
+     hero[h].ability[a].name=FileReadString(f);
+     hero[h].ability[a].desc=FileReadString(f);
+     hero[h].ability[a].use=FileReadQuad(f);
+     hero[h].ability[a].attack=FileReadQuad(f);
+     hero[h].ability[a].accuracy=FileReadQuad(f);
+     hero[h].ability[a].damage=FileReadQuad(f);
+     hero[h].ability[a].power=FileReadQuad(f);
+     hero[h].ability[a].effect=FileReadQuad(f);
+     hero[h].ability[a].magnitude=FileReadQuad(f);
+     hero[h].ability[a].cost=FileReadQuad(f);
+     hero[h].ability[a].lore=FileReadString(f);
+     FileClose(f);
+     if(!strcmp(hero[h].class,"Wizard"))
+          hero[h].ability[a].cost-=hero[h].ability[a].cost/5;
+     switch(idx) {
+          case 1:   hero[h].eqprof[13]=1;
+          case 27:  hero[h].eqprof[7]=1;
+          case 32:  hero[h].eqprof[12]=1;
+          case 35:  hero[h].eqprof[10]=1;
+          case 40:  hero[h].eqprof[Hero_GetStrongestArmor(h)]=1;
+          case 49:  hero[h].eqprof[8]=1;
+          case 66:  hero[h].eqprof[13]=1;
+          case 68:  hero[h].eqprof[11]=1;
+          case 69:  hero[h].mpgain-=5;
+                    Hero_SetDerivedStats(h);
+                    hero[h].curmp=hero[h].maxmp;
+          case 82:  hero[h].eqprof[10]=1;
+          case 92:  hero[h].eqprof[Hero_GetStrongestShield(h)]=1;
+          case 102: hero[h].eqprof[12]=1;
+          case 111: hero[h].hpgain-=2;
+                    Hero_SetDerivedStats(h);
+                    hero[h].curhp=hero[h].maxhp;
+          case 116: hero[h].eqprof[14]=1;
+     }
+}
+
+void Hero_LearnAttack(int h, int idx) {
+//- WARNING: This will shatter if called when a hero already knows 5 attacks.
+     int a;
+     int f=FileOpen("system\\attack.dat",FILE_READ);
+     while(hero[h].attack[a].idx) a++;
+     FileSeekPos(f,FindAttackPos(idx),SEEK_SET);
+     hero[h].attack[a].idx=idx;
+     hero[h].attack[a].name=FileReadString(f);
+     hero[h].attack[a].desc=FileReadString(f);
+     hero[h].attack[a].use=FileReadQuad(f);
+     hero[h].attack[a].attack=FileReadQuad(f);
+     hero[h].attack[a].accuracy=FileReadQuad(f);
+     hero[h].attack[a].damage=FileReadQuad(f);
+     hero[h].attack[a].power=FileReadQuad(f);
+     hero[h].attack[a].effect=FileReadQuad(f);
+     hero[h].attack[a].magnitude=FileReadQuad(f);
+     hero[h].attack[a].lore=FileReadString(f);
+     FileClose(f);
+}
+
+void Hero_LearnSpell(int h, int idx, int slot) {
+     int f=FileOpen("system\\spell.dat",FILE_READ);
+     FileSeekPos(f,idx-1*128,SEEK_SET);
+     hero[h].spell[slot].idx=idx;
+     hero[h].spell[slot].name=FileReadString(f);
+     FileSeekPos(f,idx-1*128+17,SEEK_SET);
+     hero[h].spell[slot].desc=FileReadString(f);
+     FileSeekPos(f,idx-1*128+50,SEEK_SET);
+     hero[h].spell[slot].type=FileReadQuad(f);
+     hero[h].spell[slot].req=FileReadQuad(f);
+     hero[h].spell[slot].school=FileReadQuad(f);
+     hero[h].spell[slot].use=FileReadQuad(f);
+     hero[h].spell[slot].attack=FileReadQuad(f);
+     hero[h].spell[slot].accuracy=FileReadQuad(f);
+     hero[h].spell[slot].damage=FileReadQuad(f);
+     hero[h].spell[slot].power=FileReadQuad(f);
+     hero[h].spell[slot].effect=FileReadQuad(f);
+     hero[h].spell[slot].magnitude=FileReadQuad(f);
+     hero[h].spell[slot].cost=FileReadQuad(f);
+     hero[h].spell[slot].lore=FileReadString(f);
+     FileClose(f);
+     if(!strcmp(hero[h].class,"Wizard"))
+          hero[h].spell[slot].cost-=hero[h].spell[slot].cost/5;
+}
+
+int Hero_PackSpace(int h) {
+     if(h<0) return 0;
+     return hero[h].packsize-hero[h].numitems;
+}
+
+void Hero_Paste(int h, int t) {
+     int i,j;
+     hero[h].name=temphero[t].name;
+     hero[h].class=temphero[t].class;
+     hero[h].race=temphero[t].race;
+     hero[h].chrimg=temphero[t].chrimg;
+     hero[h].curhp=temphero[t].curhp;
+     hero[h].maxhp=temphero[t].maxhp;
+     hero[h].curmp=temphero[t].curmp;
+     hero[h].maxmp=temphero[t].maxmp;
+     for(i=0; i<6; i++)
+          hero[h].stats[i]=temphero[t].stats[i];
+     hero[h].hpgain=temphero[t].hpgain;
+     hero[h].mpgain=temphero[t].mpgain;
+     hero[h].story=temphero[t].story;
+     hero[h].ent=temphero[t].ent;
+     hero[h].exp=temphero[t].exp;
+     hero[h].next=temphero[t].next;
+     hero[h].level=temphero[t].level;
+     hero[h].statpnt=temphero[t].statpnt;
+     hero[h].gender=temphero[t].gender;
+     hero[h].packsize=temphero[t].packsize;
+     hero[h].numitems=temphero[t].numitems;
+     hero[h].spellslots=temphero[t].spellslots;
+     hero[h].autoaction=temphero[t].autoaction;
+     for(i=0; i<10; i++)
+          hero[h].factions[i]=temphero[t].factions[i];
+     for(i=0; i<26; i++)
+          hero[h].eqprof[i]=temphero[t].eqprof[i];
+     for(i=0; i<30; i++)
+          hero[h].questlist[i]=temphero[t].questlist[i];
+     for(i=0; i<38; i++)
+          hero[h].combatstats[i]=temphero[t].combatstats[i];
+     for(i=0; i<20; i++) {
+          hero[h].backpack[i].name=temphero[t].backpack[i].name;
+          hero[h].backpack[i].desc=temphero[t].backpack[i].desc;
+          hero[h].backpack[i].lore=temphero[t].backpack[i].lore;
+          hero[h].backpack[i].use=temphero[t].backpack[i].use;
+          hero[h].backpack[i].effect=temphero[t].backpack[i].effect;
+          hero[h].backpack[i].eqtype=temphero[t].backpack[i].eqtype;
+          hero[h].backpack[i].price=temphero[t].backpack[i].price;
+          for(j=0; j<6; j++) {
+               hero[h].backpack[i].stats[j][0]=temphero[t].backpack[i].stats[j][0];
+               hero[h].backpack[i].stats[j][1]=temphero[t].backpack[i].stats[j][1];
+          }
+     }
+     for(i=0; i<5; i++) {
+          hero[h].equip[i].name=temphero[t].equip[i].name;
+          hero[h].equip[i].desc=temphero[t].equip[i].desc;
+          hero[h].equip[i].lore=temphero[t].equip[i].lore;
+          hero[h].equip[i].use=temphero[t].equip[i].use;
+          hero[h].equip[i].effect=temphero[t].equip[i].effect;
+          hero[h].equip[i].eqtype=temphero[t].equip[i].eqtype;
+          hero[h].equip[i].price=temphero[t].equip[i].price;
+          for(j=0; j<6; j++) {
+               hero[h].equip[i].stats[j][0]=temphero[t].equip[i].stats[j][0];
+               hero[h].equip[i].stats[j][1]=temphero[t].equip[i].stats[j][1];
+          }
+     }
+     for(i=0; i<5; i++) {
+          hero[h].attack[i].name=temphero[t].attack[i].name;
+          hero[h].attack[i].desc=temphero[t].attack[i].desc;
+          hero[h].attack[i].lore=temphero[t].attack[i].lore;
+          hero[h].attack[i].idx=temphero[t].attack[i].idx;
+          hero[h].attack[i].attack=temphero[t].attack[i].attack;
+          hero[h].attack[i].accuracy=temphero[t].attack[i].accuracy;
+          hero[h].attack[i].damage=temphero[t].attack[i].damage;
+          hero[h].attack[i].power=temphero[t].attack[i].power;
+          hero[h].attack[i].effect=temphero[t].attack[i].effect;
+          hero[h].attack[i].magnitude=temphero[t].attack[i].magnitude;
+     }
+     for(i=0; i<10; i++) {
+          hero[h].ability[i].name=temphero[t].ability[i].name;
+          hero[h].ability[i].desc=temphero[t].ability[i].desc;
+          hero[h].ability[i].lore=temphero[t].ability[i].lore;
+          hero[h].ability[i].idx=temphero[t].ability[i].idx;
+          hero[h].ability[i].cost=temphero[t].ability[i].cost;
+          hero[h].ability[i].use=temphero[t].ability[i].use;
+          hero[h].ability[i].attack=temphero[t].ability[i].attack;
+          hero[h].ability[i].accuracy=temphero[t].ability[i].accuracy;
+          hero[h].ability[i].damage=temphero[t].ability[i].damage;
+          hero[h].ability[i].power=temphero[t].ability[i].power;
+          hero[h].ability[i].effect=temphero[t].ability[i].effect;
+          hero[h].ability[i].magnitude=temphero[t].ability[i].magnitude;
+     }
+     for(i=0; i<10; i++) {
+          hero[h].spell[i].name=temphero[t].spell[i].name;
+          hero[h].spell[i].desc=temphero[t].spell[i].desc;
+          hero[h].spell[i].lore=temphero[t].spell[i].lore;
+          hero[h].spell[i].idx=temphero[t].spell[i].idx;
+          hero[h].spell[i].cost=temphero[t].spell[i].cost;
+          hero[h].spell[i].use=temphero[t].spell[i].use;
+          hero[h].spell[i].type=temphero[t].spell[i].type;
+          hero[h].spell[i].req=temphero[t].spell[i].req;
+          hero[h].spell[i].school=temphero[t].spell[i].school;
+          hero[h].spell[i].attack=temphero[t].spell[i].attack;
+          hero[h].spell[i].accuracy=temphero[t].spell[i].accuracy;
+          hero[h].spell[i].damage=temphero[t].spell[i].damage;
+          hero[h].spell[i].power=temphero[t].spell[i].power;
+          hero[h].spell[i].effect=temphero[t].spell[i].effect;
+          hero[h].spell[i].magnitude=temphero[t].spell[i].magnitude;
+     }
+     for(i=0; i<5; i++) {
+          hero[h].trait[i].name=temphero[t].trait[i].name;
+          hero[h].trait[i].desc=temphero[t].trait[i].desc;
+          hero[h].trait[i].lore=temphero[t].trait[i].lore;
+          hero[h].trait[i].idx=temphero[t].trait[i].idx;
+          hero[h].trait[i].use=temphero[t].trait[i].use;
+          hero[h].trait[i].damage=temphero[t].trait[i].damage;
+          hero[h].trait[i].power=temphero[t].trait[i].power;
+          hero[h].trait[i].effect=temphero[t].trait[i].effect;
+          hero[h].trait[i].magnitude=temphero[t].trait[i].magnitude;
+     }
+     for(i=0; i<10; i++) {
+          hero[h].questlog[i].name=temphero[t].questlog[i].name;
+          hero[h].questlog[i].desc=temphero[t].questlog[i].desc;
+          hero[h].questlog[i].task=temphero[t].questlog[i].task;
+          hero[h].questlog[i].stage=temphero[t].questlog[i].stage;
+          hero[h].questlog[i].idx=temphero[t].questlog[i].idx;
+          hero[h].questlog[i].dest.name=temphero[t].questlog[i].dest.name;
+          hero[h].questlog[i].dest.x=temphero[t].questlog[i].dest.x;
+          hero[h].questlog[i].dest.y=temphero[t].questlog[i].dest.y;
+     }
+}
+
+void Hero_ReadFromFile(int h, int f) {
+     int i,j;
+     temphero[0].name=FileReadString(f);
+     temphero[0].class=FileReadString(f);
+     temphero[0].race=FileReadString(f);
+     temphero[0].chrimg=FileReadString(f);
+     temphero[0].curhp=FileReadQuad(f);
+     temphero[0].maxhp=FileReadQuad(f);
+     temphero[0].curmp=FileReadQuad(f);
+     temphero[0].maxmp=FileReadQuad(f);
+     for(i=0; i<6; i++)
+          temphero[0].stats[i]=FileReadQuad(f);
+     temphero[0].hpgain=FileReadQuad(f);
+     temphero[0].mpgain=FileReadQuad(f);
+     temphero[0].story=FileReadQuad(f);
+     temphero[0].ent=FileReadQuad(f);
+     temphero[0].exp=FileReadQuad(f);
+     temphero[0].next=FileReadQuad(f);
+     temphero[0].level=FileReadQuad(f);
+     temphero[0].statpnt=FileReadQuad(f);
+     temphero[0].gender=FileReadQuad(f);
+     temphero[0].packsize=FileReadQuad(f);
+     temphero[0].numitems=FileReadQuad(f);
+     temphero[0].spellslots=FileReadQuad(f);
+     temphero[0].autoaction=0;
+     for(i=0; i<10; i++)
+          temphero[0].factions[i]=FileReadQuad(f);
+     for(i=0; i<26; i++)
+          temphero[0].eqprof[i]=FileReadQuad(f);
+     for(i=0; i<30; i++)
+          temphero[0].questlist[i]=FileReadQuad(f);
+     for(i=0; i<38; i++)
+          temphero[0].combatstats[i]=FileReadQuad(f);
+     for(i=0; i<20; i++) {
+          temphero[0].backpack[i].name=FileReadString(f);
+          temphero[0].backpack[i].desc=FileReadString(f);
+          temphero[0].backpack[i].lore=FileReadString(f);
+          temphero[0].backpack[i].use=FileReadQuad(f);
+          temphero[0].backpack[i].effect=FileReadQuad(f);
+          temphero[0].backpack[i].eqtype=FileReadQuad(f);
+          temphero[0].backpack[i].price=FileReadQuad(f);
+          for(j=0; j<6; j++) {
+               temphero[0].backpack[i].stats[j][0]=FileReadQuad(f);
+               temphero[0].backpack[i].stats[j][1]=FileReadQuad(f);
+          }
+     }
+     for(i=0; i<5; i++) {
+          temphero[0].equip[i].name=FileReadString(f);
+          temphero[0].equip[i].desc=FileReadString(f);
+          temphero[0].equip[i].lore=FileReadString(f);
+          temphero[0].equip[i].use=FileReadQuad(f);
+          temphero[0].equip[i].effect=FileReadQuad(f);
+          temphero[0].equip[i].eqtype=FileReadQuad(f);
+          temphero[0].equip[i].price=FileReadQuad(f);
+          for(j=0; j<6; j++) {
+               temphero[0].equip[i].stats[j][0]=FileReadQuad(f);
+               temphero[0].equip[i].stats[j][1]=FileReadQuad(f);
+          }
+     }
+     for(i=0; i<5; i++) {
+          temphero[0].attack[i].name=FileReadString(f);
+          temphero[0].attack[i].desc=FileReadString(f);
+          temphero[0].attack[i].lore=FileReadString(f);
+          temphero[0].attack[i].idx=FileReadQuad(f);
+          temphero[0].attack[i].attack=FileReadQuad(f);
+          temphero[0].attack[i].accuracy=FileReadQuad(f);
+          temphero[0].attack[i].damage=FileReadQuad(f);
+          temphero[0].attack[i].power=FileReadQuad(f);
+          temphero[0].attack[i].effect=FileReadQuad(f);
+          temphero[0].attack[i].magnitude=FileReadQuad(f);
+     }
+     for(i=0; i<10; i++) {
+          temphero[0].ability[i].name=FileReadString(f);
+          temphero[0].ability[i].desc=FileReadString(f);
+          temphero[0].ability[i].lore=FileReadString(f);
+          temphero[0].ability[i].idx=FileReadQuad(f);
+          temphero[0].ability[i].cost=FileReadQuad(f);
+          temphero[0].ability[i].use=FileReadQuad(f);
+          temphero[0].ability[i].attack=FileReadQuad(f);
+          temphero[0].ability[i].accuracy=FileReadQuad(f);
+          temphero[0].ability[i].damage=FileReadQuad(f);
+          temphero[0].ability[i].power=FileReadQuad(f);
+          temphero[0].ability[i].effect=FileReadQuad(f);
+          temphero[0].ability[i].magnitude=FileReadQuad(f);
+     }
+     for(i=0; i<10; i++) {
+          temphero[0].spell[i].name=FileReadString(f);
+          temphero[0].spell[i].desc=FileReadString(f);
+          temphero[0].spell[i].lore=FileReadString(f);
+          temphero[0].spell[i].idx=FileReadQuad(f);
+          temphero[0].spell[i].cost=FileReadQuad(f);
+          temphero[0].spell[i].use=FileReadQuad(f);
+          temphero[0].spell[i].type=FileReadQuad(f);
+          temphero[0].spell[i].req=FileReadQuad(f);
+          temphero[0].spell[i].school=FileReadQuad(f);
+          temphero[0].spell[i].attack=FileReadQuad(f);
+          temphero[0].spell[i].accuracy=FileReadQuad(f);
+          temphero[0].spell[i].damage=FileReadQuad(f);
+          temphero[0].spell[i].power=FileReadQuad(f);
+          temphero[0].spell[i].effect=FileReadQuad(f);
+          temphero[0].spell[i].magnitude=FileReadQuad(f);
+     }
+     for(i=0; i<5; i++) {
+          temphero[0].trait[i].name=FileReadString(f);
+          temphero[0].trait[i].desc=FileReadString(f);
+          temphero[0].trait[i].lore=FileReadString(f);
+          temphero[0].trait[i].idx=FileReadQuad(f);
+          temphero[0].trait[i].use=FileReadQuad(f);
+          temphero[0].trait[i].damage=FileReadQuad(f);
+          temphero[0].trait[i].power=FileReadQuad(f);
+          temphero[0].trait[i].effect=FileReadQuad(f);
+          temphero[0].trait[i].magnitude=FileReadQuad(f);
+     }
+     for(i=0; i<10; i++) {
+          temphero[0].questlog[i].name=FileReadString(f);
+          temphero[0].questlog[i].desc=FileReadString(f);
+          temphero[0].questlog[i].task=FileReadString(f);
+          temphero[0].questlog[i].stage=FileReadQuad(f);
+          temphero[0].questlog[i].idx=FileReadQuad(f);
+          temphero[0].questlog[i].dest.name=FileReadString(f);
+          temphero[0].questlog[i].dest.x=FileReadQuad(f);
+          temphero[0].questlog[i].dest.y=FileReadQuad(f);
+     }
+     if(h>=0) Hero_Paste(h,0);
+}
+
+void Hero_SetBaseProficiencies(int h, string class) {
+     int f,i;
+     f=FileOpen("system\\eqidx.dat",FILE_READ);
+     FileSeekLine(f,GetClassIndex(hero[h].class));
+     for(i=0; i<26; i++) {
+          hero[h].eqprof[i]=val(FileReadToken(f));
+     }
+     FileClose(f);
+}
+
+void Hero_SetBaseStatistics(int h, string race) {
+     int i;
+     if(!strcmp(race,"Human")) {
+          for(i=0; i<6; i++)
+               hero[h].stats[i]=Race_GetBaseStat(race,i);
+          for(i=0; i<10; i++)
+               hero[h].factions[i]=Race_GetBaseFaction(race,Race_GetName(i));
+          hero[h].gender=1;
+     }
+     if(!strcmp(race,"Halfling")) {
+          for(i=0; i<6; i++)
+               hero[h].stats[i]=Race_GetBaseStat(race,i);
+          for(i=0; i<10; i++)
+               hero[h].factions[i]=Race_GetBaseFaction(race,Race_GetName(i));
+          hero[h].gender=1;
+     }
+     if(!strcmp(race,"Lukosian")) {
+          for(i=0; i<6; i++)
+               hero[h].stats[i]=Race_GetBaseStat(race,i);
+          for(i=0; i<10; i++)
+               hero[h].factions[i]=Race_GetBaseFaction(race,Race_GetName(i));
+          hero[h].gender=1;
+     }
+}
+
+void Hero_SetDerivedStats(int h) {
+     int i,j;
+     int c=GetClassIndex(hero[h].class);
+     
+     //- Calculate Maximum Health
+     hero[h].maxhp=(hero[h].stats[1]/20+hero[h].hpgain)*hero[h].level+hero[h].stats[1];
+     //- Add Body of Stone bonus check (maxhp+=maxhp*25/100)
+     if(hero[h].maxhp>999) hero[h].maxhp=999;
+     
+     //- Calculate Maximum Mana
+     hero[h].maxmp=(hero[h].stats[c]/20+hero[h].mpgain)*hero[h].level+hero[h].stats[c];
+     //- Add Ritual Fortitude bonus check (maxmp+=maxmp*25/100)
+     if(hero[h].maxmp>999) hero[h].maxmp=999;     //- Cap check should not be needed, since it's not reachable.
+     
+     //- Calculate Inventory Limit
+     hero[h].packsize=hero[h].stats[0]/10+3;
+     //- Add Pack Mule bonus check (packsize=20)
+     if(hero[h].packsize>20) hero[h].packsize=20; //- Cap check should not be needed, since it's not reachable.
+     
+     //- Calculate Damage if Unarmed
+     if(!hero[h].equip[0].eqtype) {
+          if(hero[h].eqprof[12])
+               hero[h].equip[0].stats[0][0]=hero[h].level;
+          else hero[h].equip[0].stats[0][0]=2;
+          hero[h].equip[0].stats[0][1]=2;
+          hero[h].equip[0].stats[2][0]=5;
+     }
+     /*- Calculate Off-Hand Unarmed Damage for Dual Wielding
+     if(!hero[h].equip[1].eqtype && !c) {    //- Dual Wield proficiency no longer based on class.
+          if(hero[h].eqprof[12])             //- Also, should Dual Wield work with an empty offhand?
+               hero[h].equip[1].stats[0][0]=hero[h].level;
+          else hero[h].equip[1].stats[0][0]=2;
+          hero[h].equip[1].stats[0][1]=2;
+          hero[h].equip[1].stats[2][0]=5;
+     }
+     */
+
+     //- Base Modifiers from Ability Scores
+     hero[h].combatstats[0]=hero[h].stats[0]*5;
+     hero[h].combatstats[1]=hero[h].stats[0]*5;
+     hero[h].combatstats[2]=hero[h].stats[5]*5;
+     hero[h].combatstats[3]=hero[h].stats[5]*5;
+     hero[h].combatstats[4]=hero[h].stats[4]*5;
+     hero[h].combatstats[5]=hero[h].stats[4]*5;
+     hero[h].combatstats[6]=hero[h].stats[3]*5;
+     hero[h].combatstats[7]=hero[h].stats[3]*5;
+     for(i=8; i<20; i++)
+          hero[h].combatstats[i]=0;
+     hero[h].combatstats[20]=hero[h].stats[1]*2;
+     for(i=21; i<30; i++)
+          hero[h].combatstats[i]=0;
+     hero[h].combatstats[30]=hero[h].stats[2];
+     hero[h].combatstats[31]=hero[h].stats[2];
+     hero[h].combatstats[32]=hero[h].stats[4];
+     hero[h].combatstats[33]=hero[h].stats[5];
+     hero[h].combatstats[34]=hero[h].stats[1];
+     hero[h].combatstats[35]=0;
+     hero[h].combatstats[36]=hero[h].stats[3];
+     hero[h].combatstats[37]=hero[h].stats[2]*2;
+
+     //- Standard Bonuses from Equipment
+     if(hero[h].equip[1].eqtype>14) {
+          hero[h].combatstats[30]+=hero[h].equip[1].stats[0][0]*10;
+          for(i=31; i<35; i++) hero[h].combatstats[i]+=hero[h].equip[1].stats[1][0]*10;
+     }
+     hero[h].combatstats[hero[h].equip[2].stats[0][1]+11]+=hero[h].equip[2].stats[0][0]*10;
+     hero[h].combatstats[hero[h].equip[2].stats[1][1]+11]+=hero[h].equip[2].stats[1][0]*10;
+     hero[h].combatstats[hero[h].equip[3].stats[0][1]+11]+=hero[h].equip[3].stats[0][0]*10;
+     hero[h].combatstats[hero[h].equip[3].stats[1][1]+11]+=hero[h].equip[3].stats[1][0]*10;
+     hero[h].combatstats[hero[h].equip[4].stats[0][1]+23]+=hero[h].equip[4].stats[0][0]*10;
+     for(i=0; i<5; i++) hero[h].combatstats[37]+=hero[h].equip[i].stats[2][0]*10;
+     if(hero[h].equip[1].eqtype<15) hero[h].combatstats[37]-=hero[h].equip[1].stats[2][0]*10;
+
+     //- Bonuses from Enchanted Equipment
+     for(i=0; i<5; i++) {
+          for(j=3; j<6; j++) {
+               if(hero[h].equip[i].stats[j][0])
+                    hero[h].combatstats[hero[h].equip[i].stats[j][1]]+=hero[h].equip[i].stats[j][0]*10;
+          }
+     }
+}
+
+void Hero_Train(int h) {
+     int i,x;
+     int a,t,p;
+     int baselevel=1;
+
+     //- Bug Corrections: Weapon Proficiencies
+     if(!strcmp(hero[h].class,"Knight") && !hero[h].eqprof[2]) {
+          hero[h].eqprof[2]=1; hero[h].eqprof[4]=1;
+          hero[h].eqprof[5]=0; hero[h].eqprof[7]=0;
+     }
+     else if(!strcmp(hero[h].class,"Rogue") && !hero[h].eqprof[2]) {
+          hero[h].eqprof[2]=1; hero[h].eqprof[9]=0;
+     }
+     else if(!strcmp(hero[h].class,"Adept") && hero[h].eqprof[2]) {
+          hero[h].eqprof[2]=0; hero[h].eqprof[5]=1;
+     }
+     else if(!strcmp(hero[h].class,"Cleric") && !hero[h].eqprof[2]) {
+          hero[h].eqprof[2]=1; hero[h].eqprof[3]=0;
+          hero[h].eqprof[4]=0; hero[h].eqprof[7]=1;
+          hero[h].eqprof[8]=0; hero[h].eqprof[9]=1;
+     }
+     else if(!strcmp(hero[h].class,"Wizard") && hero[h].eqprof[8]) {
+          hero[h].eqprof[8]=0; hero[h].eqprof[9]=1;
+     }
+     //- End of Bug Corrections
+
+     if(!hero[h].statpnt) return;
+
+     SetExecutionPaused(1);
+     hero[h].curhp=hero[h].maxhp;
+     hero[h].curmp=hero[h].maxmp;
+     for(i=0; i<5; i++) {
+          if(hero[h].attack[i].idx)
+               a++;
+     }
+     baselevel+=a-1*10;
+     for(i=0; i<5; i++) {
+          if(hero[h].trait[i].idx)
+               t++;
+     }
+     if(t==a)
+          baselevel+=5;
+     for(i=0; i<10; i++) {
+          if(hero[h].ability[i].idx)
+               p++;
+     }
+     if(!(p%2) && a==t)
+          baselevel+=2;
+     else if(p%2)
+          baselevel+=2;
+     if(hero[h].statpnt) CreateCharacter(h,hero[h].race);
+     while(baselevel<hero[h].level) {
+          baselevel++;
+          x=0;
+          if(baselevel%10==1) {
+               Text("Trainer","For reaching \f4Level "+str(baselevel)+"\f0, \f2"+hero[h].name+"\f0 can learn a new \f4attack\f0.");
+               UI_CharGenBoxes(h);
+               CharGen_WriteAttackDesc(h,baselevel,x);
+               Unpress(1);
+               while(!b1) {
+                    Render();
+                    ShowPage();
+                    if(up || down) {
+                         PlaySound(sfx_click,volume);
+                         Unpress(5); Unpress(6);
+                         if(!x) x=1;
+                         else x=0;
+                         CharGen_WriteAttackDesc(h,baselevel,x);
+                    }
+               }
+               Unpress(1);
+               PlaySound(sfx_beep,100);
+               Hero_LearnAttack(h,temphero[0].attack[x].idx);
+               UI_ClearCharGen();
+          }
+          else if(baselevel%10==3 || baselevel%10==8) {
+               Text("Trainer","For reaching \f4Level "+str(baselevel)+"\f0, \f2"+hero[h].name+"\f0 can learn a new \f4power\f0.");
+               UI_CharGenBoxes(h);
+               Class_LoadAbilityList(hero[h].class,baselevel);
+               RectFill(0,0,335,342,clear,sprite.image[chargensprite+3]);
+               UI_BigBox(0,7,336,336,sprite.image[chargensprite+3]);
+               i=0;
+               while(tempspell[i+1].idx) {
+                    if(Hero_HasAbility(h,tempspell[i+1].name))
+                         PrintString(25,i*24+24,sprite.image[chargensprite+3],fontb,"\f1"+tempspell[i+1].name);
+                    else PrintString(25,i*24+24,sprite.image[chargensprite+3],fontb,tempspell[i+1].name);
+                    i++;
+               }
+               Tech_LoadAbility(0,tempspell[1].idx);
+               Menu_RedrawFooter(4,h);
+               Blit(0,0,ui_tempi,sprite.image[chargensprite+1]);
+               RectFill(440,75,470,87,clear,sprite.image[chargensprite+1]);
+               Unpress(1);
+               while(!b1) {
+                    Render();
+                    RectFill(15,24,23,334,clear,sprite.image[chargensprite+3]);
+                    TBlit(16,x*24+30,cur_arrr,sprite.image[chargensprite+3]);
+                    ShowPage();
+                    if(up) {
+                         PlaySound(sfx_click,volume);
+                         Unpress(5);
+                         x--;
+                         if(x<0) x=12;
+                         while(!tempspell[x+1].idx) x--;
+                         Tech_LoadAbility(0,tempspell[x+1].idx);
+                         Menu_RedrawFooter(4,h);
+                         Blit(0,0,ui_tempi,sprite.image[chargensprite+1]);
+                         RectFill(440,75,470,87,clear,sprite.image[chargensprite+1]);
+                    }
+                    else if(down) {
+                         PlaySound(sfx_click,volume);
+                         Unpress(6);
+                         x++;
+                         if(!tempspell[x+1].idx) x=0;
+                         Tech_LoadAbility(0,tempspell[x+1].idx);
+                         Menu_RedrawFooter(4,h);
+                         Blit(0,0,ui_tempi,sprite.image[chargensprite+1]);
+                         RectFill(440,75,470,87,clear,sprite.image[chargensprite+1]);
+                    }
+                    if(b1 && Hero_HasAbility(h,tempspell[x+1].name)) {
+                         Unpress(1);
+                         b1=0;
+                    }
+               }
+               Unpress(1);
+               PlaySound(sfx_success,volume);
+               Hero_LearnAbility(h,tempspell[x+1].idx);
+               UI_ClearCharGen();
+          }
+          else if(baselevel%10==6) {
+               Text("Trainer","For reaching \f4Level "+str(baselevel)+"\f0, \f2"+hero[h].name+"\f0 can learn a new \f4trait\f0.");
+               UI_CharGenBoxes(h);
+               UI_ClearCharGen();
+          }
+     }
+     SetExecutionPaused(0);
+}
+
+void Hero_WriteToFile(int h, int f) {
+     int i,j;
+     FileWriteString(f,hero[h].name);
+     FileWriteString(f,hero[h].class);
+     FileWriteString(f,hero[h].race);
+     FileWriteString(f,hero[h].chrimg);
+     FileWriteQuad(f,hero[h].curhp);
+     FileWriteQuad(f,hero[h].maxhp);
+     FileWriteQuad(f,hero[h].curmp);
+     FileWriteQuad(f,hero[h].maxmp);
+     for(i=0; i<6; i++)
+          FileWriteQuad(f,hero[h].stats[i]);
+     FileWriteQuad(f,hero[h].hpgain);
+     FileWriteQuad(f,hero[h].mpgain);
+     FileWriteQuad(f,hero[h].story);
+     FileWriteQuad(f,hero[h].ent);
+     FileWriteQuad(f,hero[h].exp);
+     FileWriteQuad(f,hero[h].next);
+     FileWriteQuad(f,hero[h].level);
+     FileWriteQuad(f,hero[h].statpnt);
+     FileWriteQuad(f,hero[h].gender);
+     FileWriteQuad(f,hero[h].packsize);
+     FileWriteQuad(f,hero[h].numitems);
+     FileWriteQuad(f,hero[h].spellslots);
+     for(i=0; i<10; i++)
+          FileWriteQuad(f,hero[h].factions[i]);
+     for(i=0; i<26; i++)
+          FileWriteQuad(f,hero[h].eqprof[i]);
+     for(i=0; i<30; i++)
+          FileWriteQuad(f,hero[h].questlist[i]);
+     for(i=0; i<38; i++)
+          FileWriteQuad(f,hero[h].combatstats[i]);
+     for(i=0; i<20; i++) {
+          FileWriteString(f,hero[h].backpack[i].name);
+          FileWriteString(f,hero[h].backpack[i].desc);
+          FileWriteString(f,hero[h].backpack[i].lore);
+          FileWriteQuad(f,hero[h].backpack[i].use);
+          FileWriteQuad(f,hero[h].backpack[i].effect);
+          FileWriteQuad(f,hero[h].backpack[i].eqtype);
+          FileWriteQuad(f,hero[h].backpack[i].price);
+          for(j=0; j<6; j++) {
+               FileWriteQuad(f,hero[h].backpack[i].stats[j][0]);
+               FileWriteQuad(f,hero[h].backpack[i].stats[j][1]);
+          }
+     }
+     for(i=0; i<5; i++) {
+          FileWriteString(f,hero[h].equip[i].name);
+          FileWriteString(f,hero[h].equip[i].desc);
+          FileWriteString(f,hero[h].equip[i].lore);
+          FileWriteQuad(f,hero[h].equip[i].use);
+          FileWriteQuad(f,hero[h].equip[i].effect);
+          FileWriteQuad(f,hero[h].equip[i].eqtype);
+          FileWriteQuad(f,hero[h].equip[i].price);
+          for(j=0; j<6; j++) {
+               FileWriteQuad(f,hero[h].equip[i].stats[j][0]);
+               FileWriteQuad(f,hero[h].equip[i].stats[j][1]);
+          }
+     }
+     for(i=0; i<5; i++) {
+          FileWriteString(f,hero[h].attack[i].name);
+          FileWriteString(f,hero[h].attack[i].desc);
+          FileWriteString(f,hero[h].attack[i].lore);
+          FileWriteQuad(f,hero[h].attack[i].idx);
+          FileWriteQuad(f,hero[h].attack[i].attack);
+          FileWriteQuad(f,hero[h].attack[i].accuracy);
+          FileWriteQuad(f,hero[h].attack[i].damage);
+          FileWriteQuad(f,hero[h].attack[i].power);
+          FileWriteQuad(f,hero[h].attack[i].effect);
+          FileWriteQuad(f,hero[h].attack[i].magnitude);
+     }
+     for(i=0; i<10; i++) {
+          FileWriteString(f,hero[h].ability[i].name);
+          FileWriteString(f,hero[h].ability[i].desc);
+          FileWriteString(f,hero[h].ability[i].lore);
+          FileWriteQuad(f,hero[h].ability[i].idx);
+          FileWriteQuad(f,hero[h].ability[i].cost);
+          FileWriteQuad(f,hero[h].ability[i].use);
+          FileWriteQuad(f,hero[h].ability[i].attack);
+          FileWriteQuad(f,hero[h].ability[i].accuracy);
+          FileWriteQuad(f,hero[h].ability[i].damage);
+          FileWriteQuad(f,hero[h].ability[i].power);
+          FileWriteQuad(f,hero[h].ability[i].effect);
+          FileWriteQuad(f,hero[h].ability[i].magnitude);
+     }
+     for(i=0; i<10; i++) {
+          FileWriteString(f,hero[h].spell[i].name);
+          FileWriteString(f,hero[h].spell[i].desc);
+          FileWriteString(f,hero[h].spell[i].lore);
+          FileWriteQuad(f,hero[h].spell[i].idx);
+          FileWriteQuad(f,hero[h].spell[i].cost);
+          FileWriteQuad(f,hero[h].spell[i].use);
+          FileWriteQuad(f,hero[h].spell[i].type);
+          FileWriteQuad(f,hero[h].spell[i].req);
+          FileWriteQuad(f,hero[h].spell[i].school);
+          FileWriteQuad(f,hero[h].spell[i].attack);
+          FileWriteQuad(f,hero[h].spell[i].accuracy);
+          FileWriteQuad(f,hero[h].spell[i].damage);
+          FileWriteQuad(f,hero[h].spell[i].power);
+          FileWriteQuad(f,hero[h].spell[i].effect);
+          FileWriteQuad(f,hero[h].spell[i].magnitude);
+     }
+     for(i=0; i<5; i++) {
+          FileWriteString(f,hero[h].trait[i].name);
+          FileWriteString(f,hero[h].trait[i].desc);
+          FileWriteString(f,hero[h].trait[i].lore);
+          FileWriteQuad(f,hero[h].trait[i].idx);
+          FileWriteQuad(f,hero[h].trait[i].use);
+          FileWriteQuad(f,hero[h].trait[i].damage);
+          FileWriteQuad(f,hero[h].trait[i].power);
+          FileWriteQuad(f,hero[h].trait[i].effect);
+          FileWriteQuad(f,hero[h].trait[i].magnitude);
+     }
+     for(i=0; i<10; i++) {
+          FileWriteString(f,hero[h].questlog[i].name);
+          FileWriteString(f,hero[h].questlog[i].desc);
+          FileWriteString(f,hero[h].questlog[i].task);
+          FileWriteQuad(f,hero[h].questlog[i].stage);
+          FileWriteQuad(f,hero[h].questlog[i].idx);
+          FileWriteString(f,hero[h].questlog[i].dest.name);
+          FileWriteQuad(f,hero[h].questlog[i].dest.x);
+          FileWriteQuad(f,hero[h].questlog[i].dest.y);
+     }
+}
+
+int KoS() {
+     if(partyfact<4) {
+          Text("","...");
+          return 1;
+     }
+     return 0;
+}
+
+void Party_EarnGold(int g) {
+     partygold+=g;
+     if(partygold>1000000000)
+          partygold=1000000000;
+}
+
+void Party_EarnLore(int l) {
+     lorexp+=l;
+}
+
+int Party_GetAvgFaction(int f) {
+     int i,x;
+     if(f<0 || f>9) return 0;
+     for(i=0; i<numchars; i++)
+          x+=hero[i].factions[f];
+     return x/numchars;
+}
+
+int Party_GetAvgLevel() {
+     int i,x;
+     for(i=0; i<numchars; i++)
+          x+=hero[i].level;
+     return x/numchars;
+}
+
+int Party_GetHiLevel() {
+     int i,x;
+     for(i=0; i<numchars; i++) {
+          if(hero[i].level>x)
+               x=hero[i].level;
+     }
+     return x;
+}
+
+int Party_GetIndexFromName(string n) {
+     int i;
+     for(i=0; i<numchars; i++) {
+          if(!strcmp(n,hero[i].name))
+               return i;
+     }
+     return -1;
+}
+
+int Party_GetLowLevel() {
+     int i,x;
+     x=50;
+     for(i=0; i<numchars; i++) {
+          if(hero[i].level<x)
+               x=hero[i].level;
+     }
+     return x;
+}
+
+int Party_GetMostDamaged() {
+     int i,x,d;
+     for(i=0; i<numchars; i++) {
+          if(d<hero[i].maxhp-hero[i].curhp && hero[i].curhp) {
+               d=hero[i].maxhp-hero[i].curhp;
+               x=i;
+          }
+     }
+     return x;
+}
+
+string Party_GetName() {
+     if(numchars>1)
+          return "heroes";
+     else return "\f2"+hero[0].name+"\f0";
+}
+
+int Party_GetStoryHero(int s) {
+     int i;
+     for(i=0; i<numchars; i++) {
+          if(hero[i].story==s)
+               return i+1;
+     }
+     return 0;
+}
+
+string Party_GetStoryHeroName(int s) {
+     int i;
+     for(i=0; i<numchars; i++) {
+          if(hero[i].story==s)
+               return hero[i].name;
+     }
+     return "";
+}
+
+int Party_HasRace(string r) {
+     //- A dead hero from the specified race will not count as present.
+     int i;
+     for(i=0; i<numchars; i++) {
+          if(!strcmp(hero[i].race,r) && hero[i].curhp)
+               return i+1;
+     }
+     return 0;
+}
+
+int Party_NumberDead() {
+     int i,x;
+     for(i=0; i<numchars; i++) {
+          if(!hero[i].curhp)
+               x++;
+     }
+     return x;
+}
+
+int Party_PackSpace() {
+     int i,x;
+     for(i=0; i<numchars; i++)
+          x+=Hero_PackSpace(i);
+     return x;
+}
+
+int Party_RacialInsight(int chime, ... args) {
+     int h,i,done;
+     while(!done && i<args.length) {
+          h=Party_HasRace(args.string[i]);
+          if(h) {
+               HText(h-1,args.string[i+1]);
+               done=1;
+          }
+          i+=2;
+     }
+     if(!done && chime)
+          SetFadeText("Other races have additional insights about this location",1);
+     return done;
+}
+
+void Party_RacialSpeech(int idx, ... rtext) {
+     HText(idx,rtext.string[GetRacialIndex(hero[idx].race)]);
+}
+
+void Party_RecruitRace(int r) {
+     if(recruits[r]) return;
+     recruits[r]=1;
+     maxlevel+=5;
+}
+
+void Party_RedrawDetailFrames() {
+     int i;
+     for(i=0; i<numchars; i++) {
+          if(hero[i].maxhp)
+               UI_HeroDetail(i,heroframe+i);
+     }
+}
+
+void Party_SetBind() {
+}
+
+void Party_SetFairies() {
+     int i;
+     arefairies=0;
+     for(i=0; i<numchars; i++) {
+          if(!strcmp(hero[i].race,"Fairy")) {
+               arefairies=1;
+               HookEntityRender(hero[i].ent,"ForeverWalk");
+          }
+          else HookEntityRender(hero[i].ent,"");
+     }
+     if(Quest_PartyHas("Expedition to Achiela")) {
+          arefairies=1;
+          for(i=0; i<numchars; i++) {
+               if(!strcmp(hero[i].race,"Lukosian"))
+                    HookEntityRender(hero[i].ent,"ForeverWalk");
+               else HookEntityRender(hero[i].ent,"");
+          }
+     }
+}
+
+void Party_SwapHeroes(int g, int h) {
+     int x;
+     Hero_Copy(g,0);
+     Hero_Copy(h,1);
+     Hero_Paste(g,1);
+     Hero_Paste(h,0);
+     x=hero[g].ent;
+     hero[g].ent=hero[h].ent;
+     hero[h].ent=x;
+     if(h<numchars) {
+          if(hero[g].curhp)
+               ChangeCHR(hero[g].ent,"images\\chrs\\"+hero[g].chrimg+".chr");
+          else ChangeCHR(hero[g].ent,"images\\chrs\\g_"+left(hero[g].race,6)+".chr");
+     }
+     if(g<numchars) {
+          if(hero[h].curhp)
+               ChangeCHR(hero[h].ent,"images\\chrs\\"+hero[h].chrimg+".chr");
+          else ChangeCHR(hero[h].ent,"images\\chrs\\g_"+left(hero[h].race,6)+".chr");
+     }
+     Party_RedrawDetailFrames();
+     Party_SetFairies();
+}
+
+void Party_TeleportEffect() {
+     SetExecutionPaused(1);
+     PlaySound(sfx_teleport,100);
+     timer=0;
+     while(timer<32) {
+          Render();
+          CircleFill(320,240,timer*15,timer*15,RGB(0,0,Random(100,200)),sprite.image[sizedscreen]);
+          ShowPage();
+     }
+     SetExecutionPaused(0);
+}
+
+void Party_UpdateAbilities() {
+//- For those times when the design was just plain _wrong_
+     int i,j;
+     for(i=0; i<numchars; i++) {
+          j=0;
+          while(hero[i].ability[j].idx) {
+               if(hero[i].ability[j].idx==65 && hero[i].ability[j].use!=11)
+                    hero[i].ability[j].use=11;
+               j++;
+          }
+     }
+}
+
+int Race_GetBaseFaction(string r, string f) {
+     int y=Race_GetIndex(f);
+     switch(Race_GetIndex(r)) {
+          case 0:   switch(y) {    //- Human
+                         case 0:   return 7;
+                         case 1:   return 6;
+                         case 2:   return 5;
+                         case 3:   return 6;
+                         case 4:   return 4;
+                         case 5:   return 2;
+                         case 6:   return 4;
+                         case 7:   return 5;
+                         case 8:   return 0;
+                         case 9:   return 4;
+                    }
+          case 1:   switch(y) {    //- Elf
+                         case 0:   return 6;
+                         case 1:   return 7;
+                         case 2:   return 4;
+                         case 3:   return 5;
+                         case 4:   return 6;
+                         case 5:   return 2;
+                         case 6:   return 2;
+                         case 7:   return 5;
+                         case 8:   return 2;
+                         case 9:   return 4;
+                    }
+          case 2:   switch(y) {    //- Dwarf
+                         case 0:   return 6;
+                         case 1:   return 4;
+                         case 2:   return 7;
+                         case 3:   return 6;
+                         case 4:   return 5;
+                         case 5:   return 3;
+                         case 6:   return 4;
+                         case 7:   return 2;
+                         case 8:   return 3;
+                         case 9:   return 3;
+                    }
+          case 3:   switch(y) {    //- Halfling
+                         case 0:   return 6;
+                         case 1:   return 5;
+                         case 2:   return 6;
+                         case 3:   return 7;
+                         case 4:   return 4;
+                         case 5:   return 1;
+                         case 6:   return 1;
+                         case 7:   return 4;
+                         case 8:   return 3;
+                         case 9:   return 3;
+                    }
+          case 4:   switch(y) {    //- Fairy
+                         case 0:   return 4;
+                         case 1:   return 6;
+                         case 2:   return 4;
+                         case 3:   return 4;
+                         case 4:   return 7;
+                         case 5:   return 3;
+                         case 6:   return 2;
+                         case 7:   return 2;
+                         case 8:   return 1;
+                         case 9:   return 5;
+                    }
+          case 5:   switch(y) {    //- Lizardman
+                         case 0:   return 3;
+                         case 1:   return 1;
+                         case 2:   return 1;
+                         case 3:   return 1;
+                         case 4:   return 3;
+                         case 5:   return 7;
+                         case 6:   return 0;
+                         case 7:   return 5;
+                         case 8:   return 4;
+                         case 9:   return 3;
+                    }
+          case 6:   switch(y) {    //- Orc
+                         case 0:   return 4;
+                         case 1:   return 1;
+                         case 2:   return 2;
+                         case 3:   return 1;
+                         case 4:   return 2;
+                         case 5:   return 1;
+                         case 6:   return 7;
+                         case 7:   return 5;
+                         case 8:   return 4;
+                         case 9:   return 4;
+                    }
+          case 7:   switch(y) {    //- Kobold
+                         case 0:   return 5;
+                         case 1:   return 4;
+                         case 2:   return 2;
+                         case 3:   return 4;
+                         case 4:   return 1;
+                         case 5:   return 5;
+                         case 6:   return 6;
+                         case 7:   return 7;
+                         case 8:   return 4;
+                         case 9:   return 4;
+                    }
+          case 8:   switch(y) {    //- Shadowkin
+                         case 0:   return 0;
+                         case 1:   return 1;
+                         case 2:   return 3;
+                         case 3:   return 2;
+                         case 4:   return 5;
+                         case 5:   return 3;
+                         case 6:   return 2;
+                         case 7:   return 4;
+                         case 8:   return 7;
+                         case 9:   return 5;
+                    }
+          case 9:   switch(y) {    //- Lukosian
+                         case 0:   return 4;
+                         case 1:   return 4;
+                         case 2:   return 3;
+                         case 3:   return 3;
+                         case 4:   return 5;
+                         case 5:   return 3;
+                         case 6:   return 4;
+                         case 7:   return 4;
+                         case 8:   return 4;
+                         case 9:   return 7;
+                    }
+     }
+     Exit("ERROR: Invalid race name passed to Race_GetBaseFaction()");
+}
+
+int Race_GetBaseStat(string r, int s) {
+     switch(Race_GetIndex(r)) {
+          case 0:   switch(s) {    //- Human
+                         case 0:   return 30;
+                         case 1:   return 25;
+                         case 2:   return 20;
+                         case 3:   return 20;
+                         case 4:   return 50;
+                         case 5:   return  5;
+                    }
+          case 1:   switch(s) {    //- Elf
+                         case 0:   return 20;
+                         case 1:   return 20;
+                         case 2:   return 30;
+                         case 3:   return 20;
+                         case 4:   return 35;
+                         case 5:   return 25;
+                    }
+          case 2:   switch(s) {    //- Dwarf
+                         case 0:   return 35;
+                         case 1:   return 50;
+                         case 2:   return 10;
+                         case 3:   return 10;
+                         case 4:   return 30;
+                         case 5:   return 15;
+                    }
+          case 3:   switch(s) {    //- Halfling
+                         case 0:   return 15;
+                         case 1:   return  5;
+                         case 2:   return 50;
+                         case 3:   return 40;
+                         case 4:   return 20;
+                         case 5:   return 20;
+                    }
+          case 4:   switch(s) {    //- Fairy
+                         case 0:   return  5;
+                         case 1:   return 10;
+                         case 2:   return 35;
+                         case 3:   return 35;
+                         case 4:   return 15;
+                         case 5:   return 50;
+                    }
+          case 5:   switch(s) {    //- Lizardman
+                         case 0:   return 40;
+                         case 1:   return 40;
+                         case 2:   return 40;
+                         case 3:   return  5;
+                         case 4:   return 15;
+                         case 5:   return 10;
+                    }
+          case 6:   switch(s) {    //- Orc
+                         case 0:   return 50;
+                         case 1:   return 30;
+                         case 2:   return 15;
+                         case 3:   return 15;
+                         case 4:   return 10;
+                         case 5:   return 30;
+                    }
+          case 7:   switch(s) {    //- Kobold
+                         case 0:   return 25;
+                         case 1:   return 25;
+                         case 2:   return 25;
+                         case 3:   return 25;
+                         case 4:   return 25;
+                         case 5:   return 25;
+                    }
+          case 8:   switch(s) {    //- Shadowkin
+                         case 0:   return 25;
+                         case 1:   return 35;
+                         case 2:   return 25;
+                         case 3:   return 25;
+                         case 4:   return  5;
+                         case 5:   return 35;
+                    }
+          case 9:   switch(s) {    //- Lukosian
+                         case 0:   return 10;
+                         case 1:   return 10;
+                         case 2:   return  5;
+                         case 3:   return 50;
+                         case 4:   return 35;
+                         case 5:   return 40;
+                    }
+     }
+}
+
+int Race_GetIndex(string r) {
+     return GetRacialIndex(r);
+}
+
+int Race_GetMaximumStat(string r, int s) {
+     switch(GetRacialIndex(r)) {
+          case 0:   switch(s) {    //- Human
+                         case 0:   return  95;
+                         case 1:   return  85;
+                         case 2:   return  70;
+                         case 3:   return  80;
+                         case 4:   return 120;
+                         case 5:   return  50;
+                    }
+          case 1:   switch(s) {    //- Elf
+                         case 0:   return  70;
+                         case 1:   return  75;
+                         case 2:   return  95;
+                         case 3:   return  75;
+                         case 4:   return 100;
+                         case 5:   return  85;
+                    }
+          case 2:   switch(s) {    //- Dwarf
+                         case 0:   return 100;
+                         case 1:   return 120;
+                         case 2:   return  65;
+                         case 3:   return  65;
+                         case 4:   return  85;
+                         case 5:   return  65;
+                    }
+          case 3:   switch(s) {    //- Halfling
+                         case 0:   return  70;
+                         case 1:   return  50;
+                         case 2:   return 120;
+                         case 3:   return 100;
+                         case 4:   return  75;
+                         case 5:   return  85;
+                    }
+          case 4:   switch(s) {    //- Fairy
+                         case 0:   return  50;
+                         case 1:   return  65;
+                         case 2:   return 100;
+                         case 3:   return 100;
+                         case 4:   return  65;
+                         case 5:   return 120;
+                    }
+          case 5:   switch(s) {    //- Lizardman
+                         case 0:   return 100;
+                         case 1:   return 100;
+                         case 2:   return 100;
+                         case 3:   return  50;
+                         case 4:   return  85;
+                         case 5:   return  65;
+                    }
+          case 6:   switch(s) {    //- Orc
+                         case 0:   return 120;
+                         case 1:   return  90;
+                         case 2:   return  70;
+                         case 3:   return  75;
+                         case 4:   return  65;
+                         case 5:   return  80;
+                    }
+          case 7:   switch(s) {    //- Kobold
+                         case 0:   return  80;
+                         case 1:   return  80;
+                         case 2:   return  85;
+                         case 3:   return  85;
+                         case 4:   return  85;
+                         case 5:   return  85;
+                    }
+          case 8:   switch(s) {    //- Shadowkin
+                         case 0:   return  85;
+                         case 1:   return 100;
+                         case 2:   return  80;
+                         case 3:   return  85;
+                         case 4:   return  50;
+                         case 5:   return 100;
+                    }
+          case 9:   switch(s) {    //- Lukosian
+                         case 0:   return  65;
+                         case 1:   return  65;
+                         case 2:   return  50;
+                         case 3:   return 120;
+                         case 4:   return 100;
+                         case 5:   return 100;
+                    }
+     }
+}
+
+string Race_GetName(int r) {
+     return GetRaceName(r);
+}
+
+int Race_GetStatForLevel(string r, int l) {
+     l=l%10;
+     switch(GetRacialIndex(r)) {
+          case 0:   switch(l) {
+                         case 0:   return 4;
+                         case 1:   return 4;
+                         case 2:   return 4;
+                         case 3:   return 3;
+                         case 4:   return 0;
+                         case 5:   return 2;
+                         case 6:   return 4;
+                         case 7:   return 0;
+                         case 8:   return 3;
+                         case 9:   return 1;
+                    }
+          case 1:   switch(l) {
+                         case 0:   return 4;
+                         case 1:   return 4;
+                         case 2:   return 2;
+                         case 3:   return 3;
+                         case 4:   return 4;
+                         case 5:   return 2;
+                         case 6:   return 5;
+                         case 7:   return 3;
+                         case 8:   return 2;
+                         case 9:   return 5;
+                    }
+          case 2:   switch(l) {
+                         case 0:   return 1;
+                         case 1:   return 1;
+                         case 2:   return 0;
+                         case 3:   return 5;
+                         case 4:   return 1;
+                         case 5:   return 3;
+                         case 6:   return 0;
+                         case 7:   return 1;
+                         case 8:   return 4;
+                         case 9:   return 2;
+                    }
+          case 3:   switch(l) {
+                         case 0:   return 1;
+                         case 1:   return 1;
+                         case 2:   return 3;
+                         case 3:   return 2;
+                         case 4:   return 4;
+                         case 5:   return 2;
+                         case 6:   return 3;
+                         case 7:   return 2;
+                         case 8:   return 5;
+                         case 9:   return 2;
+                    }
+          case 4:   switch(l) {
+                         case 0:   return 2;
+                         case 1:   return 2;
+                         case 2:   return 3;
+                         case 3:   return 5;
+                         case 4:   return 4;
+                         case 5:   return 5;
+                         case 6:   return 3;
+                         case 7:   return 5;
+                         case 8:   return 4;
+                         case 9:   return 5;
+                    }
+          case 5:   switch(l) {
+                         case 0:   return 0;
+                         case 1:   return 0;
+                         case 2:   return 0;
+                         case 3:   return 1;
+                         case 4:   return 1;
+                         case 5:   return 1;
+                         case 6:   return 4;
+                         case 7:   return 3;
+                         case 8:   return 3;
+                         case 9:   return 3;
+                    }
+          case 6:   switch(l) {
+                         case 0:   return 0;
+                         case 1:   return 0;
+                         case 2:   return 0;
+                         case 3:   return 3;
+                         case 4:   return 1;
+                         case 5:   return 5;
+                         case 6:   return 0;
+                         case 7:   return 3;
+                         case 8:   return 1;
+                         case 9:   return 5;
+                    }
+          case 7:   switch(l) {
+                         case 0:   return 2;
+                         case 1:   return 2;
+                         case 2:   return 0;
+                         case 3:   return 1;
+                         case 4:   return 3;
+                         case 5:   return 4;
+                         case 6:   return 5;
+                         case 7:   return 0;
+                         case 8:   return 3;
+                         case 9:   return 4;
+                    }
+          case 8:   switch(l) {
+                         case 0:   return 3;
+                         case 1:   return 3;
+                         case 2:   return 5;
+                         case 3:   return 0;
+                         case 4:   return 5;
+                         case 5:   return 1;
+                         case 6:   return 3;
+                         case 7:   return 2;
+                         case 8:   return 5;
+                         case 9:   return 4;
+                    }
+          case 9:   switch(l) {
+                         case 0:   return 3;
+                         case 1:   return 3;
+                         case 2:   return 5;
+                         case 3:   return 4;
+                         case 4:   return 3;
+                         case 5:   return 1;
+                         case 6:   return 0;
+                         case 7:   return 3;
+                         case 8:   return 5;
+                         case 9:   return 4;
+                    }
+     }
+}
+
+void Tech_CopyAbility(int h, int a, int d) {
+     if(winflag) {
+          tempspell[d].name=hero[h].ability[a].name;
+          tempspell[d].desc=hero[h].ability[a].desc;
+          tempspell[d].lore=hero[h].ability[a].lore;
+          tempspell[d].idx=hero[h].ability[a].idx;
+          tempspell[d].cost=hero[h].ability[a].cost;
+          tempspell[d].use=hero[h].ability[a].use;
+          tempspell[d].attack=hero[h].ability[a].attack;
+          tempspell[d].accuracy=hero[h].ability[a].accuracy;
+          tempspell[d].damage=hero[h].ability[a].damage;
+          tempspell[d].power=hero[h].ability[a].power;
+          tempspell[d].effect=hero[h].ability[a].effect;
+          tempspell[d].magnitude=hero[h].ability[a].magnitude;
+     }
+     else {
+          tempspell[d].name=fighter[h].ability[a].name;
+          tempspell[d].desc=fighter[h].ability[a].desc;
+          tempspell[d].lore=fighter[h].ability[a].lore;
+          tempspell[d].idx=fighter[h].ability[a].idx;
+          tempspell[d].cost=fighter[h].ability[a].cost;
+          tempspell[d].use=fighter[h].ability[a].use;
+          tempspell[d].attack=fighter[h].ability[a].attack;
+          tempspell[d].accuracy=fighter[h].ability[a].accuracy;
+          tempspell[d].damage=fighter[h].ability[a].damage;
+          tempspell[d].power=fighter[h].ability[a].power;
+          tempspell[d].effect=fighter[h].ability[a].effect;
+          tempspell[d].magnitude=fighter[h].ability[a].magnitude;
+     }
+}
+
+void Tech_CopyAttack(int h, int a, int d) {
+     if(winflag) {
+          tempspell[d].name=hero[h].attack[a].name;
+          tempspell[d].desc=hero[h].attack[a].desc;
+          tempspell[d].lore=hero[h].attack[a].lore;
+          tempspell[d].idx=hero[h].attack[a].idx;
+          tempspell[d].cost=hero[h].attack[a].cost;
+          tempspell[d].use=hero[h].attack[a].use;
+          tempspell[d].attack=hero[h].attack[a].attack;
+          tempspell[d].accuracy=hero[h].attack[a].accuracy;
+          tempspell[d].damage=hero[h].attack[a].damage;
+          tempspell[d].power=hero[h].attack[a].power;
+          tempspell[d].effect=hero[h].attack[a].effect;
+          tempspell[d].magnitude=hero[h].attack[a].magnitude;
+     }
+     else {
+          tempspell[d].name=fighter[h].attack[a].name;
+          tempspell[d].desc=fighter[h].attack[a].desc;
+          tempspell[d].lore=fighter[h].attack[a].lore;
+          tempspell[d].idx=fighter[h].attack[a].idx;
+          tempspell[d].cost=fighter[h].attack[a].cost;
+          tempspell[d].use=fighter[h].attack[a].use;
+          tempspell[d].attack=fighter[h].attack[a].attack;
+          tempspell[d].accuracy=fighter[h].attack[a].accuracy;
+          tempspell[d].damage=fighter[h].attack[a].damage;
+          tempspell[d].power=fighter[h].attack[a].power;
+          tempspell[d].effect=fighter[h].attack[a].effect;
+          tempspell[d].magnitude=fighter[h].attack[a].magnitude;
+     }
+}
+
+void Tech_CopySpell(int h, int s, int d) {
+     if(winflag) {
+          tempspell[d].name=hero[h].spell[s].name;
+          tempspell[d].desc=hero[h].spell[s].desc;
+          tempspell[d].lore=hero[h].spell[s].lore;
+          tempspell[d].idx=hero[h].spell[s].idx;
+          tempspell[d].cost=hero[h].spell[s].cost;
+          tempspell[d].use=hero[h].spell[s].use;
+          tempspell[d].type=hero[h].spell[s].type;
+          tempspell[d].req=hero[h].spell[s].req;
+          tempspell[d].school=hero[h].spell[s].school;
+          tempspell[d].attack=hero[h].spell[s].attack;
+          tempspell[d].accuracy=hero[h].spell[s].accuracy;
+          tempspell[d].damage=hero[h].spell[s].damage;
+          tempspell[d].power=hero[h].spell[s].power;
+          tempspell[d].effect=hero[h].spell[s].effect;
+          tempspell[d].magnitude=hero[h].spell[s].magnitude;
+     }
+     else {
+          tempspell[d].name=fighter[h].spell[s].name;
+          tempspell[d].desc=fighter[h].spell[s].desc;
+          tempspell[d].lore=fighter[h].spell[s].lore;
+          tempspell[d].idx=fighter[h].spell[s].idx;
+          tempspell[d].cost=fighter[h].spell[s].cost;
+          tempspell[d].use=fighter[h].spell[s].use;
+          tempspell[d].type=fighter[h].spell[s].type;
+          tempspell[d].req=fighter[h].spell[s].req;
+          tempspell[d].school=fighter[h].spell[s].school;
+          tempspell[d].attack=fighter[h].spell[s].attack;
+          tempspell[d].accuracy=fighter[h].spell[s].accuracy;
+          tempspell[d].damage=fighter[h].spell[s].damage;
+          tempspell[d].power=fighter[h].spell[s].power;
+          tempspell[d].effect=fighter[h].spell[s].effect;
+          tempspell[d].magnitude=fighter[h].spell[s].magnitude;
+     }
+}
+
+string Tech_GetEffectDesc(int e) {
+     if(e<12) return "% damage bonus";
+     if(e<24) return "% resistance bonus";
+     if(e<30) return "% accuracy bonus";
+     if(e<36) return "% defense bonus";
+     if(e==36) return "% critical chance modifier";
+     if(e==37) return "% speed bonus";
+     if(e==38) return " maximum health modifier";
+     if(e==39) return " regeneration modifier";
+     if(e==40) return "% aimed accuracy bonus";
+     if(e==41) return "% evasion defense bonus";
+     if(e==42) return "% focused damage bonus";
+     if(e==43) return "% defending resist bonus";
+     if(e==44) return "% weapon damage converted";
+     if(e==45) return "% chance to guard ally";
+     if(e==46) return "% chance to block foe";
+     if(e==47) return " strength wall";
+     if(e==48) return " point damage shield";
+     if(e==49) return "% damage second attack";
+     if(e==50) return "% counterattack rate";
+     if(e==51) return "% chance of ability failure";
+     if(e==52) return "% chance of action loss";
+     if(e==53) return "% chance miss";
+     if(e==54) return "% chance to attack allies";
+     if(e==55) return "% damage increase";
+     if(e==56) return "% effectiveness reduction";
+     if(e==57) return "% concealment";
+     if(e==58) return "% hate generation modifier";
+     if(e==59) return "% of maximum health to killer";
+     if(e==60) return " health";
+     if(e==61) return " mana";
+     if(e==62) return " hate";
+     if(e==63) return " delay";
+     if(e==64) return "% activation effectiveness";
+     if(e==65) return "% base damage";
+     if(e==66) return " level pet";
+     if(e==67) return " damage storm";
+     if(e==68) return " quality locks opened";
+     if(e==69) return " quality traps disarmed";
+     if(e==70) return "% gold stolen";
+     if(e==71) return " item stolen";
+     if(e==72) return "% grand theft";
+     if(e==73) return "% of party flees";
+     if(e==74) return " health stolen";
+     if(e==75) return "% health after revival";
+     if(e==76) return " mana stolen";
+     if(e==77) return "% less hate generated";
+     if(e==78) return "% more hate generated";
+     if(e==79) return "% success rate";
+     if(e==80) return "% increase in battle spacing";
+     if(e==81) return "% overland speed increase";
+     if(e==82) return " ailment(s) removed";
+     if(e==83) return "% spoils value increase";
+     if(e==84) return "% drop rate increase";
+     if(e==85) return "% lore experience increase";
+     if(e==86) return "% group experience increase";
+     if(e==87) return " item created";
+     if(e==88) return "% chance of instant kill";
+     if(e==89) return "% damage increase";
+     if(e==90) return " strength light source";
+     if(e==101) return " point faction increase";
+     if(e==102) return "% chance of instant kill";
+     if(e==103) return "% hate reduction";
+     if(e==104) return "% speed and crit increase";
+     if(e==105) return "% resist and damage increase";
+     if(e==106) return " attacks";
+     if(e==107) return " potion created";
+     if(e==108) return " health loss and mana gain";
+     if(e==109) return "% increased encounter rate";
+     if(e==110) return " spirit contacted";
+     if(e==111) return " item converted";
+     if(e==112) return " item disenchanted";
+     if(e==113) return "% field damage reduction";
+     if(e==114) return " item enchanted";
+     if(e==115) return "% escape chance";
+     if(e==116) return " attacks";
+     if(e==117) return "% effectiveness change";
+     if(e==118) return "% accurate map";
+     if(e==119) return "% health restored";
+     if(e==120) return " strength plague";
+     if(e==121) return "% damage increase if weak";
+     if(e==122) return "% base damage";
+     if(e==123) return " beacon created or used";
+     if(e==124) return "% damage converted";
+     if(e==125) return "% damage second attack";
+     if(e==126) return "% damage second attack";
+     if(e==127) return "% health lost and restored";
+     if(e==128) return "% concealment and hate loss";
+     if(e==129) return "% damage against weak foe";
+     if(e==130) return "% extra damage to undead";
+     if(e==131) return " health and mana stolen";
+     if(e==132) return "% cost reduction";
+     if(e==133) return " item created";
+     if(e==134) return "% increase per slain ally";
+     if(e==135) return "% increased critical chance";
+     if(e==136) return "% evasion and damage increase";
+     return " ";
+}
+
+void Tech_LoadAbility(int s, int idx) {
+     int f=FileOpen("system\\ability.dat",FILE_READ);
+     FileSeekPos(f,idx-1*128,SEEK_SET);
+     tempspell[s].idx=idx;
+     tempspell[s].name=FileReadString(f);
+     tempspell[s].desc=FileReadString(f);
+     tempspell[s].use=FileReadQuad(f);
+     tempspell[s].attack=FileReadQuad(f);
+     tempspell[s].accuracy=FileReadQuad(f);
+     tempspell[s].damage=FileReadQuad(f);
+     tempspell[s].power=FileReadQuad(f);
+     tempspell[s].effect=FileReadQuad(f);
+     tempspell[s].magnitude=FileReadQuad(f);
+     tempspell[s].cost=FileReadQuad(f);
+     tempspell[s].lore=FileReadString(f);
+     FileClose(f);
+}
+
+void Tech_LoadSpell(int s, int idx) {
+     int f=FileOpen("system\\spell.dat",FILE_READ);
+     FileSeekPos(f,idx-1*128,SEEK_SET);
+     tempspell[s].idx=idx;
+     tempspell[s].name=FileReadString(f);
+     FileSeekPos(f,idx-1*128+17,SEEK_SET);
+     tempspell[s].desc=FileReadString(f);
+     FileSeekPos(f,idx-1*128+50,SEEK_SET);
+     tempspell[s].type=FileReadQuad(f);
+     tempspell[s].req=FileReadQuad(f);
+     tempspell[s].school=FileReadQuad(f);
+     tempspell[s].use=FileReadQuad(f);
+     tempspell[s].attack=FileReadQuad(f);
+     tempspell[s].accuracy=FileReadQuad(f);
+     tempspell[s].damage=FileReadQuad(f);
+     tempspell[s].power=FileReadQuad(f);
+     tempspell[s].effect=FileReadQuad(f);
+     tempspell[s].magnitude=FileReadQuad(f);
+     tempspell[s].cost=FileReadQuad(f);
+     tempspell[s].lore=FileReadString(f);
+     FileClose(f);
+}
+
+void Tech_PopulateSpellSchool(int s) {
+     int i,j;
+     int f=FileOpen("system\\spell.dat",FILE_READ);
+     if(s<13) {
+          for(i=0; i<246; i++) {
+               if(spellbook[i]) {
+                    FileSeekPos(f,i*128+58,SEEK_SET);
+                    if(FileReadQuad(f)==s) {
+                         Tech_LoadSpell(j,i+1);
+                         j++;
+                    }
+               }
+          }
+          tempspell[j].idx=0;
+     }
+     else {
+          s-=13;
+          for(i=0; i<41; i++) {
+               if(spellbook[s*41+i]) {
+                    Tech_LoadSpell(j,s*41+i+1);
+                    j++;
+               }
+          }
+          if(j<41) tempspell[j].idx=0;
+     }
+     FileClose(f);
+}

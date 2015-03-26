@@ -1,0 +1,120 @@
+struct quest {
+     string name, desc, task;
+     int stage, idx;
+     location dest;
+};
+
+struct location {
+     string name;
+     int x, y;
+};
+
+void Quest_Add(string name, int idx, string desc, string task, string cont, int x, int y) {
+     int q;
+     if(!idx) {          //- Primary Quests
+          if(len(questlog[0].name))
+               Exit("ERROR: Replacing primary quest before completing previous stage.");
+          questlog[0].name=name;
+          questlog[0].desc=desc;
+          questlog[0].task=task;
+          questlog[0].stage=1;
+          questlog[0].dest.name=cont;
+          questlog[0].dest.x=x;
+          questlog[0].dest.y=y;
+          SetFadeText("\f4"+name+"\f0: "+task,1);
+     }
+     else if(idx<50) {   //- Recruitment Quests
+     }
+     else {              //- Other Quests
+          q=1;
+          while(len(questlog[q].name)) {
+               q++;
+               if(q==6) return;
+          }
+          questlog[q].name=name;
+          questlog[q].desc=desc;
+          questlog[q].task=task;
+          questlog[q].stage=1;
+          questlog[q].idx=idx;
+          questlog[q].dest.name=cont;
+          questlog[q].dest.x=x;
+          questlog[q].dest.y=y;
+          SetFadeText("\f4"+name+"\f0: "+task,1);
+     }
+}
+
+void Quest_Advance(string name, int stage, string task, string cont, int x, int y) {
+     int q=Quest_PartyHas(name);
+     if(q) {
+          q--;
+          if(questlog[q].stage==stage) {
+               questlog[q].stage++;
+               questlog[q].task=task;
+               questlog[q].dest.name=cont;
+               questlog[q].dest.x=x;
+               questlog[q].dest.y=y;
+               SetFadeText("\f4"+name+"\f0: "+task,1);
+          }
+     }
+}
+
+void Quest_Complete(string name, int stage, int reward) {
+     int q=Quest_PartyHas(name);
+     if(q) {
+          q--;
+          if(questlog[q].stage==stage) {
+               questlog[q].name="";
+               questlog[q].desc="";
+               questlog[q].task="";
+               questlog[q].stage=0;
+               questlog[q].dest.name="";
+               questlog[q].dest.x=0;
+               questlog[q].dest.y=0;
+               PlaySound(sfx_success,100);
+               if(questlog[q].idx<60) {
+                    SetFadeText("\f4"+name+"\f0 complete!  (+"+str(reward)+" lore experience)",0);
+                    Party_EarnLore(reward);
+               }
+               else {
+                    SetFadeText("\f4"+name+"\f0 complete!  (+"+str(reward)+" gold pieces)",0);
+                    Party_EarnGold(reward);
+               }
+               questlog[q].idx=0;
+          }
+     }
+}
+
+void Quest_FlashTask(string name) {
+     int q=Quest_PartyHas(name);
+     if(q) SetFadeText("\f4"+questlog[q-1].name+"\f0: "+questlog[q-1].task,1);
+}
+
+int Quest_PartyHas(string name) {
+     int q;
+     while(q<6) {
+          if(!strcmp(name,questlog[q].name))
+               return q+1;
+          q++;
+     }
+     return 0;
+}
+
+int Quest_PartyOnStage(string name, int stage) {
+     int q;
+     q=Quest_PartyHas(name);
+     if(q) {
+          if(questlog[q-1].stage==stage)
+               return q;
+     }
+     return 0;
+}
+
+string Quest_TypeString(int q) {
+     q=q%10;
+     if(q==0) return "Primary";
+     if(q==1) return "Exploration";
+     if(q==2) return "Retrieval";
+     if(q==3) return "Hunting";
+     if(q==4) return "Dungeon";
+     if(q==5) return "Story";
+}

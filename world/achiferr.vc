@@ -1,0 +1,251 @@
+void Start() {
+     int i;
+     string s;
+     if(xdest>800)
+          s="North Bank";
+     else s="South Bank";
+     entity.y[4]+=8;
+     Batt_SetTimer(0,0);
+     Map_Initialize("Achiela Ferry",s,"humtown.it","Human");
+     if(Quest_PartyOnStage("Expedition to Achiela",7))
+          FirstArrival();
+     else if(Quest_PartyOnStage("Expedition to Achiela",10))
+          OverlordDefeat();
+}
+
+void Leave() {
+     if(entity.x[GetPlayer()]<55) LeaveSouth();
+     else LeaveNorth();
+}
+
+void LeaveNorth() {
+     battleindex=3;
+     areaname="Erelikoth Area";
+     Map_Switch("amin.map",218,385,1);
+}
+
+void LeaveSouth() {
+     battleindex=5;
+     areaname="Achiela Island";
+     Map_Switch("amin.map",214,388,1);
+}
+
+void FerryNorth() {
+     int price=15*numchars;
+     int i;
+     string s;
+     if(numchars>1) s="the lot of ";
+     i=Prompt("Ferryman","Headed over to \f3Achiela\f0?  It be a dangerous place, but I'll ferry "+
+              s+"you over for "+str(price)+"$.  Have we a deal?","Sure","Nope");
+     if(i==2) return;
+     if(partygold<price)
+          Text("Ferryman","No gold, no ferry.  Get lost.");
+     else {
+          partygold-=price;
+          Text("Ferryman","Rrr... Thank you kindly.  Let's be off.");
+          Warp(41,21);
+     }
+}
+
+void FerrySouth() {
+     int price=15*numchars;
+     int i;
+     if(Quest_PartyHas("Expedition to Achiela")) {
+          Text("Ferryman","Headed back to the mainland?  Can't say I blame you.  Price for the "+
+               "return trip be 75$.  Have we a deal?");
+          HText(0,"Sorry.  We've still got work to do here.  Maybe later.");
+          Text("Ferryman","Suit yourselves.");
+          return;
+     }
+     i=Prompt("Ferryman","Headed back to the mainland?  Can't say I blame you.  Price for the "+
+              "return trip be "+str(price)+"$.  Have we a deal?","Sure","Nope");
+     if(i==2) return;
+     if(partygold<price)
+          Text("Ferryman","No gold, no ferry.  Get lost.");
+     else {
+          partygold-=price;
+          Text("Ferryman","Rrr...  Thank you kindly.  Let's be off.");
+          Warp(58,21);
+     }
+}
+
+void Inn() {
+     GenericInn("Ferryman's Landing",10);
+}
+
+void Resurrect() {
+     GenericRevive("Priestess","Human",20);
+     entity.face[2]=2;
+}
+
+void Samurai() {
+     Text("Samurai","We've been out exploring the ruins of \f3Achiela\f0.  It's an interesting "+
+          "place.  What really matters, though, is that we got the \f4Hero Shrine\f0 out of "+
+          "there.  It makes our job so much easier.");
+     entity.face[4]=4;
+}
+
+void Wizardess() {
+     Text("Wizardess","My kind are no longer welcome in \f2Human\f0 lands, so "+
+          "my companions agreed to remain with me.  Since this was my home too.");
+     entity.face[6]=1;
+}
+
+void FerryLoan() {
+     int i;
+     int debt=GetFlag("AchielaFerryDebt");
+     if(debt && partygold<debt) {
+          Text("Thief","Hey!  Where's my money!  You still owe me "+
+               str(debt)+"$!  No money, no talky.  Scram.");
+     }
+     else if(debt) {
+          Text("Thief","Ah, I see you've got my money. I'll just be taking that then.");
+          PlaySound(sfx_cash,volume);
+          partygold-=debt;
+          Text("Thief","Heh.  Nice doing business with you.  Come again.");
+          debt=0;
+     }
+     else if(partygold>=50*numchars || Quest_PartyHas("Expedition to Achiela")) 
+          Text("Thief","Hey there.  Headed out to the ruins?  Watch yourself.  There's demons "+
+               "crawling all over the place.  Eat you up right quick.");
+     else {
+          SetPortrait(0,"\f2Thief");
+          i=Prompt("Huh?  Don't have enough for the ferry?  I might be able to float you "+
+                   "the cash.  You'll have to pay me back twice over though.  Want the money?",
+                   "Yes","No");
+          if(i==2) Text("Thief","Suit yourself.  Get the money from the demons then.");
+          else {
+               PlaySound(sfx_cash,volume);
+               Text("Thief","Heh.  Nice doing business with you.");
+               SetFlag("AchielaFerryDebt",((15*numchars)-partygold)*2);
+               partygold=15*numchars;
+          }
+     }
+     entity.face[5]=3;
+}
+
+void Paladin() {
+     Text("Paladin","It bothers me that I'm helping a \f2Lukosian\f0 reclaim a \f2Human\f0 city.  "+
+          "Not enough to make me give up the fight against these demons, though.  "+
+          "The Light will recapture \f3Achiela\f0!  I swear it!");
+}
+
+void NorthDoor() {
+//     GenericDoor(0,0,1);
+}
+
+void InnDoor() {
+     if(tempint[1]) return;
+     PlaySound(sfx_open,100);
+     SetTile(33,14,1,0);
+     SetTile(33,15,1,0);
+     SetTile(33,16,1,0);
+     SetObs(33,16,0);
+     tempint[1]=1;
+}
+
+void FirstArrival() {
+     int h=Party_GetStoryHero(1);
+     PlayerMove("X83DL1X58");
+     Text("Ferryman","Headed over to \f3Achiela\f0?  It be a dangerous place, but I'll ferry the lot of "+
+          "you over for 75$.  Have we a deal?");
+     HText(0,"Sure.  Here's the gold.");
+     Text("Ferryman","Rrr... Thank you kindly.  Let's be off.");
+     Warp(41,21);
+     Area_Change("","South Bank","");
+     PlayerMove("DL4X26R0");
+     HText(0,"Alright, \f2"+hero[h].name+"\f0, pay very close attention.");
+     TextPlus("By reenacting part of the \f4investiture ritual\f0 that made us \f4heroes\f0, we "+
+              "can bind ourselves to a specific \f4Hero Shrine\f0.  This means that, should we die, our "+
+              "souls will return to the new shrine before we reincarnate.",0);
+     HText(h,"So if the demons get us, we'll come back here instead of in \f3Gelaham\f0?");
+     HText("Aerin","Or \f3Esselte\f0, as the case may be.");
+     HText("Marty","That'd be quite the walk.  It's important the entire party is bound together.");
+     while(strcmp(bindmap,"world\\achiferr.map")) {
+          HText(0,"Try it out, \f2"+hero[h].name+"\f0.  You'll need to offer blood to the shrine, but "+
+               "nothing drastic like you went through the first time.");
+          HeroShrine();
+     }
+     HText(0,"Excellent.  Now let's be off.  We have demons to hunt.");
+     Quest_Advance("Expedition to Achiela",7,"Visit the ruins at \f3Achiela\f0","Amin",203,399);
+}
+
+void OverlordDefeat() {
+     int h=Party_GetStoryHero(1)-1;
+     cameratracking=0;
+     SetPlayer(hero[h].ent);
+     EntityMove(hero[Party_GetIndexFromName("Adain")].ent,"D1L2R0");
+     EntityMove(hero[Party_GetIndexFromName("Grace")].ent,"D2L1R0");
+     EntityMove(hero[Party_GetIndexFromName("Marty")].ent,"R4L0");
+     EntityMove(hero[Party_GetIndexFromName("Aerin")].ent,"U0");
+     PlayerMove("D2R3");
+     HText("Adain","Well that was unexpected.");
+     HText(h,"Fire!  Darkness!  We're all going to die!  We're...");
+     showtext=1;
+     PlayerMove("L0");
+     TextPlus("Right.  Heroes.  I don't know that I'm ever going to get used to that.",0);
+     HText("Marty","You will.  Trust me.  Doesn't make the experience any more pleasant, though.  "+
+           "Especially the cost.");
+     showtext=1;
+     PlayerMove("U0");
+     HText(h,"Cost?");
+     showtext=1;
+     EntityMove(hero[Party_GetIndexFromName("Aerin")].ent,"D0");
+     WaitForEntity(hero[Party_GetIndexFromName("Aerin")].ent);
+     HText("Aerin","Slain parties invariably return with exactly half of their monetary possessions.  "+
+           "Equipment and adventuring supplies are never lost, only wealth.  We've been unable to determine "+
+           "the mechanism by which this occurs.");
+     HText("Marty","Somebody somewhere's getting rich.  I'm sure of it.");
+     HText("Grace","I'm sure there's no conspiracy to rob dead heroes, \f2Marty\f0.  How would anyone even "+
+           "pull that off?");
+     HText("Adain","Again, it doesn't matter.  We're done here.  It's time to report back.");
+     showtext=1;
+     PlayerMove("L0");
+     HText(h,"Done?  But the city's still overrun by demons.");
+     HText("Adain","We weren't commissioned to correct the problem.  We were commissioned to investigate.  "+
+           "And we have enough information to call this quest complete.  Now we head back to \f3Gelaham\f0.");
+     showtext=1;
+     EntityMove(hero[Party_GetIndexFromName("Aerin")].ent,"L0");
+     WaitForEntity(hero[Party_GetIndexFromName("Aerin")].ent);
+     HText("Aerin","I trust you can take care of that step yourself.  I've no desire to return to \f3Gelaham\f0 "+
+           "any time soon.");
+     HText("Grace","We understand.  Thank you for your help, \f2Aerin\f0.");
+     TeleportEffect(hero[Party_GetIndexFromName("Aerin")].ent);
+     entity.y[hero[Party_GetIndexFromName("Aerin")].ent]=0;
+     HText("Marty","Will you be heading back overland?");
+     HText("Adain","No, I've got a \f4Tiny Cross\f0.");
+     HText("Marty","Bah.  Nobody walks anymore.  I guess I'll be parting ways also.  No sense heading to "+
+           "\f3Gelaham\f0 when I'm this close to \f3Erelikoth\f0.");
+     HText("Adain","Really?  You don't want to come for the reward?");
+     HText("Marty","Ha!  In my experience, the Temple takes all the money raised by its heroes and leaves them "+
+           "with a pat on the head.  I'll pass.");
+     h=Party_GetStoryHero(1)-1;
+     showtext=1;
+     PlayerMove("U0");
+     HText(h,"They're called tithes, and service is its own reward.");
+     showtext=1;
+     EntityMove(hero[Party_GetIndexFromName("Marty")].ent,"D0");
+     WaitForEntity(hero[Party_GetIndexFromName("Marty")].ent);
+     HText("Marty","You are so green.  It's kind of refreshing, really.");
+     showtext=1;
+     EntityMove(hero[Party_GetIndexFromName("Marty")].ent,"L0");
+     WaitForEntity(hero[Party_GetIndexFromName("Marty")].ent);
+     TextPlus("Anyway, I'm off.  I'm sure we'll meet again someday.",0);
+     HText("Grace","It's always good to see you, Marty.  I'll look you up the next time I'm in \f3Amunash\f0.");
+     HText("Marty","Don't bother.  I'll be on the road.");
+     SetExecutionPaused(2);
+     showtext=1;
+     PlayerMove("R0");
+     EntityMove(hero[Party_GetIndexFromName("Marty")].ent,"R13");
+     HSetPortrait(Party_GetIndexFromName("Adain"));
+     Text_Main("Well, let's be off.",0,0,1,0,0);
+     Party_TeleportEffect();
+     cameratracking=1;
+     xdest=50*16+8;
+     ydest=44*16+8;
+     Hero_Clear(Party_GetIndexFromName("Marty"));
+     Hero_Clear(Party_GetIndexFromName("Aerin"));
+     guestchars-=2;
+     questlog[0].stage=10;
+     Map_Switch("hitemple.map",0,0,1);
+}

@@ -1,0 +1,251 @@
+void Start() {
+     int i;
+     Batt_SetTimer(0,0);
+     Map_Initialize("Demonic Achiela","Ruined Outskirts","element.it","");
+     Batt_SetTimer(1,30);
+     if(Quest_PartyOnStage("Expedition to Achiela",8))
+          FirstArrival();
+}
+
+void Leave() {
+     battleindex=5;
+     areaname="Achiela Island";
+     Map_Switch("amin.map",203,400,1);
+}
+
+void RuinedOutskirts() {
+     Area_Change("","Ruined Outskirts","");
+     battleindex=1;
+}
+
+void OverrunLabs() {
+     Area_Change("","Overrun Labs","");
+     battleindex=2;
+}
+
+void LukosianQuarters() {
+     Area_Change("","Lukosian Area","");
+     battleindex=3;
+}
+
+void HumanQuarters() {
+     Area_Change("","Human Area","");
+     battleindex=4;
+}
+
+void TenebluxSecurity() {
+     Area_Change("","Security Post","");
+     battleindex=2;
+}
+
+void RupturedGate() {
+     int x;
+     Area_Change("","Ruptured Gate","");
+     if(Quest_PartyOnStage("Expedition to Achiela",9)) {
+          battleindex=6;
+          Quest_Advance("Expedition to Achiela",9,"Bring news of your findings to \f3Gelaham\f0","Amin",354,449);
+          HText(0,"Oh no.");
+          x=808-entity.x[hero[0].ent];
+          if(x<0) PlayerMove("PUL"+str(0-x)+"TY23");
+          else if(x>0) PlayerMove("PUL"+str(x)+"TY23");
+          else PlayerMove("Y23");
+          HText(Party_GetStoryHero(1)-1,"That looks bad.");
+          HText("Aerin","`Looks bad?`  That's all you've got?  This is catastrophic!  "+
+                "\f3Serinor\f0 itself has ripped!  The veil has been breached!");
+          HText("Grace","This can't be what they intended.  What do you suppose went wrong?");
+          HText("Adain","It doesn't matter.  How do we fix it?");
+          HText("Aerin","`Fix?`  There is no fix!  THIS.  CAN'T.  HAPPEN.");
+          HText("Marty","The hole begs to differ with you.");
+          HText(Party_GetStoryHero(1)-1,"Is this what's letting monsters into \f3Serinor\f0?");
+          HText("Adain","This is obviously the source of the demons, yes.");
+          HText("Aerin","No, the pup raises an important distinction.  Though this is "+
+                "certainly a violent symptom of the interplanar weakening that is plaguing \f3Serinor\f0, I do "+
+                "not believe this to be the underlying cause.  Indeed, that illness likely caused this.");
+          ClearPortrait();
+          Text("","Foolish mortal.  \f3I\f0 caused this.");
+          HText("Marty","Did the hole just talk?");
+          HText("Adain","Something's coming out!");
+          battleindex=6; runflag=1;
+          estring="23 0";
+          Battle();
+     }
+     else battleindex=0;
+}
+
+void SecludedGarden() {
+     Area_Change("","Secluded Garden","");
+     battleindex=5;
+}
+
+void EntranceSign() {
+     Sign("","Achiela Research Facility\n \nFounded by\nDivine High Temple of the Light\nBanaedoor Laboratories");
+     if(Quest_PartyHas("Expedition to Achiela") && !tempint[0]) {
+          HText("Aerin","How quick the \f3Temple\f0 forgets this was a \f2lukosian\f0 city as well.");
+          HText("Grace","Peace, \f2Aerin\f0.  They sent us together to figure out what went wrong.");
+          tempint[0]=1;
+     }
+}
+
+void SaintSign() {
+     Sign("","Saint Ammdayan the Scholar\nMay his quiet insight guide our works");
+     if(Quest_PartyHas("Expedition to Achiela") && !tempint[1]) {
+          HText("Marty","Maybe they should have picked a better patron saint.");
+          HText(Party_GetStoryHero(1)-1,"Not long ago, I'd have called that blasphemy, but I think you make a good point.");
+          tempint[1]=1;
+     }
+}
+
+void SecuritySign() {
+     Sign("","Though Light controls the door, only Knowledge can grant access.");
+     if(Quest_PartyHas("Expedition to Achiela") && !tempint[2]) {
+          HText("Adain","Interesting compromise.");
+          HText("Aerin","I find the symbolism quite pleasing, personally.");
+          tempint[2]=1;
+     }
+}
+
+void ButtonSign() {
+     Sign("","Press this button to open color-matched security panels.  Press again to close.");
+     if(Quest_PartyHas("Expedition to Achiela") && !tempint[3]) {
+          HText(Party_GetStoryHero(1)-1,"Why are the instructions etched on a pot?");
+          HText("Marty","This is a \f2halfling\f0 security system.  That's how we do things.");
+          HText(Party_GetStoryHero(1)-1,"Do you have something against paper?");
+          HText("Marty","It's traditional.  We've always used pots to preseve information.");
+          HText(Party_GetStoryHero(1)-1,"Oh.  Okay.  I guess.");
+          tempint[3]=1;
+     }
+}
+
+void Blocks() {
+     if(tempint[4]) return;
+     Party_RacialSpeech(0,"This isn't of \f2human\f0 design.",
+                        "Strange.  Not demonic, but certainly unnatural.",
+                        "Huh.  This is one of ours.  I wonder who installed it.",
+                        "That's dwarven steel!  Nothing better to block a door.",
+                        "Well this is going to slow us down.",
+                        "A secured checkpoint.  This will be difficult to bypass.",
+                        "The way is blocked by...  um, something strong.",
+                        "I think I remember seeing something like this once before.",
+                        "Fascinating.  They used a neutral party for their security.");
+     Party_RacialInsight(1,"Halfling","This is a \f2halfling\f0 security system.  There should be "+
+                        "a button to open the security panels somewhere nearby.",
+                        "Lukosian","This security system was installed by a \f2halfling\f0.  "+
+                        "Probably because the original researchers didn't trust each other to "+
+                        "control the security measures.  A button to open this should be nearby.",
+                        "Shadowkin","This seems to be of \f2halfling\f0 construction.  Relatively "+
+                        "recent, too.  The controls must be around here somewhere.");
+}
+
+void Button() {
+     PlaySound(sfx_summon,100);
+     if(!tempint[4]) {
+          SetTile(44,35,2,128);
+          SetTile(44,33,4,126);
+          SetTile(50,33,1,0);
+          SetTile(50,34,1,0);
+          SetTile(50,34,2,0);
+          SetTile(50,35,1,0);
+          SetTile(50,35,2,0);
+          SetTile(51,33,1,0);
+          SetTile(51,34,1,0);
+          SetTile(51,34,2,0);
+          SetTile(51,35,1,0);
+          SetTile(51,35,2,0);
+          SetObs(50,35,0);
+          SetObs(51,35,0);
+          tempint[4]=1;
+     }
+     else {
+          SetTile(44,35,2,139);
+          SetTile(44,33,4,124);
+          SetTile(50,33,1,123);
+          SetTile(50,34,1,122);
+          SetTile(50,34,2,125);
+          SetTile(50,35,1,122);
+          SetTile(50,35,2,124);
+          SetTile(51,33,1,123);
+          SetTile(51,34,1,122);
+          SetTile(51,34,2,124);
+          SetTile(51,35,1,122);
+          SetTile(51,35,2,125);
+          SetObs(50,35,1);
+          SetObs(51,35,1);
+          tempint[4]=0;
+     }
+}
+
+void LukosianBook() {
+     Sign("Lukosian Notes","These notes, scrawled in the arcane scratchings of the Wolf language, "+
+          "detail something called the \f4Teneblux Program\f0, a joint venture with the \f2humans\f0 "+
+          "which was attempting to fuse the elements of light and dark.");
+}
+
+void HumanBook() {
+     Sign("Prayer Book","The prayers written here are novel, and focus extensively on bringing light "+
+          "into the darkness.  They are odd in that they call not for the destruction of the darkness, "+
+          "just its illumination.");
+}
+
+void LabBook() {
+     Sign("Research Log","This ledger lists failed experiment after failed experiment.  The final entry "+
+          "is for a scheduled experiment in the central lab having to do with creating a twilight element, "+
+          "neither light nor dark.");
+}
+
+void FirstArrival() {
+     PlayerMove("Y75");
+     entity.face[hero[0].ent]=4;
+     entity.face[hero[1].ent]=3;
+     entity.face[hero[3].ent]=4;
+     Wait(25,1);
+     HText(Party_GetIndexFromName("Adain"),"This place has been ravaged.");
+     HText(Party_GetIndexFromName("Aerin"),"Only the outskirts.  The research facility appears intact.");
+     HText(Party_GetIndexFromName("Grace"),"Why would the demons tear down people's homes but leave "+
+           "the labs alone?  That seems backwards.");
+     HText(Party_GetIndexFromName("Aerin"),"Our best chance for answers lies at the heart of the "+
+           "research facility.  The central laboratory should hold all the information we need.");
+     HText(Party_GetStoryHero(1)-1,"And the nastiest demons, right?");
+     HText(Party_GetIndexFromName("Marty"),"Most likely.  But that's what heroes are for, right?");
+     Quest_Advance("Expedition to Achiela",8,"Reach the central laboratory in the \f3Achiela Research Facility\f0","Amin",203,399);
+}
+
+void Local_BattleSetup() {
+     runflag=0;
+     switch(Random(1,8)) {
+          case 1:   estring="11 20 11 0";
+          case 2:   estring="8 8 0";
+          case 3:   estring="5 5 0";
+          case 4:   estring="17 11 0";
+          case 5:   estring="20 0";
+          case 6:   estring="5 8 11 0";
+          case 7:   estring="17 17 0";
+          case 8:   estring="17 8 0";
+     }
+     switch(battleindex) {
+          case 0:   estring="";
+          case 1:   estring="14 "+estring;
+          case 5:   estring="32 32 0";
+          case 6:   estring="23 0";
+     }
+}
+
+void Local_BattleSpecial() {
+     if(winflag==1 && battleindex==5 && GetFlag("AchielaGarden")<2) {
+          Party_RacialSpeech(0,"Imagine finding shards of the Light here.",
+                             "How do such fragile creatures survive in such a violent place?",
+                             "Weird.  Not a place I'd expect to see wisps.",
+                             "I'd not expected to see wisps here of all places.",
+                             "Wow!  Wisps!  And around demons, no less.",
+                             "Strange.  I thought darkness destroyed wisps.",
+                             "Isn't it kind of dark for such pretty lights?",
+                             "Rrr...  There be spirit lights where there should be none.",
+                             "Odd that the Light can penetrate such profound darkness.",
+                             "Fascinating.  Something's generating light even now.");
+          if(GetFlag("AchielaGarden")<2)
+               Party_RacialInsight(1,"Kobold","The spirits be thick here.  The calm between light "+
+                                  "and dark be letting in something else.  An ancestral paragon "+
+                                  "could probably \f4commune\f0 with it.",
+                                  "Human","Something in this garden yet calls to the Light for succor.  "+
+                                  "Perhaps someone closer to the spirits could \f4commune\f0 with it.");
+     }
+}

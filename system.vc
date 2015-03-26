@@ -1,0 +1,1100 @@
+#define _eosver "EoS 0.4.110213"
+
+//- System Information
+int flags, tempint[25];
+int xdest, ydest, fdest;
+int mainsong, volume;
+int fadeimage, fadesong, fadetimer;
+int msec, second, minute, hour, paused;
+int loaded, saveslot, lastsaved;
+int arefairies, fairyframe;
+string mainsongname, actmap, mapname, areaname, actfact, fadetext;
+
+//- Load Sound Effects
+int sfx_ability = LoadSound("sound\\ability.wav");
+int sfx_barrier = LoadSound("sound\\barrier.wav");
+int sfx_beep = LoadSound("sound\\blip.wav");
+int sfx_buzz = LoadSound("sound\\buzz.wav");
+int sfx_cancel = LoadSound("sound\\cancel.ogg");
+int sfx_cash = LoadSound("sound\\cash.wav");
+int sfx_cast = LoadSound("sound\\cast.wav");
+int sfx_castfail = LoadSound("sound\\castfail.wav");
+int sfx_chimes = LoadSound("sound\\chimes.wav");
+int sfx_click = LoadSound("sound\\click.wav");
+int sfx_cure = LoadSound("sound\\cure.wav");
+int sfx_darkness = LoadSound("sound\\darkness.wav");
+int sfx_death = LoadSound("sound\\death.ogg");
+int sfx_decrease = LoadSound("sound\\decrease.wav");
+int sfx_done = LoadSound("sound\\done.wav");
+int sfx_escape = LoadSound("sound\\escape.wav");
+int sfx_failure = LoadSound("sound\\failure.wav");
+int sfx_hit = LoadSound("sound\\damage1.wav");
+int sfx_increase = LoadSound("sound\\increase.wav");
+int sfx_miss = LoadSound("sound\\miss.wav");
+int sfx_open = LoadSound("sound\\open.wav");
+int sfx_prompt = LoadSound("sound\\prompt.wav");
+int sfx_recover = LoadSound("sound\\recover.wav");
+int sfx_song = LoadSound("sound\\song.wav");
+int sfx_stun = LoadSound("sound\\stun.wav");
+int sfx_success = LoadSound("sound\\success.wav");
+int sfx_summon = LoadSound("sound\\summon.wav");
+int sfx_swamp = LoadSound("sound\\damage2.wav");
+int sfx_telefail = LoadSound("sound\\telefail.wav");
+int sfx_teleport = LoadSound("sound\\teleport.wav");
+int sfx_unresist = LoadSound("sound\\unresist.wav");
+int sfx_weather = LoadSound("sound\\weather.wav");
+int sfx_damage[12];
+
+//- Load Fonts
+int fontb=LoadFont("images\\fontbig.png");
+int fontm=LoadFont("images\\fontmed.png");
+int fonts=LoadFont("images\\fontsmall.png");
+
+//- Load Global Graphics
+int cbbox;
+int cbox;
+int carr;
+int black=RGB(0,0,0);
+int white=RGB(255,255,255);
+int clear=RGB(255,0,255);
+int tempscreen,sizedscreen;
+int isdark,darkscreen,darkalpha,lights[32];
+int torchimage=LoadImage("images\\ani\\torch.png");
+
+//- Included .vc Files
+#include "system\\quest.vc"
+#include "system\\party.vc"
+#include "system\\menu.vc"
+#include "system\\ensign.vc"
+#include "system\\battle.vc"
+#include "system\\objects.vc"
+#include "system\\uipieces.vc"
+#include "system\\events.vc"
+#include "system\\convert.vc"
+
+void AutoExec() {
+     int bg,newimg,loadimg,exitimg,p;
+     SetAppName("Epic of Serinor");
+     CallFunction("ConvertFiles");
+     volume=100;
+     WindowSetSize(1,640,480);
+     SetResolution(640,480);
+     bindmapname="Gelaham";
+     bindareaname="Hero Terraces";
+     mainsong=LoadSong("sound\\title.it");
+     PlaySong(mainsong);
+     SetSongVolume(mainsong,volume);
+     if(!tempscreen) {
+          ResetSprites();
+          tempscreen=NewImage(320,240);
+          sizedscreen=GetSprite();
+          sprite.image[sizedscreen]=NewImage(640,480);
+          sprite.sc[sizedscreen]=1;
+          sprite.x[sizedscreen]=0; sprite.y[sizedscreen]=0;
+          RectFill(0,0,639,479,clear,sprite.image[sizedscreen]);
+          EnableVariableWidth(fontb);
+          EnableVariableWidth(fontm);
+          EnableVariableWidth(fonts);
+          InitializeSPC();
+          InitializeMenu();
+          InitializeEnsign();
+          InitializeCombat();
+          flags=DictNew();
+          sfx_damage[0]=LoadSound("sound\\sharp.ogg");
+          sfx_damage[1]=LoadSound("sound\\blunt.ogg");
+          sfx_damage[2]=LoadSound("sound\\fire.wav");
+          sfx_damage[3]=LoadSound("sound\\ice.ogg");
+          sfx_damage[4]=LoadSound("sound\\light.wav");
+          sfx_damage[5]=LoadSound("sound\\dark.ogg");
+          sfx_damage[6]=LoadSound("sound\\arcane.ogg");
+          sfx_damage[7]=LoadSound("sound\\psychic.wav");
+          sfx_damage[8]=LoadSound("sound\\poison.wav");
+          sfx_damage[9]=LoadSound("sound\\sonic.ogg");
+          //sfx_damage[10]=LoadSound("sound\\astral.ogg");
+          sfx_damage[11]=LoadSound("sound\\primal.ogg");
+          StartupSplash("images\\ani\\op_v3");
+          StartupSplash("images\\ani\\op_et");
+          StartupSplash("images\\ani\\op_ens");
+     }
+     bg=LoadImage("images\\ani\\op_tower.png");
+     PrintRight(640,473,bg,fonts,_eosver);
+     RectFill(0,0,639,479,0,screen);
+     timer=0;
+     Unpress(3);
+     while(timer<200 && !b3) {
+          Blit(0,0,bg,screen);
+          SetLucent(timer/2);
+          RectFill(0,0,639,479,black,screen);
+          ShowPage();
+     }
+     SetLucent(0);
+     Blit(0,0,bg,screen);
+     newimg=LoadImage("images\\ani\\op_new.png");
+     loadimg=LoadImage("images\\ani\\op_load.png");
+     exitimg=LoadImage("images\\ani\\op_exit.png");
+     PlaySound(sfx_click,volume);
+     while(1) {
+          Blit(0,0,bg,screen);
+          if(!p) Blit(31,290,newimg,screen);
+          else if(p==1) Blit(30,350,loadimg,screen);
+          else Blit(30,410,exitimg,screen);
+          ShowPage();
+          if(up) {
+               PlaySound(sfx_click,volume);
+               Unpress(5);
+               p--;
+               if(p<0) p=2;
+          }
+          if(down) {
+               PlaySound(sfx_click,volume);
+               Unpress(6);
+               p++;
+               if(p>2) p=0;
+          }
+          if(b1 && !p) {
+               Unpress(1);
+               PlaySound(sfx_beep,volume);
+               HookRetrace("ProcessFades");
+               HookTimer("Clock");
+               timer=0;
+               while(timer<100) {
+                    Blit(0,0,bg,screen);
+                    Blit(31,290,newimg,screen);
+                    SetLucent(100-timer);
+                    RectFill(0,0,639,479,black,screen);
+                    SetSongVolume(mainsong,volume-(timer*volume/100));
+                    ShowPage();
+               }
+               FreeImage(bg); FreeImage(newimg);
+               FreeImage(loadimg); FreeImage(exitimg);
+               Map("world\\hitemple.map");
+          }
+          else if(b1 && p==1) {
+               Unpress(1);
+               PlaySound(sfx_beep,volume);
+               loaded=Menu_Load();
+               if(loaded) {
+                    HookRetrace("ProcessFades");
+                    HookTimer("Clock");
+                    timer=0;
+                    while(timer<100) {
+                         Blit(0,0,bg,screen);
+                         Blit(30,350,loadimg,screen);
+                         SetLucent(100-timer);
+                         RectFill(0,0,639,479,black,screen);
+                         SetSongVolume(mainsong,volume-(timer*volume/100));
+                         ShowPage();
+                    }
+                    FreeImage(bg); FreeImage(newimg);
+                    FreeImage(loadimg); FreeImage(exitimg);
+                    fadesong=500;
+                    LoadGame(loaded);
+               }
+          }
+          else if(b1 && p==2) {
+               PlaySound(sfx_beep,volume);
+               timer=0;
+               while(timer<100) {
+                    Blit(0,0,bg,screen);
+                    Blit(30,410,exitimg,screen);
+                    SetLucent(100-timer);
+                    RectFill(0,0,639,479,black,screen);
+                    SetSongVolume(mainsong,volume-(timer*volume/100));
+                    ShowPage();
+               }
+               Exit("EoS by Eldritch <eldritch05@gmail.com>");
+          }
+     }
+}
+
+void Clock() {
+     msec++;
+     if(msec>=100) {second++; msec=0;}
+     if(second>=60) {minute++; second=0;}
+     if(minute>=60) {hour++; minute=0;}
+}
+
+void FadeIn(int d, int m) {
+     timer=0;
+     while(timer<d) {
+          Render();
+          SetLucent(timer*100/d);
+          RectFill(0,0,639,479,black,sprite.image[sizedscreen]);
+          if(m) SetSongVolume(mainsong,timer*volume/d);
+          ShowPage();
+     }
+     SetLucent(0);
+     Render();
+     ShowPage();
+     SetExecutionPaused(0);
+}
+
+void FadeOut(int d, int m) {
+     SetExecutionPaused(1);
+     timer=0;     
+     while(timer<d) {
+          Render();
+          SetLucent(100-(timer*100/d));
+          RectFill(0,0,639,479,black,sprite.image[sizedscreen]);
+          if(m) SetSongVolume(mainsong,volume-(timer*volume/d));
+          ShowPage();
+     }
+     SetLucent(0);
+     RectFill(0,0,639,479,black,sprite.image[sizedscreen]);
+     ShowPage();
+}
+
+int FindAttackPos(int idx) {
+     int pos;
+     int class=idx/100;
+     int tier=idx/10%10;
+     int slot=idx%10;
+     pos=class-1*12;
+     pos+=tier*2;
+     pos+=tier/2;
+     pos+=slot;
+     if(!(tier%2)) pos--;
+     return pos*128;
+}
+
+void ForeverWalk() {
+     int f=entity.face[event.entity];
+     if(f==1) f=5;
+     else if(f==2) f=0;
+     else if(f==3) f=10;
+     else f=15;
+     BlitEntityFrame(entity.x[event.entity]-xwin,entity.y[event.entity]-ywin,
+                     event.entity,f+fairyframe,screen);
+}
+
+string GetAttackType(int a) {
+     switch(a) {
+          case 0:   return "Weapon";
+          case 1:   return "Physical";
+          case 2:   return "Elemental";
+          case 3:   return "Planar";
+          case 4:   return "Magical";
+          case 5:   return "Natural";
+          case 6:   return "Spiritual";
+     }
+     Exit("ERROR: Invalid Attack Type passed to GetAttackType()");
+}
+
+string GetCombatStatName(int s) {
+     if(s<12) return "% "+GetDamageType(s+1)+" damage";
+     if(s<24) return "% "+GetDamageType(s-11)+" resistance";
+     if(s<29) return "% "+GetAttackType(s-23)+" accuracy";
+     if(s<36) return "% "+GetAttackType(s-29)+" defense";
+     if(s==36) return "% critical chance";
+     if(s==37) return "% speed";
+     if(s==38) return " max health";
+     if(s==39) return " regeneration";
+     if(s==40) return "% accuracy";
+     if(s==41) return "% evasion";
+     if(s==42) return "% damage";
+     if(s==43) return "% resistance";
+     if(s==44) return "% weapon damage";
+     if(s==47) return " damage reduction";
+     if(s==48) return " pt. damage shield";
+     if(s==50) return "% counterattack rate";
+     if(s==57) return "% concealment";
+     Exit("ERROR: Invalid Combat Stat passed to GetCombatStatName(): "+str(s));
+}
+
+string GetContinentName(string c) {
+     if(!strcmp(c,"Amin"))
+          return "Amin";
+     if(!strcmp(c,"Elf"))
+          return "Elven Isles";
+     if(!strcmp(c,"Dwarf"))
+          return "Adamant Spur";
+     if(!strcmp(c,"Kobold"))
+          return "Canid Keys";
+     if(!strcmp(c,"Rutoshen"))
+          return "Rutoshen";
+     if(!strcmp(c,"Thornner"))
+          return "Thornner";
+     if(!strcmp(c,"Glacier"))
+          return "The Glacier";
+     if(!strcmp(c,"Dragon"))
+          return "Draconic Atoll";
+}
+
+string GetDamageType(int d) {
+     switch(d) {
+          case 0:   return "weapon";
+          case 1:   return "sharp";
+          case 2:   return "blunt";
+          case 3:   return "fire";
+          case 4:   return "frost";
+          case 5:   return "light";
+          case 6:   return "dark";
+          case 7:   return "arcane";
+          case 8:   return "psychic";
+          case 9:   return "poison";
+          case 10:  return "sonic";
+          case 11:  return "astral";
+          case 12:  return "primal";
+          case 15:  return "storm";
+     }
+     Exit("ERROR: Invalid Damage Type passed to GetDamageType()");
+}
+
+int GetFlag(string k) {
+     if(DictContains(flags,k))
+          return DictGetInt(flags,k);
+     return 0;
+}
+
+string GetSpellSchoolName(int s) {
+     switch(s) {
+          case 1:   return "Divine";
+          case 2:   return "Psychic";
+          case 3:   return "Music";
+          case 4:   return "Nature";
+          case 5:   return "Invention";
+          case 6:   return "Thievery";
+          case 7:   return "Elemental";
+          case 8:   return "Alchemy";
+          case 9:   return "Brawl";
+          case 10:  return "Spirit";
+          case 11:  return "Shadow";
+          case 12:  return "Arcane";
+          case 13:  return "Strength";
+          case 14:  return "Vitality";
+          case 15:  return "Agility";
+          case 16:  return "Wisdom";
+          case 17:  return "Psyche";
+          case 18:  return "Will";
+     }
+     Exit("ERROR: Invalid School Index passed to GetSpellSchoolName()");
+}
+
+string GetSpellSchoolTrait(int s) {
+     switch(s) {
+          case 1:   return "Ordination";
+          case 2:   return "Enlightenment";
+          case 3:   return "Songweaver";
+          case 4:   return "Druidic";
+          case 5:   return "Mystic Inventor";
+          case 6:   return "Master Thief";
+          case 7:   return "Elementalist";
+          case 8:   return "Alchemist";
+          case 9:   return "Frenzied Brawler";
+          case 10:  return "Shaman";
+          case 11:  return "Necromancer";
+          case 12:  return "Scholar";
+          case 13:  return "Gladiator";
+          case 14:  return "Knight";
+          case 15:  return "Rogue";
+          case 16:  return "Adept";
+          case 17:  return "Cleric";
+          case 18:  return "Wizard";
+     }
+     Exit("ERROR: Invalid School Index passed to GetSpellSchoolTrait()");
+}
+
+string GetTargetString(int t) {
+     string s;
+     switch(t%10) {
+          case 1:   s="Self";
+          case 2:   s="One Ally";
+          case 3:   s="All Allies";
+          case 4:   s="One Foe";
+          case 5:   s="All Foes";
+     }
+     if(t>20) s=s+" (Field Only)";
+     else if(t>10) s=s+" (Combat Only)";
+     return s;
+}
+
+string GetTime() {
+     string t;
+     t=str(hour)+":";
+     if(minute<10) t=t+"0";
+     t=t+str(minute)+":";
+     if(second<10) t=t+"0";
+     t=t+str(second);
+     return t;
+}
+
+string GetUseString(int x) {
+     string t;
+     switch(x%10) {
+          case 0:   t="Cannot be used";
+          case 1:   t="Single Use";
+          case 2:   t="Multiple Uses";
+     }
+     switch(x/10) {
+          case 0:   return "Common, "+t;
+          case 1:   return "Instrument, "+t;
+          case 2:   return "Gadget, "+t;
+          case 3:   return "Potion, "+t;
+          case 4:   return "Trinket, "+t;
+          case 5:   return "Grimoire, "+t;
+     }
+}
+
+int IsAttackEffect(int target, int effect) {
+     if(target<4) return 0;
+     if(effect>39 && effect<60) return 0;
+     if(effect==62) return 0;
+     if(effect==74) return 1;
+     if(effect==76) return 1;
+     if(effect==88) return 1;
+     if(effect==89) return 1;
+     if(effect>63) return 0;
+     return 1;
+}
+
+int IsReservedChar(string c) {
+     if(!strcmp("/",c)) return 1;
+     if(!strcmp(chr(92),c)) return 1;
+     if(!strcmp("?",c)) return 1;
+     if(!strcmp("%",c)) return 1;
+     if(!strcmp("*",c)) return 1;
+     if(!strcmp(":",c)) return 1;
+     if(!strcmp("|",c)) return 1;
+     if(!strcmp(chr(34),c)) return 1;
+     if(!strcmp("<",c)) return 1;
+     if(!strcmp(">",c)) return 1;
+     if(!strcmp(".",c)) return 1;
+     return 0;
+}
+
+void Lighting_FreeSource(int idx) {
+     sprite.x[lights[idx]]=0;
+     sprite.y[lights[idx]]=0;
+     sprite.lucent[lights[idx]]=0;
+     FreeImage(sprite.image[lights[idx]]);
+     sprite.image[lights[idx]]=0;
+     lights[idx]=0;
+}
+
+void Lighting_SetDarkness(int d) {
+     int i;
+     isdark=d;
+     if(d) {
+          darkscreen=NewImage(320,240);
+          darkalpha=NewImage(320,240);
+          RectFill(0,0,319,239,RGB(255-d,255-d,255-d),darkscreen);
+          RectFill(0,0,319,239,black,darkalpha);
+          for(i=0; i<numchars; i++)
+               Lighting_SetSource(i,0,0,48);
+     }
+     else if(darkscreen) {
+          for(i=0; i<numchars; i++)
+               Lighting_FreeSource(i);
+          i=5;
+          while(lights[i]) {
+               Lighting_FreeSource(i);
+               i++;
+          }
+          FreeImage(darkscreen);
+          FreeImage(darkalpha);
+          darkscreen=0;
+          darkalpha=0;
+     }
+}
+
+void Lighting_SetSource(int idx, int x, int y, int mag) {
+     lights[idx]=GetSprite();
+     sprite.image[lights[idx]]=NewImage(mag,mag);
+     RectFill(0,0,mag-1,mag-1,black,sprite.image[lights[idx]]);
+     ScaleBlit(0,0,mag,mag,torchimage,sprite.image[lights[idx]]);
+     if(idx<5) {
+          sprite.x[lights[idx]]=0-mag/2+8;
+          sprite.y[lights[idx]]=0-mag/2-8;
+     }
+     else {
+          sprite.x[lights[idx]]=x*16-mag/2-16;
+          sprite.y[lights[idx]]=y*16-mag/2;
+     }
+     sprite.lucent[lights[idx]]=100;
+}
+
+void LoadGame(int slot) {
+     int i,j;
+     string s,v;
+     int f=FileOpen("save\\eossave"+str(slot)+".sav",FILE_READ);
+     if(!f) Map("world\\hitemple.map");
+     i=FileReadQuad(f);
+     if(FileEOF(f)) Map("world\\hitemple.map");
+     v=FileReadString(f);
+
+     FileSeekPos(f,i,SEEK_SET);
+     //- Read Party Information
+     maxlevel=FileReadQuad(f);
+     lorexp=FileReadQuad(f);
+     partygold=FileReadQuad(f);
+     xdest=FileReadQuad(f);
+     ydest=FileReadQuad(f);
+     bindx=FileReadQuad(f);
+     bindy=FileReadQuad(f);
+     for(i=0; i<10; i++)
+          recruits[i]=FileReadQuad(f);
+     for(i=0; i<246; i++)
+          spellbook[i]=FileReadQuad(f);
+     second=FileReadQuad(f);
+     minute=FileReadQuad(f);
+     hour=FileReadQuad(f);
+     lastsaved=(hour*10000)+(minute*100)+second;
+     bindmap=FileReadString(f);
+     bindmapname=FileReadString(f);
+     bindareaname=FileReadString(f);
+     actmap=FileReadString(f);
+     mapname=FileReadString(f);
+     areaname=FileReadString(f);
+     actfact=FileReadString(f);
+     FileReadString(f);
+
+     //- Read Party Quest Information
+     i=0;
+     s=FileReadString(f);
+     while(strcmp(s,chr(47)+"/- End of Quests")) {
+          questlog[i].name=s;
+          questlog[i].desc=FileReadString(f);
+          questlog[i].task=FileReadString(f);
+          questlog[i].stage=FileReadQuad(f);
+          questlog[i].idx=FileReadQuad(f);
+          questlog[i].dest.name=FileReadString(f);
+          questlog[i].dest.x=FileReadQuad(f);
+          questlog[i].dest.y=FileReadQuad(f);
+          i++;
+          if(i<6) s=FileReadString(f);
+          else s=chr(47)+"/- End of Quests";
+     }
+     
+     //- Read Heroes
+     numchars=FileReadQuad(f);
+     guestchars=FileReadQuad(f);
+     hostelchars=FileReadQuad(f);
+     for(i=0; i<numchars; i++)
+          Hero_ReadFromFile(i,f);
+     for(i=0; i<hostelchars; i++)
+          Hero_ReadFromFile(i+5,f);
+     FileReadString(f);
+     
+     //- Read Flags
+     if(val(right(v,6))<110206) {
+          j=FileReadQuad(f);
+          DictSetInt(flags,"Tutorial",FileReadQuad(f));
+          for(i=1; i<j; i++) {
+               FileReadQuad(f);
+          }
+          FileReadString(f);
+     }
+     else {
+          j=FileReadQuad(f);
+          for(i=0; i<j; i++)
+               DictSetInt(flags,FileReadString(f),FileReadQuad(f));
+          FileReadString(f);
+     }
+
+     //- Read Configuration/Options
+     volume=FileReadQuad(f);
+     
+     FileClose(f);
+     fdest=0;
+     Party_UpdateAbilities();
+     Map(actmap);
+}
+
+void Map_Initialize(string m, string a, string s, string f) {
+     int i,x,y;
+     x=xdest%16;
+     y=ydest%16;
+     for(i=0; i<numchars; i++) {
+          if(hero[i].curhp) hero[i].ent=EntitySpawn(xdest/16,ydest/16,"images\\chrs\\"+hero[i].chrimg+".chr");
+          else hero[i].ent=EntitySpawn(xdest/16,ydest/16,"images\\chrs\\g_"+left(hero[i].race,6)+".chr");
+          if(i) EntityStalk(hero[i].ent,hero[i-1].ent);
+     }
+     SetPlayer(hero[0].ent);
+     entity.x[hero[0].ent]+=x;
+     entity.y[hero[0].ent]+=y;
+     Party_SetFairies();
+     actmap=curmap.path;
+     if(len(f)) {
+          actfact=f;
+          partyfact=Party_GetAvgFaction(GetRacialIndex(f));
+     }
+     else {
+          actfact="";
+          partyfact=0;
+     }
+     if(loaded) {
+          Area_Change(bindmapname,bindareaname,s);
+          FadeIn(30,1);
+          loaded=0;
+     }
+     else Area_Change(m,a,s);
+     Unpress(9);
+     SetExecutionPaused(0);
+}
+
+void Map_Switch(string m, int x, int y, int f) {
+     if(f) SetFadeImage(DuplicateImage(sprite.image[sizedscreen]));
+     if(x) xdest=x*16;
+     if(y) ydest=y*16;
+     fdest=f;
+     Map("world\\"+m);
+}
+
+void PrintUnderline(int x, int y, int d, int f, string s, int a) {
+//- Prints an underlined string.
+//  a: 0=left, 1=center, 2=right
+     int w=TextWidth(f,s);
+     int h=FontHeight(f);
+     if(a==1) x-=w/2;
+     else if(a==2) x-=w;
+     Line(x,y+h-4,x+w-2,y+h-4,black,d);
+     Line(x-1,y+h-3,x+w-1,y+h-3,black,d);
+     Line(x,y+h-3,x+w-2,y+h-3,white,d);
+     Line(x,y+h-2,x+w-2,y+h-2,black,d);
+     PrintString(x,y,d,f,s);
+}
+
+void ProcessFades() {
+     int i;
+     if(WindowGetWidth(1)!=640 || WindowGetHeight(1)!=480)
+          WindowSetSize(1,640,480);
+     if(!winflag) {
+          if(blinkfighter && systemtime-fightefft>=2) {
+               if(!Random(0,3)) {
+                    sprite.x[fighter[blinkfighter-1].image]=fighteffx;
+                    sprite.y[fighter[blinkfighter-1].image]=fighteffy;
+               }
+               else {
+                    sprite.x[fighter[blinkfighter-1].image]=640;
+                    sprite.y[fighter[blinkfighter-1].image]=480;
+               }
+               fightefft=systemtime;
+          }
+          if(flashfighter && systemtime-fightefft>=5) {
+               if(sprite.silhouette[fighter[flashfighter-1].image]){
+                    Blit(0,0,fighteffx,sprite.image[fighter[flashfighter-1].image]);
+                    sprite.silhouette[fighter[flashfighter-1].image]=0;
+               }
+               else {
+                    Silhouette(0,0,0,fighteffx,sprite.image[fighter[flashfighter-1].image]);
+                    sprite.silhouette[fighter[flashfighter-1].image]=1;
+               }
+               fightefft=systemtime;
+          }
+          if(shakefighter && systemtime-fightefft>=2) {
+               sprite.x[fighter[shakefighter-1].image]=fighteffx+Random(0-2,2);
+               fightefft=systemtime;
+          }
+          return;
+     }
+     if(cameratracking==1)
+          GrabRegion(entity.x[GetPlayer()]-xwin-152,entity.y[GetPlayer()]-ywin-116,480,360,0,0,screen,tempscreen);
+     else if(ywin>=120)
+          GrabRegion(160,120,480,360,0,0,screen,tempscreen);
+     else GrabRegion(160,ywin,480,240+ywin,0,0,screen,tempscreen);
+     if(isdark) {
+          RectFill(0,0,319,239,RGB(255-isdark,255-isdark,255-isdark),darkscreen);
+          for(i=0; i<numchars; i++) {
+               SubtractiveBlit((312-entity.x[hero[0].ent])+(entity.x[hero[i].ent]-entity.x[hero[0].ent]/32)+entity.x[hero[i].ent]-160+sprite.x[lights[i]],
+                               (236-entity.y[hero[0].ent])+(entity.y[hero[i].ent]-entity.y[hero[0].ent]/32)+entity.y[hero[i].ent]-120+sprite.y[lights[i]],
+                               sprite.image[lights[i]],darkscreen);
+          }
+          i=5;
+          while(lights[i]) {
+               SubtractiveBlit(sprite.x[lights[i]]-xwin+(312-entity.x[hero[0].ent]+xwin),
+                               sprite.y[lights[i]]-ywin+(236-entity.y[hero[0].ent]+ywin),sprite.image[lights[i]],darkscreen);
+               i++;
+          }
+          AlphaBlit(0,0,darkalpha,darkscreen,tempscreen);
+     }
+     ScaleBlit(0,0,640,480,tempscreen,sprite.image[sizedscreen]);
+     if(arefairies) {
+          switch(systemtime%160/20) {
+               case 0:   fairyframe=0;
+               case 1:   fairyframe=1;
+               case 2:   fairyframe=2;
+               case 3:   fairyframe=1;
+               case 4:   fairyframe=0;
+               case 5:   fairyframe=3;
+               case 6:   fairyframe=4;
+               case 7:   fairyframe=3;
+          }
+     }
+     if(menuactive) UI_PartyDetail(heroframe+5);
+     if(!fadetimer && !texttimer) return;
+     if(fadeimage && systemtime-fadetimer>=20) {
+          FreeImage(fadeimage);
+          fadeimage=0;
+     }
+     if(len(fadetext) && systemtime-fadetimer>=500) fadetext="";
+     if(fadesong && systemtime-fadetimer>=100) {
+          FreeSong(mainsong);
+          mainsong=fadesong-1;
+          fadesong=0;
+          SetSongVolume(mainsong,100);
+     }
+     if(showtext && systemtime-texttimer>=10) {
+          sprite.lucent[textsprite[0]]=textboxtrans;
+          sprite.lucent[textsprite[1]]=0;
+          sprite.lucent[textsprite[2]]=0;
+          sprite.lucent[textsprite[4]]=textboxtrans;
+          sprite.lucent[textsprite[5]]=0;
+          sprite.lucent[textsprite[6]]=0;
+     }
+     if(!showtext && systemtime-texttimer>=10) {
+          sprite.lucent[textsprite[0]]=100;
+          sprite.lucent[textsprite[1]]=100;
+          sprite.lucent[textsprite[2]]=100;
+          sprite.lucent[textsprite[4]]=100;
+          sprite.lucent[textsprite[5]]=100;
+          sprite.lucent[textsprite[6]]=100;
+     }
+     if(!fadeimage && !fadesong && !len(fadetext)) {
+          fadetimer=0;
+          if(showtext && sprite.lucent[textsprite[6]]==0) {
+               texttimer=0;
+               return;
+          }
+          else if(!showtext && sprite.lucent[textsprite[6]]==100) {
+               texttimer=0;
+               return;
+          }
+     }
+     if(fadeimage) BlitLucent(0,0,systemtime-fadetimer*5,fadeimage,sprite.image[sizedscreen]);
+     if(len(fadetext) && systemtime-fadetimer<50)
+          PrintCenter(320,systemtime-fadetimer/5-10,sprite.image[sizedscreen],fontm,fadetext);
+     else if(len(fadetext) && systemtime-fadetimer>400) {
+          SetLucent(systemtime-fadetimer-400);
+          PrintCenter(320,0,sprite.image[sizedscreen],fontm,fadetext);
+          SetLucent(0);
+     }
+     else if(len(fadetext)) PrintCenter(320,0,sprite.image[sizedscreen],fontm,fadetext);
+     if(fadesong) {
+          SetSongVolume(mainsong,100-(systemtime-fadetimer));
+          SetSongVolume(fadesong-1,systemtime-fadetimer);
+     }
+     if(showtext && sprite.lucent[textsprite[6]]>0) {
+          if((systemtime-texttimer)<10-(textboxtrans/10)) {
+               sprite.lucent[textsprite[0]]=100-(systemtime-texttimer*10);
+               sprite.lucent[textsprite[4]]=100-(systemtime-texttimer*10);
+          }
+          else {
+               sprite.lucent[textsprite[0]]=textboxtrans;
+               sprite.lucent[textsprite[4]]=textboxtrans;
+          }
+          sprite.lucent[textsprite[1]]=100-(systemtime-texttimer*10);
+          sprite.lucent[textsprite[2]]=100-(systemtime-texttimer*10);
+          sprite.lucent[textsprite[5]]=100-(systemtime-texttimer*10);
+          sprite.lucent[textsprite[6]]=100-(systemtime-texttimer*10);
+     }
+     if(!showtext && sprite.lucent[textsprite[6]]<100) {
+          if((systemtime-texttimer)>textboxtrans/10) {
+               sprite.lucent[textsprite[0]]=systemtime-texttimer*10;
+               sprite.lucent[textsprite[4]]=systemtime-texttimer*10;
+          }
+          sprite.lucent[textsprite[1]]=systemtime-texttimer*10;
+          sprite.lucent[textsprite[2]]=systemtime-texttimer*10;
+          sprite.lucent[textsprite[5]]=systemtime-texttimer*10;
+          sprite.lucent[textsprite[6]]=systemtime-texttimer*10;
+     }
+}
+
+string ProcessKeyboardInput(string words, int maxlen, int f) {
+     string base;
+     base=words;
+     if(key[SCAN_BACKSP]) {
+          key[SCAN_BACKSP]=0; lastpressed=0;
+          words=left(words,len(words)-1);
+          if(strcmp(base,words)) PlaySound(sfx_click,volume);
+          return words;
+     }
+     if(lastpressed && TextWidth(f,words+chr(lastkey))<=maxlen) {
+          if(lastpressed!=SCAN_SPACE && lastpressed!=SCAN_ENTER) {
+               if(!key[SCAN_LSHIFT] && !key[SCAN_RSHIFT])
+                    words=words+chr(lastkey);
+               else words=words+ToUpper(chr(lastkey));
+          }
+          else if(lastpressed!=SCAN_ENTER) words=words+"_";
+          if(lastpressed!=SCAN_LSHIFT && lastpressed!=SCAN_RSHIFT) {
+               key[lastpressed]=0;
+               lastpressed=0;
+          }
+     }
+     if(IsReservedChar(right(words,1))) words=left(words,len(words)-1);
+     if(strcmp(base,words)) PlaySound(sfx_click,volume);
+     return words;
+}
+
+string ProcessTimeString(int time) {
+     int h,m,s;
+     string res;
+     s=time%100;
+     m=time/100%100;
+     h=time/10000;
+     res=str(h)+":";
+     if(m<10) res=res+"0"+str(m)+":";
+     else res=res+str(m)+":";
+     if(s<10) res=res+"0"+str(s);
+     else res=res+str(s);
+     return res;
+}
+
+void QuitGame(string speaker) {
+     string s;
+     if(numchars>1) s="heroes";
+     else s=hero[0].name;
+     Text_Main(" \nRest then, \f2"+s+"\f0, but return soon.\nAll of \f3Serinor\f0 depends on you."0,0,0,1,0);
+     FadeOut(100,1);
+     ResetWorld();
+     AutoExec();
+     Exit("EoS by Eldritch <eldritch05@gmail.com>");
+}
+
+void ResetWorld() {
+     int i,j;
+     HookRetrace("");
+     HookTimer("");
+     RectFill(0,0,639,479,clear,sprite.image[sizedscreen]);
+     
+     //- Clear Party Information
+     maxlevel=0;
+     lorexp=0;
+     partygold=0;
+     xdest=0;
+     ydest=0;
+     bindx=0;
+     bindy=0;
+     for(i=0; i<10; i++)
+          recruits[i]=0;
+     second=0;
+     minute=0;
+     hour=0;
+     lastsaved=0;
+     bindmap="";
+     bindmapname="";
+     bindareaname="";
+     actmap="";
+     mapname="";
+     areaname="";
+     actfact="";
+     actheromenu=0;
+     actpartymenu=0;
+
+     //- Clear Party Quest Information
+     for(i=0; i<6; i++) {
+          questlog[i].name="";
+          questlog[i].desc="";
+          questlog[i].task="";
+          questlog[i].stage=0;
+          questlog[i].idx=0;
+          questlog[i].dest.name="";
+          questlog[i].dest.x=0;
+          questlog[i].dest.y=0;
+     }
+     
+     //- Clear Heroes
+     numchars=0;
+     guestchars=0;
+     hostelchars=0;
+     for(i=0; i<105; i++)
+          Hero_Delete(i);
+     
+     //- Clear Flags
+     DictFree(flags);
+     flags=DictNew();
+     
+     //- Clear Configuration/Options
+     volume=100;
+     
+     //- Clear Local Information
+     mainsongname="";
+     actfact="";
+}
+
+void SaveGame(int slot, string desc) {
+     int i,j;
+     string s;
+     int thumb=NewImage(64,48);
+     int f=FileOpen("save\\eossave"+str(slot)+".sav",FILE_WRITE);
+     
+     //- Write Save Header
+     FileWriteQuad(f,12310+len(_eosver)+len(desc)+len(mapname));
+     FileWriteString(f,_eosver);
+     ScaleBlit(0,0,64,48,tempscreen,thumb);
+     for(i=0; i<48; i++) {
+          for(j=0; j<64; j++)
+               FileWriteQuad(f,GetPixel(j,i,thumb));
+     }
+     FileWriteString(f,desc);
+     FileWriteString(f,mapname);
+     FileWriteQuad(f,partygold);
+     FileWriteQuad(f,Party_GetAvgLevel());
+     FileWriteQuad(f,(hour*10000)+(minute*100)+second);
+     FreeImage(thumb);
+     
+     //- Write Party Information
+     FileWriteQuad(f,maxlevel);
+     FileWriteQuad(f,lorexp);
+     FileWriteQuad(f,partygold);
+     FileWriteQuad(f,entity.x[hero[0].ent]);
+     FileWriteQuad(f,entity.y[hero[0].ent]);
+     FileWriteQuad(f,bindx);
+     FileWriteQuad(f,bindy);
+     for(i=0; i<10; i++)
+          FileWriteQuad(f,recruits[i]);
+     for(i=0; i<246; i++)
+          FileWriteQuad(f,spellbook[i]);
+     FileWriteQuad(f,second);
+     FileWriteQuad(f,minute);
+     FileWriteQuad(f,hour);
+     FileWriteString(f,bindmap);
+     FileWriteString(f,bindmapname);
+     FileWriteString(f,bindareaname);
+     FileWriteString(f,actmap);
+     FileWriteString(f,mapname);
+     FileWriteString(f,areaname);
+     FileWriteString(f,actfact);
+     FileWriteString(f,chr(47)+"/- End of Party");
+
+     //- Write Party Quest Information
+     i=0;
+     s=questlog[i].name;
+     while(len(s)) {
+          FileWriteString(f,s);
+          FileWriteString(f,questlog[i].desc);
+          FileWriteString(f,questlog[i].task);
+          FileWriteQuad(f,questlog[i].stage);
+          FileWriteQuad(f,questlog[i].idx);
+          FileWriteString(f,questlog[i].dest.name);
+          FileWriteQuad(f,questlog[i].dest.x);
+          FileWriteQuad(f,questlog[i].dest.y);
+          i++;
+          if(i<6) s=questlog[i].name;
+          else s="";
+     }
+     FileWriteString(f,chr(47)+"/- End of Quests");
+     
+     //- Write Heroes
+     FileWriteQuad(f,numchars);
+     FileWriteQuad(f,guestchars);
+     FileWriteQuad(f,hostelchars);
+     for(i=0; i<numchars; i++)
+          Hero_WriteToFile(i,f);
+     for(i=0; i<hostelchars; i++)
+          Hero_WriteToFile(i+5,f);
+     FileWriteString(f,chr(47)+"/- End of Heroes");
+     
+     //- Write Flags
+     FileWriteQuad(f,DictSize(flags));
+     s=DictListKeys(flags," ");
+     for(i=0; i<DictSize(flags); i++) {
+          FileWriteString(f,GetToken(s," ",i));
+          FileWriteQuad(f,DictGetInt(flags,GetToken(s," ",i)));
+     }
+     FileWriteString(f,chr(47)+"/- End of Flags");
+
+     //- Write Configuration/Options
+     FileWriteQuad(f,volume);
+     
+     FileClose(f);
+     saveslot=slot;
+     lastsaved=(hour*10000)+(minute*100)+second;
+}
+
+void SetExecutionPaused(int x) {
+     if(x) {
+          if(x<2) EntityStop(GetPlayer());
+          HookButton(3,"");
+          HookButton(4,"");
+          paused=1;
+     }
+     else {
+          HookButton(3,"Menu_System");
+          HookButton(4,"Menu_Info");
+          paused=0;
+     }
+     if(x<2) SetEntitiesPaused(x);
+     
+}
+
+void SetFadeImage(int img) {
+     if(fadeimage) FreeImage(fadeimage);
+     fadeimage=img;
+     fadetimer=systemtime;
+}
+
+void SetFadeSong(string song) {
+     if(!strcmp(song,mainsongname)) return;
+     if(fadesong) {
+          FreeSong(mainsong);
+          mainsong=fadesong-1;
+     }
+     mainsongname=song;
+     fadesong=LoadSong("sound\\"+song)+1;
+     SetSongVolume(fadesong-1,0);
+     PlaySong(fadesong-1);
+     fadetimer=systemtime;
+}
+
+void SetFadeText(string words, int sound) {
+     fadetext=words; fadetimer=systemtime;
+     if(sound) PlaySound(sfx_chimes,100);
+}
+
+void SetFlag(string k, int v) {
+     DictSetInt(flags,k,v);
+}
+
+void StartupSplash(string name) {
+     int bg=LoadImage(name+".png");
+     int bg2=LoadImage(name+"2.png");
+     Blit(0,0,bg,screen);
+     RectFill(0,0,ImageWidth(screen),ImageHeight(screen),0,screen);
+     timer=0; key[SCAN_ESC]=0;
+     while(timer<125 && !key[SCAN_ESC]) {
+          Blit(0,0,bg,screen);
+          SetLucent(timer-25);
+          Blit(0,0,bg2,screen);
+          RectFill(0,0,ImageWidth(screen),ImageHeight(screen),black,screen);
+          SetLucent(0);
+          ShowPage();
+     }
+     while(timer<250 && !key[SCAN_ESC]) ShowPage();
+     timer=0;
+     while(timer<125 && !key[SCAN_ESC]) {
+          Blit(0,0,bg,screen);
+          SetLucent(100-timer);
+          BlitLucent(0,0,100-timer,bg2,screen);
+          SetLucent(125-timer);
+          RectFill(0,0,ImageWidth(screen),ImageHeight(screen),black,screen);
+          ShowPage();
+     }
+     FreeImage(bg); FreeImage(bg2);
+}
+
+void Wait(int d, int r) {
+     timer=0;
+     while(timer<d) {
+          if(r) Render();
+          ShowPage();
+     }
+}
+
+void WaitForEntity(int e) {
+     int t=systemtime+3000;
+     while(entity.movecode[e]) {
+          Render(); 
+          ShowPage(); 
+          if(t<systemtime) {
+               EntityStop(e);
+               Log("ERROR: Movescript timeout for entity "+str(e));
+          }
+     }
+}
+
+void Warp(int x, int y) {
+     SetFadeImage(DuplicateImage(sprite.image[sizedscreen]));
+     if(x) entity.x[GetPlayer()]=x*16;
+     if(y) entity.y[GetPlayer()]=y*16;
+     Unpress(9);
+}

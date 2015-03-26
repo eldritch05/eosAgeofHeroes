@@ -1,0 +1,444 @@
+int firstlevelup, firstmaxedlevel;
+
+void Area_Change(string m, string a, string s) {
+     if(!strcmp(mapname,m) && !strcmp(areaname,a) && !loaded)
+          return;
+     else if(!len(m) && !strcmp(areaname,a) && !loaded)
+          return;
+     if(len(m)) mapname=m;
+     if(len(a)) areaname=a;
+     fadetext=mapname+" - "+areaname;
+     if(len(s)) SetFadeSong(s);
+     fadetimer=systemtime;
+}
+
+int DenyServices() {
+     if(partyfact>4) return 0;
+     if(GetRacialIndex(actfact)<0) return 0;
+     switch(Random(0,4)) {
+          case 0:   Text("","I've got something for you right here.  It's called the exit.  Now get lost.");
+          case 1:   Text("","I wonder how much I could get for the tongue of a blithering idiot.  "+
+                         "If you stick around I might just find out.");
+          case 2:   Text("","We don't deal with scum like you.  Go back to whatever hole you came from.");
+          case 3:   Text("","Don't you things have your own cities?  Whatever.  I'm not dealing with you.");
+          case 4:   Text("","Out, scoundrels.  Things like you aren't welcome in our fair city.");
+     }
+     return 1;
+}
+
+void FindTreasure(int g, string f) {
+     if(GetFlag(f)) return;
+     SetExecutionPaused(1);
+     if(g) {
+          PlaySound(sfx_success,volume);
+          ClearPortrait();
+          Text_Main("Acquired "+str(g)+"$!",0,0,0,0,0);
+          Party_EarnGold(g);
+          SetFlag(f,1);
+     }
+     else {
+          if(FindItem(0))
+               SetFlag(f,1);
+     }
+     SetExecutionPaused(0);
+}
+
+void GenericChest(int g, string f) {
+     int x;
+     if(GetFlag(f)) return;
+     SetExecutionPaused(1);
+     PlaySound(sfx_open,volume);
+     SetTile(event.tx,event.ty,1,163);
+     if(!g) x=FindItem(0);
+     else {
+          PlaySound(sfx_success,volume);
+          ClearPortrait();
+          Text_Main("Acquired "+str(g)+"$!",0,0,0,0,0);
+          Party_EarnGold(g);
+          x=1;
+     }
+     if(x) SetFlag(f,1);
+     else SetTile(event.tx,event.ty,1,162);
+     SetExecutionPaused(0);
+}
+
+void GenericCraftItem(string name, ... alttext) {
+     if(!strcmp("Antidote Herb",name))
+          CraftItem(name,"","Removes one ailment.",1,124,50);
+     else if(!strcmp("Healing Salve",name))
+          CraftItem(name,"","Restores 20 health.",1,42,50);
+     else if(!strcmp("Torch",name))
+          CraftItem(name,"","",1,247,25);
+     
+     //- Vararg alttext allows generic items with custom flavor text
+     if(!alttext.length) return;
+     if(alttext.is_string[0])
+          tempitem[0].name=alttext.string[0];
+     if(alttext.length<2) return;
+     if(alttext.is_string[1])
+          tempitem[0].desc=alttext.string[1];
+     if(alttext.length<3) return;
+     if(alttext.is_string[2])
+          tempitem[0].lore=alttext.string[2];
+}
+
+void GenericInn(string name, int cost) {
+     int i;
+     cost=cost*numchars;
+     SetPortrait(0,"\f2Innkeeper");
+     if(partyfact==5 && len(actfact)) cost+=cost;
+     else if(partyfact<5 && len(actfact)) {
+          Text("Innkeeper","Hmph.  We don't have beds for the likes of you.  Go bother the "+
+               "\f2tender\f0 at the \f3Journeyman's Rest\f0.");
+          return;
+     }
+     i=Prompt("Hello, and welcome to the \f3"+name+"\f0.  It will cost you "+
+              str(cost)+"$ to rest here.  Would you like a room?","Yes","No");
+     if(i==2) return;
+     if(cost>partygold) {
+          Text("Innkeeper","I'm afraid you don't have enough gold.  I simply can't rent you a "+
+               "room if you can't afford to pay for it.");
+          return;
+     }
+     partygold-=cost;
+     Text("Innkeeper","Thank you.  Your beds are right over there.  Enjoy your stay.");
+     InnRest();
+     Text("Innkeeper","Ah, you're awake.  I trust you had a good rest.  Please come again.");
+}
+
+void GenericRevive(string name, string race, int cost) {
+     int i,x,price;
+     x=Party_NumberDead();
+     if(!x) {
+          Text(name,"Greetings, "+Party_GetName()+".  I am pleased to see you are well.  "+
+               "Return to me if you ever need a \f4resurrection\f0.");
+          return;
+     }
+     price=x*cost*Party_GetAvgLevel();
+     if(Party_GetAvgFaction(GetRacialIndex(race))<6)
+          price+=6-Party_GetAvgFaction(GetRacialIndex(race))*price/2;
+     SetPortrait(0,"\f2"+name);
+     i=Prompt("I see battle has taken its toll on you.  For a donation of "+str(price)+
+              "$, I will \f4restore life\f0 to your dead.","Okay","No thanks");
+     if(i==2) return;
+     if(partygold<price && !strcmp(race,"Human") && Party_GetAvgFaction(0)>5) {
+          Text(name,"You do not have enough gold to cover the donation?  Very well.  "+
+               "I know you to be devout followers of the Light.  Donate what you are able "+
+               "and I will raise your dead anyway.");
+          price=partygold;
+     }
+     else if(partygold<price) {
+          Text(name,"You do not have enough gold to cover the donation?  I'm sorry, but "+
+               "without this show of devotion to our faith, I am unable to assist you.");
+          return;
+     }
+     partygold-=price;
+     PlaySound(sfx_cast,100);
+     switch(GetRacialIndex(race)) {
+          case 0:   Text(name,"May the Light shine on our heroes!  Let the Divine Light infuse "+
+                         "them and rekindle their immortal souls!");
+          case 1:   Text(name,"May the power of the Wellspring of Life, from which all life stems, "+
+                         "restore health to our fallen heroes.");
+          case 2:   Text(name,"Divine Light, I beseech you!  Hear now your faithful servant and "+
+                         "let the wanderers return to this place.");
+          case 3:   Text(name,"Heroes!  Hear my voice!  Your place is here.  Return now from "+
+                         "whatever darkness in which you wander.");
+          case 4:   Text(name,"Death is fleeting, and its grasp loose.  Return, heroes.  There "+
+                         "is nothing that can stop you.");
+          case 5:   Text(name,"By the power of the Warlords, I command you return to the fray!  "+
+                         "Your final battle has not yet come.");
+          case 6:   Text(name,"Breathe once more the flames, heroes, and rise up on the wings of "+
+                         "the dragons.");
+          case 7:   Text(name,"Mothers, hear me.  Track these wayward souls across the ghostly "+
+                         "seas and lead them back again to the world.");
+          case 8:   Text(name,"Return, heroes, for your share in our cursed blessing.  There "+
+                         "can be no rest for you.");
+          case 9:   Text(name,"The Eternal Knowledge fills me.  I know you will return, and such "+
+                         "knowing shapes reality.  Arise.");
+     }
+     PlaySound(sfx_recover,100);
+     for(i=0; i<numchars; i++) {
+          if(!hero[i].curhp) {
+               hero[i].curhp=1;
+               ChangeCHR(hero[i].ent,"images\\chrs\\"+hero[i].chrimg+".chr");
+               UI_HeroDetail(i,heroframe+i);
+          }
+     }
+     Text(name,"It is done.  Return if you ever again require my services.");
+}
+
+void GenericShop_Armor(string race, int maxrank) {
+     GenericShop_Equipment(race,maxrank,16,30,20,26);
+}
+
+int GenericShop_GetItemFromPointer(int p, int start, ... exclude) {
+     int i;
+     int curitem=p+start;
+     if(!exclude.length) return curitem;
+     for(i=0; i<exclude.length; i++) {
+          if(curitem>=exclude.int[i])
+               curitem++;
+     }
+     return curitem;
+}
+
+void GenericShop_Equipment(string race, int maxrank, int start, int stop, ... exclude) {
+     int done,rank,magic,p,q,v;
+     int totalitems=stop-start-exclude.length;
+     int curitem=GenericShop_GetItemFromPointer(p,start,exclude);
+     if(totalitems<1) Exit("ERROR: Invalid range passed to GenericShop_Equipment()");
+     menuactive=2;
+     SetExecutionPaused(1);
+     PlaySound(sfx_prompt,volume);
+     chargensprite=GetSprite();
+     sprite.image[chargensprite]=NewImage(336,343);
+     sprite.alphamap[chargensprite]=NewImage(336,343);
+     sprite.x[chargensprite]=220; sprite.y[chargensprite]=41;
+     sprite.sc[chargensprite]=1;
+     UI_PopulateEquipShop(race,rank,maxrank,magic,p,chargensprite,start,stop,exclude);
+     for(q=0; q<numchars; q++)
+          sprite.x[heroframe+q]=0;
+     sprite.x[heroframe+5]=0;
+     sprite.y[footframe]=383;
+     CraftEquipment(1,race,0,0);
+     Party_RedrawDetailFrames();
+     Menu_RedrawFooter(1,0);
+     Unpress(0);
+     while(!b2) {
+          Render();
+          UI_PartyDetail(heroframe+5);
+          ShowPage();
+          q=0;
+          if(up) {
+               Unpress(5);
+               p--;
+               if(p<0) p=totalitems;
+               q=1;
+          }
+          else if(down) {
+               Unpress(6);
+               p++;
+               if(p>totalitems) p=0;
+               q=1;
+          }
+          else if(left && rank) {
+               Unpress(7);
+               if(rank==5 && magic)
+                    magic=0;
+               else rank--;
+               q=1;
+          }
+          else if(right && rank<maxrank) {
+               Unpress(8);
+               if(rank==5 && !magic)
+                    magic=1;
+               else rank++;
+               q=1;
+          }
+          if(q) {
+               PlaySound(sfx_click,100);
+               curitem=GenericShop_GetItemFromPointer(p,start,exclude);
+               UI_PopulateEquipShop(race,rank,maxrank,magic,p,chargensprite,start,stop,exclude);
+               CraftEquipment(curitem,race,rank,magic);
+               Menu_RedrawFooter(1,0);
+               Party_RedrawDetailFrames();
+          }
+          if(b1) {
+               Unpress(1);
+               v=tempitem[0].price;
+               if(partyfact && partyfact<6) v=v*2;
+               if(partygold<v)
+                    PlaySound(sfx_buzz,100);
+               else {
+                    PlaySound(sfx_beep,100);
+                    q=Menu_SelectTarget(0);
+                    if(q && !Hero_PackSpace(q-1))
+                         PlaySound(sfx_buzz,100);
+                    else if(q) {
+                         PlaySound(sfx_cash,100);
+                         partygold-=v;
+                         Item_AssignTemp(q-1,0,hero[q-1].numitems);
+                         CraftEquipment(curitem,race,rank,magic);
+                         Party_RedrawDetailFrames();
+                    }
+               }
+          }
+     }
+     PlaySound(sfx_done,100);
+     for(q=0; q<numchars; q++)
+          sprite.x[heroframe+q]=0-128;
+     sprite.x[heroframe+5]=0-128;
+     sprite.y[footframe]=480;
+     FreeImage(sprite.image[chargensprite]); sprite.image[chargensprite]=0;
+     menuactive=0;
+     SetExecutionPaused(0);
+}
+
+void GenericShop_Weapon(string race, int maxrank) {
+     GenericShop_Equipment(race,maxrank,1,10);
+}
+
+void HeroShrine() {
+     int i;
+     string s;
+     if(!strcmp(actmap,bindmap))
+          s="\f1(Bound Here)";
+     SetPortrait(DictGetInt(spc,"Hero Shrine"),"\f4Hero Shrine");
+     i=Prompt("The \f4Shrine of Heroes\f0 gleams...",
+              "\f4Record\f0 your quest with the shrine",
+              "\f4Bind\f0 your soul at this location  "+s,
+              "\f4Retire\f0 from your quest temporarily",
+              "\f4Nothing\f0 at this time");
+     if(i==1 && !Quest_PartyOnStage("Expedition to Achiela",7)) {
+          ClearPortrait();
+          i=Menu_Save();
+          if(i) {
+               SetExecutionPaused(1);
+               SetPortrait(DictGetInt(spc,"Hero Shrine"),"\f4Hero Shrine");
+               Text_Main("You recount the stories of your adventures in the constant blue light "+
+                         "of the shrine, knowing it will \f4record all you've done\f0.",0,0,0,0,0);
+               SetExecutionPaused(0);
+          }
+          else HideTextBox();
+     }
+     else if(i==2) {
+          bindx=entity.x[hero[0].ent];
+          bindy=entity.y[hero[0].ent];
+          bindmap=actmap;
+          bindmapname=mapname;
+          bindareaname=areaname;
+          Text_Main("The shrine pulses once with a red gleam as you flick a drop of blood into "+
+                    "it, \f4binding your soul\f0 to your current location.",0,0,0,0,0);
+     }
+     else if(i==3) {
+          if(lastsaved+100<(hour*10000)+(minute*100)+second) 
+               s="\n\f3You have not saved recently.";
+          else s="";
+          i=Prompt("Are you sure you want to quit?"+s,"Stay","Quit");
+          if(i==1) return;
+          QuitGame("\f4Hero Shrine");
+     }
+}
+
+void Hostel_Enter() {
+     inhostel=1;
+}
+
+void Hostel_Leave() {
+     inhostel=0;
+}
+
+void Hostel_Tender() {
+     int p;
+     if(Kos()) return;
+     SetPortrait(0,"Tender");
+     p=Prompt("Hey there.  Looking for fresh faces?  I can help you if you want to recruit new heroes.  "+
+              "Otherwise, just set your \f4Marching Order\f0 yourself.","Recruit","Nothing");
+     if(p==1) CreateCharacter(hostelchars+5,actfact);
+}
+
+void InnRest() {
+     int i;
+     SetExecutionPaused(1);
+     FadeOut(30,1);
+     PlayMusic("sound\\inn.s3m");
+     SetMusicVolume(volume/2);
+     timer=0;
+     for(i=0; i<hostelchars+5; i++) {
+          if(hero[i].curhp) {
+               hero[i].curhp=hero[i].maxhp;
+               hero[i].curmp=hero[i].maxmp;
+          }
+     }
+     Wait(600-timer,0);
+     StopMusic();
+     FadeIn(30,1);
+     SetExecutionPaused(0);
+}
+
+void TeleportEffect(int e) {
+     int i=GetSprite();
+     SetExecutionPaused(1);
+     sprite.image[i]=NewImage(64,64);
+     RectFill(0,0,63,63,clear,sprite.image[i]);
+     sprite.sc[i]=1;
+     sprite.x[i]=entity.x[e]-xwin;
+     sprite.x[i]+=sprite.x[i]-320-16;
+     sprite.y[i]=entity.y[e]-ywin;
+     sprite.y[i]+=sprite.y[i]-240-48;
+     PlaySound(sfx_teleport,100);
+     timer=0;
+     while(timer<32) {
+          CircleFill(32,32,timer,timer,RGB(0,0,Random(100,200)),sprite.image[i]);
+          Render();
+          ShowPage();
+     }
+     entity.visible[e]=0;
+     entity.x[e]=0; entity.y[e]=0;
+     timer=0;
+     while(timer<32) {
+          CircleFill(32,32,32,32,RGB(0,0,Random(100,200)),sprite.image[i]);
+          CircleFill(32,32,timer,timer,clear,sprite.image[i]);
+          Render();
+          ShowPage();
+     }
+     sprite.x[i]=0; sprite.y[i]=0;
+     sprite.sc[i]=0;
+     FreeImage(sprite.image[i]);
+     sprite.image[i]=0;
+     SetExecutionPaused(0);
+}
+
+void Tutorial_LevelUp() {
+     int hr=Party_GetIndexFromName(Party_GetStoryHeroName(1));
+     int ae=Party_GetIndexFromName("Aerin");
+     int ad=Party_GetIndexFromName("Adain");
+     int gr=Party_GetIndexFromName("Grace");
+     int ma=Party_GetIndexFromName("Marty");
+     if(Quest_PartyHas("Expedition to Achiela")) {
+          HText(hr,"I...");
+          TextPlus("I think I'm getting the hang of this.",0);
+          HText(ae,"The pup has learned something.");
+          HText(gr,"Like you \f2Lukosians\f0 always say, experience is the best teacher.");
+          HText(ae,"Experiments.  The saying goes, `experiments are the best teachers.`");
+          HText(ma,"Close enough.  But you are getting better, \f2"+hero[hr].name+"\f0.  We can all tell.");
+          HText(ad,"You'll find there are some things you can teach yourself and apply while you're still out in "+
+               "the field.  Things like how to better absorb a hit, or how to better stretch your mana reserves.");
+          TextPlus("For most things though, you'll need to spend time with a skilled \f4trainer\f0 back in town.  "+
+                   "You'll know when it's time to go back and train.  That feeling of accomplishment is unmistakable.",0);
+          HText(hr,"So we need to go back to \f3Gelaham\f0 now?");
+          HText(ad,"Oh no.  We have work to do.");
+          HText(gr,"You'll have quite the training session to look forward to when we're done, I imagine.");
+          HText(ae,"Experience.  Bah.  Why go to all that risk when you can get carefully controlled results in a lab?");
+          HText(ma,"I will never understand you people.");
+     }
+     SetFadeText("See a \f2hero trainer\f0 in town to finish raising your level.",1);
+     firstlevelup=0;
+}
+
+void Tutorial_MaxedLevel() {
+     int hr=Party_GetStoryHero(1);
+     if(Quest_PartyHas("Expedition to Achiela")) {
+          hr--;
+          HText(hr,"I...");
+          TextPlus("I feel like I should be improving, but I'm not.",0);
+          HText("Aerin","And now the pup has stopped learning.");
+          HText("Marty","That was quick.  I suppose you've been learning a lot very quickly, though.");
+          HText("Grace","It's to be expected, \f2"+hero[hr].name+"\f0.  There's only so much you can learn on your own.");
+          HText(hr,"Oh.  So I'll be able to learn more after seeing a trainer, right?");
+          HText("Adain","Probably not this time.  It's more than just a training session you need.  Your abilities will "+
+                "never reach their true pinnacle if all you know is the \f2human\f0 lands around \f3Gelaham\f0.");
+          TextPlus("You need to get out and see \f3Serinor\f0.  Befriending the other races and learning from them "+
+                   "is the only way you'll continue to improve from here on out.",0);
+          HText(hr,"Slaying demons isn't enough breadth of experience already?");
+          HText("Grace","You'd be surprised what you can learn from the other races.");
+          HText("Aerin","It should not be that large of a surprise.  We \f2lukosians\f0 very obviously know so much more "+
+                "than your \f2human\f0 mind can begin to fathom.");
+          HText("Marty","And you'll find more technological gadgets in \f3Amunash\f0 than anywhere in \f3Serinor\f0.");
+          TextPlus("Or, if you prefer, we can teach to dozens of ways to cook fish.  We like our fish.",0);
+          HText("Adain","The point is, you need to see more of the world before your skills will improve again.  Don't "+
+                "worry.  You'll have plenty of time after we're through with our business here.");
+     }
+     if(maxlevel<50) SetFadeText("Recruit more races to increase your maximum level cap.",1);
+     firstmaxedlevel=2;
+}

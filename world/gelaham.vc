@@ -1,0 +1,801 @@
+//- Minimap offset - (0,18)
+void Start() {
+     entity.x[18]-=8;
+     entity.y[0]+=8;  entity.y[2]+=8;
+     entity.y[4]+=8;  entity.y[5]+=8;
+     entity.y[11]+=8; entity.y[16]+=8;
+     entity.y[17]+=8; entity.y[19]+=8;
+     entity.y[23]+=8; entity.y[24]+=8;
+     entity.y[29]+=4; entity.x[30]+=8;
+     if(!hero[0].level) NewGame();
+     if(Quest_PartyOnStage("Expedition to Achiela",2)) {
+          tempint[0]=EntitySpawn(44,93,"images\\chrs\\humpries.chr");
+          entity.script[tempint[0]]="Graig_Hostel";
+          entity.obstruct[tempint[0]]=1;
+     }
+     Map_Initialize("Gelaham","Temple Terrace","humtown.it","Human");
+     Batt_SetTimer(0,0);
+}
+
+void Leave() {
+     battleindex=1;
+     if(Quest_PartyOnStage("Expedition to Achiela",2)) {
+          Text("Graig","Ah.  There you are.  Over here.");
+          PlayerMove("X44Y94");
+          Graig_Hostel();
+          return;
+     }
+     areaname="Gelaham Area";
+     Map_Switch("amin.map",354,450,1);
+}
+
+void HighTemple() {
+     if(partyfact<4)
+          Text("","The door is barred from within.");
+     else {
+          xdest=entity.x[hero[0].ent]-64;
+          ydest=1000;
+          Map_Switch("hitemple.map",0,0,1);
+     }
+}
+
+void HeroTerraces() {
+     Area_Change("","Hero Terraces","");
+}
+
+void PilgrimTerraces() {
+     Area_Change("","Pilgrim Terraces","");
+}
+
+void TempleTerrace() {
+     Area_Change("","Temple Terrace","");
+}
+
+void GateGuard() {
+     if(KoS()) return;
+     Text("Guard","This is the \f2Human\f0 settlement of \f3Gelaham\f0, location of the \f3High Temple\f0.  "+
+          "All who walk in the Light are welcome here.");
+}
+
+void Inn() {
+     GenericInn("Weary Pilgrim Inn",6);
+}
+
+void ItemShop() {
+     int p;
+     if(entity.face[GetPlayer()]==2) return;
+     if(DenyServices()) return;
+     GenericShop_Armor("Human",9);
+     Text("Merchant","Adventurers, are you?  I've got everything you'll need right here.  Well, except "+
+          "weapons and armor, anyway.  Or spells.");
+     p=Prompt("Would you like a torch?  It's all I've got in stock right now.  They're 25$.","Yes","No");
+     if(p==1 && partygold<25)
+          Text("Merchant","I'm understocked, not a charity.  No money, no goods.");
+     else if(p==1 && !Party_PackSpace())
+          Text("Merchant","Doesn't look like you can carry any more.  Clear out your packs and come back.");
+     else if(p==1) {
+          partygold-=25;
+          PlaySound(sfx_cash,volume);
+          GenericCraftItem("Torch");
+          FindItem(0);
+     }
+     //Shop("2 23 11 12 13 58 83 84 0",0);
+     EntityMove(event.entity,"D0");
+}
+
+void ArcaneShop() {
+     int i,x;
+     if(KoS()) return;
+     for(i=0; i<numchars; i++) {
+          if(!strcmp(hero[i].class,"Wizard") && !strcmp(hero[i].race,"Human"))
+               x++;
+     }
+     if(!x) {
+          Text("Wizard","I don't understand why the Temple has banned the sale of non-religious magic.  "+
+               "It makes my studies unnecessarily difficult.");
+     }
+     else {
+          Text("Wizard","It's always nice to see a fellow \f2Human\f0 trying to walk the difficult road "+
+               "of wizardry.  It's illegal, but I'll teach you some of what I know.  For a price.");
+//          Shop("241 242 243 244 245 281 282 283 284 285 0",1);
+     }
+}
+
+void TempleStore() {
+     if(entity.face[GetPlayer()]==2) return;
+     if(DenyServices()) return;
+     Text("Paladin","Standard issue temple equipment all right here.  And all yours with the right donation.");
+     //Shop("3 4 5 6 7 8 9 10 230 231 232 0",0);
+     EntityMove(event.entity,"D0");
+}
+
+void TempleGuard() {
+     if(KoS()) return;
+     Text("Paladin","You are entering the \f3Divine High Temple\f0.  May the Light shine on the devout.");
+}
+
+void BanSign() {
+     Text("","By order of His Eminence the High Priest: Sale of any magic other than that relating to Spirituality "+
+          "and the Psyche is strictly forbidden.");
+}
+
+void Wizard1() {
+     if(KoS()) return;
+     Text("Wizardess","There used to be a \f2Fairy\f0 here who would sell spells for wizards, but it left since "+
+          "the Temple enacted the ban on selling arcane magicks.  You might be able to buy some lessons from the "+
+          "\f2old wizard\f0 who lives on the southeast terrace.  But you didn't hear that from me.");
+}
+
+void PsycheShop() {
+     if(entity.face[GetPlayer()]==2) return;
+     if(DenyServices()) return;
+     Text("Cleric","I have a variety of clerical spells for sale.  If you're looking for \f4Divine spells\f0, "+
+          "however, you'll need to go to the \f3High Temple\f0.");
+     //Shop("41 42 43 44 46 48 49 81 82 0",1);
+     EntityMove(event.entity,"D0");
+}
+
+void ItemGuy() {
+     if(KoS()) return;
+     Text("","Though other races have clerics, only \f2Humans\f0 have the dedication to the Light that gives us "+
+          "improved healing abilities and moral superiority.");
+}
+
+void BronzeShop() {
+     if(entity.face[GetPlayer()]==2) return;
+     if(DenyServices()) return;
+     Text("Merchant","Finest bronzeworks in the area, and all reasonably priced.");
+     GenericShop_Weapon("Human",9);
+     EntityMove(event.entity,"D0");
+}
+
+void RobeShop() {
+     if(DenyServices()) return;
+     Text("Tailor","All the priests who are anybody buy their robes from me.  And with good cause.");
+     //Shop("9 39 40 41 42 43 44 45 276 277 46 47 48 0",0);
+}
+
+void JourneyDeflect() {
+     if(partyfact<5) {
+          Text("","Tired?  There's no way the Weary Pilgrim will rent you a bed, so "+
+               "you'll need to stay here.  Or just leave town.  That's good too.");
+     }
+     else {
+          Text("","Hey, you don't need to stay here.  This is the \f3Journeyman's Rest\f0.  It has branches "+
+               "in every town, but they're very expensive to stay at.  You should head up to the \f3Weary "+
+               "Pilgrim\f0 up on the terrace just outside the Temple.  It's cheaper there.");
+     }
+}
+
+void InnDoor() {
+//     if(entity.y[partychr[0]]/16<120)
+//          GenericDoor(0,event.tx-43,1);
+//     else GenericDoor(0,event.tx-39,2);
+}
+
+void HostelDoor() {
+//     GenericDoor(100,3,1);
+}
+
+void GrymahDoor() {
+//     GenericDoor(0,5,1);
+}
+
+void Chest() {
+//     GenericChestTile(32,0,8,261);
+}
+
+void GrymahWife() {
+     int i;
+     string s;
+     if(KoS()) return;
+     CraftEquipment(12,"Lizardman",1,0);
+     tempitem[0].name="Wyrmtongue";
+     tempitem[0].desc="Grymah's Former Blade";
+     tempitem[0].lore="Said to be forged from a dragon's jawbone.  Valued at "+str(tempitem[0].price)+"$";
+     tempitem[0].stats[4][0]=5;
+     tempitem[0].stats[4][1]=36;
+     if(GetFlag("SearchForGrymah")==1) {
+          Text("Grymah's Widow","Thank you again for avenging my husband's death.  I still miss him, "+
+               "but it is good to know his killers have been brought to justice.");
+     }
+     else if(Quest_PartyOnStage("Search for Grymah",4)) {
+          if(!Party_PackSpace()) {
+               Text("Grymah's Widow","You still can't carry it.  Well, go make some space in your backpacks "+
+                    "and I'll keep it here until you come back.");
+               return;
+          }
+          Text("Grymah's Widow","You're back.  Here's the sword.");
+          FindItem(0);
+          Text("Grymah's Widow","I think my husband would want you to have it.  Thank you again for all you've done.");
+          Quest_Complete("Search for Grymah",4,100);
+          SetFlag("SearchForGrymah",1);
+     }
+     else if(!GetFlag("SearchForGrymah") && !Quest_PartyHas("Search for Grymah")) {
+          if(questlog[5].idx) s="Quest Log Already Full";
+          else s="Yes";
+          Text("Grymah's Wife","I'm so worried about my husband.  His patrols have never been this long "+
+               "before.  I'm afraid something must have happened to him.  Oh, \f2Grymah\f0!");
+          i=Prompt("Oh, "+Party_GetName()+", please, you must help me.  Will you go to the \f3cave to the west\f0 "+
+                   "and find my husband for me?",s,"No");
+          if(i==2 || questlog[5].idx)
+               Text("Grymah's Wife","I will continue to wait then, and hope that \f2Grymah\f0 comes home.");
+          else {
+               Text("Grymah's Wife","Oh, thank you.  He went to search the \f3cave to the west\f0 for bandits.  "+
+                    "It's on the coast due west of \f3Gelaham\f0.  Please bring him home!");
+               Quest_Add("Search for Grymah",54,"Search the \f3Bandit Cave\f0 for \f2Grymah\f0",
+                         "Search the cave west of \f3Gelaham\f0 for signs of \f2Grymah\f0","Amin",289,457);
+          }
+     }
+     else if(Quest_PartyOnStage("Search for Grymah",3)) {
+          Text("Grymah's Widow","That...  That's my husband's ring!  Oh, he must be dead, for he would "+
+               "never be without it.");
+          HText(0,"We killed the group of bandits who murdered your husband.  They have paid for their crime in full.");
+          Text("Grymah's Widow","Good.  I am glad my husband is avenged.  Please, take this \f4old sword\f0 of his.");
+          if(!Party_PackSpace()) {
+               Text("Grymah's Widow","Oh.  You can't carry it.  Well, go make some space in your backpacks "+
+                    "and I'll keep it here until you come back.");
+               Quest_Advance("Search for Grymah",3,"Return to \f2Grymah's Widow\f0 for your reward","Amin",354,450);
+          }
+          else {
+               FindItem(0);
+               Text("Grymah's Widow","I think my husband would want you to have it.  Thank you again for all you've done.");
+               Quest_Complete("Search for Grymah",3,100);
+               SetFlag("SearchForGrymah",1);
+          }
+     }
+     else if(Quest_PartyHas("Search for Grymah"))
+          Text("Grymah's Wife","Please hurry, "+Party_GetName()+", and bring my husband back to me.");
+}
+
+void Pot() {
+     //FindTreasure(2,0,10);
+     //if(HasItem(5,145)) GiveExp(0,1275000,DuplicateImage(screen));
+}
+
+void Guy() {
+     if(KoS()) return;
+     Text("","It's shameful that some humans still insist on using the foul magicks of the will.  Like the "+
+          "\f2old guy\f0 next door.  The Temple should exile him.");
+}
+
+void CalcStartExp() {
+/*     int i,x,y;
+     if(KoS()) return;
+     for(i=0; i<numchars; i++)
+          x+=party[i].exp;
+     for(i=0; i<110; i++)
+          x+=hostels[i].exp;
+     if(x<totalexp) x=totalexp;
+     totalexp=x; 
+     if(totalexp>63750000) totalexp=63750000;
+     y=GetStartLevel();
+     Text4("^Priestess: I can see...",
+          "Our heroes have earned "+HighlightNumber()+str(x),
+          "total experience points.",
+          "Their starting level is "+HighlightNumber()+str(y)+".");
+     if(flags[10]<50) flags[10]=0;
+     if(y<5) {
+          Text4("^Priestess: Visit me again when the",
+               "starting level is "+HighlightNumber()+"5, and I will have a",
+               "fitting reward for you.","");
+          return;
+     }
+     if(y>=5) {
+          if(!flags[10]) {
+               Text4("^Priestess: Magnificent work, heroes!",
+                    "For reaching a starting level of "+HighlightNumber()+"5, I",
+                    "give to you this ~Linking_Lute.  It will",
+                    "make raising the starting level easier.");
+               if(GetInventorySpace()) {
+                    GetItem(361);
+                    PlaySound(sfx_success,volume);
+                    Text4("Received ~Linking_Lute`!","","","");
+                    flags[10]=50;
+               }
+               else {
+                    Text4("^Priestess: But I see you can't carry",
+                         "any more.  Return for it when you have",
+                         "emptied your backpacks a bit.","");
+                    return;
+               }
+          }
+          if(y<10)
+               Text4("^Priestess: Visit me again when the",
+                    "starting level is "+HighlightNumber()+"10, and I will have",
+                    "a fitting reward for you.","");
+     }
+     if(y>=10) {
+          if(flags[10]<51) {
+               Text4("^Priestess: Magnificent work, heroes!",
+                    "For reaching a starting level of "+HighlightNumber()+"10, I",
+                    "give to you this ~Wisdomcaller.  It will",
+                    "make raising your own levels easier.");
+               if(GetInventorySpace()) {
+                    GetItem(362);
+                    PlaySound(sfx_success,volume);
+                    Text4("Received ~Wisdomcaller`!","","","");
+                    flags[10]=51;
+               }
+               else {
+                    Text4("^Priestess: But I see you can't carry",
+                         "any more.  Return for it when you have",
+                         "emptied your backpacks a bit.","");
+                    return;
+               }
+          }
+          if(y<20)
+               Text4("^Priestess: Visit me again when the",
+                    "starting level is "+HighlightNumber()+"20, and I will have",
+                    "a fitting reward for you.","");
+     }*/
+}
+
+void MountainMan() {
+     if(KoS()) return;
+     Text("","Stay out of the mountains to the east.  It's the only way to get to \f3Kognar\f0, but "+
+          "the monsters there will chew you up.");
+}
+
+void CaveThief() {
+     int i;
+     if(partyfact<5) {
+/*          Text("Enjoying your stay?  Of course you're not.  They hate people like us here.  "+
+               "But I've got a secret for you.  You'll love it.  Follow me.");
+          entity.face[18]=1;
+          SetFactionCustom(11,5);
+          PlaySound(sfx_resist[2],volume);
+          for(i=53; i<56; i++) {
+               SetTile(14,i,10,0);
+               SetTile(15,i,10,0);
+               if(i==55) {
+                    SetTile(14,i,0,0);
+                    SetTile(15,i,0,0);
+               }
+          }
+          Wait(100,1);
+          Warp(23,10,2);
+          for(i=53; i<56; i++) {
+               SetTile(14,i,10,146);
+               SetTile(15,i,10,146);
+               if(i==55) {
+                    SetTile(14,i,0,38);
+                    SetTile(15,i,0,38);
+               }
+          }
+          entity.face[18]=2;*/
+     }
+     else Text("","Enjoying your stay?  Of course you are.  They love people like you here.  But watch out if "+
+               "they don't like you.  Hard to move around, know what I mean?");
+}
+
+void ShadowShop() {
+     Text("","I am amazed at how much business these fellows are able to bring me right here "+
+          "in \f3Gelaham\f0.  I still miss \f3Achiela\f0, however.");
+     //Shop("321 322 323 324 325 326 327 328 329 330 331 332 336 339 341 342 343 344 0",1);
+}
+
+void BlackMarket() {
+     Text("","No special deals available today, but maybe you'll find something interesting in our "+
+          "more standard fare.");
+     //Shop("107 437 439 171 176 42 185 232 235 515 0",0);
+}
+
+void MarketThief() {
+     Text("","Heading out?  Check back occasionally.  We get in new stuff from time to time.");
+     //Warp(14,57,2);
+     //SetActiveFaction(1);
+}
+
+void HeroGuy() {
+     if(KoS()) return;
+     Text("","Heroes of all races pray at the \f4Hero Shrine\f0, which is why cities tend to be built up around wherever "+
+          "one is found.  Ours is at the base of the mountain.  The attunement to the \f4Shrine\f0 is what gives heroes "+
+          "the ability to always return from the clutches of death.  It literally saves their lives indefinitely.");
+}
+
+void Liall() {
+     if(KoS()) return;
+     Text("","I don't know why that creepy \f2Lukosian\f0 insists on living in that tower up north.  Why can't he "+
+          "live off in the middle of nowhere with all the rest of them?  Ooh!  Gives me the chills just thinking "+
+          "about those things.  If you ask me, they're no better than werewolves, cities and intelligence or not.");
+}
+
+void GraveWoman() {
+     if(KoS()) return;
+     Text("","I heard a rumor once that one of these graves is the resting place of a hero, "+
+          "but isn't that silly?  Heroes never die.  Why would they need a grave?");
+}
+
+void DefenseTrain() {
+     if(KoS()) return;
+     Text("","The most important part of success in combat is having somebody who can shrug "+
+          "off even the mightiest of blows.  Without that, you're sure to die.");
+//     if(!flags[73] && GetInventorySpace()) {
+//          Text("Here.  This should help keep one of you well-protected.");
+//          FindTreasure(7,0,73);
+//     }
+}
+
+void OffenseTrain() {
+     if(KoS()) return;
+     Text("","The most important part of success in combat is being able to put out steady "+
+          "physical damage.  Without that, the monsters out there will overwhelm you.");
+//     if(!flags[74] && GetInventorySpace()) {
+//          Text("Here.  This should help one of you do some damage.");
+//          FindTreasure(3,0,74);
+//     }
+}
+
+void MagicTrain() {
+     if(KoS()) return;
+     Text("","The most important part of success in combat is the ability to cause magical "+
+          "damage.  Without that, monsters with special defenses will overpower you.");
+//     if(!spellbook[40]) {
+//          Text("Here.  This should help cause some magical damage.");
+//          Book("Thorn",
+//               "     Level 1 Nature spell",
+//               "     Requires 3 MP to cast",
+//               "Does 5-10 plant damage to a foe",0);
+//               PlaySound(sfx_success,volume);
+//               Text4("The party learns ~Thorn`!","","","");
+//               spellbook[40]=1;
+//     }
+}
+
+void HealingTrain() {
+     if(KoS()) return;
+     Text("","The most important part of success in combat is being able to heal the damage "+
+          "caused by foes.  Without that, you don't stand a chance of success.");
+//     if(!spellbook[80]) {
+//          Text("Here.  This should help heal your wounds.");
+//          Book("Infuse Health",
+//               "     Level 1 Spirit spell",
+//               "     Requires 4 MP to cast",
+//               "Restores 3 HP/round to an ally",0);
+//               PlaySound(sfx_success,volume);
+//               Text4("The party learns ~Infuse_Health`!","","","");
+//               spellbook[80]=1;
+//     }
+}
+
+void NewGame() {
+     int done,x,y;
+     int graigchr=EntitySpawn(22,81,"images\\chrs\\humpries.chr");
+     hero[0].ent=EntitySpawn(39,88,"images\\chrs\\"+hero[0].chrimg+".chr");
+     SetExecutionPaused(1);
+     SetEntitiesPaused(0);
+     entity.y[hero[0].ent]+=8;
+     EntityMove(hero[0].ent,"L0");
+     SetPlayer(graigchr);
+     xwin=408; ywin=1180;
+     bindmap="gelaham.map";
+     bindmapname="Gelaham";
+     bindareaname="Settlement";
+     bindx=63; bindy=98;
+     Area_Change("Gelaham","Settlement","");
+     
+     FadeIn(30,0);
+     EntityMove(graigchr,"X36Y94X44Y89X45PU8T");
+     WaitForEntity(graigchr);
+     cameratracking=1;
+     Text("Tender","Can I help you, father?");
+     SetPortrait(0,"\f2Graig");
+     Text_Main("Just looking for",0,0,1,0,10);
+     ShowTextbox();
+     EntityMove(graigchr,"L0");
+     WaitForEntity(graigchr);
+     TextPlus("Ah.  There "+GetGenderSub(hero[0].gender)+" is.  What's that one's name?",1);
+     SetExecutionPaused(2);
+     ShowTextbox();
+
+     x=GetSprite();
+     sprite.image[x]=NewImage(128,64);
+     sprite.x[x]=256; sprite.y[x]=360;
+     sprite.sc[x]=1;
+     RectFill(0,0,127,63,clear,sprite.image[x]);
+     UI_HeroDetail(0,x);
+     hero[0].level=1; hero[0].next=1000;
+     hero[0].class="Novice";
+     hero[0].curhp=35; hero[0].maxhp=35;
+     hero[0].curmp=35; hero[0].maxmp=35;
+     hero[0].story=1;
+     PlaySound(sfx_prompt,100);
+     while(!done) {
+          Render();
+          hero[0].name=ProcessKeyboardInput(left(hero[0].name,len(hero[0].name)-3),86,fontb)+"\f0|";
+          UI_HeroDetail(0,x);
+          ShowPage();
+          if(b1 && len(hero[0].name)>3) done=1;
+     }
+     PlaySound(sfx_beep,100);
+     Unpress(1);
+     hero[0].name=left(hero[0].name,len(hero[0].name)-3);
+     FreeImage(sprite.image[x]); sprite.image[x]=0;
+
+     EntityMove(graigchr,"U0");
+     WaitForEntity(graigchr);
+     Text("Tender","The new one?  \f2"+hero[0].name+"\f0.  Is the Temple starting "+GetGenderPos(hero[0].gender)+
+                   " training so soon?");
+     Text("Graig","We have need of heroes at \f3Achiela\f0.  So "+GetGenderSub(hero[0].gender)+"'ll need to be "+
+                  "ready by the time the team leaves.");
+     Text("Tender","\f3Achiela\f0?  The Temple would send one so young?");
+     Text("Graig","Too few take up the \f4Hero Soul\f0 any more.  We must make do with what we have.");
+     Text("Tender","If the Light wills it so.");
+     Text("Graig","It is the will of the Light.");
+     ShowTextbox();
+     EntityMove(graigchr,"L0");
+     WaitForEntity(graigchr);
+     TextPlus("\f2"+hero[0].name+"\f0!  Come.  The Temple has need of you.",0);
+     SetExecutionPaused(2);
+     EntityMove(hero[0].ent,"X44");
+     WaitForEntity(hero[0].ent);
+     HText(0,"The Temple calls?  For me?");
+     Text("Graig","It is time to begin your training.");
+     HText(0,"Already?  But I'm still shaky from the ritual.");
+     Text("Graig","It will pass.  Trust me.  But come.  We can talk as we walk.");
+     SetExecutionPaused(2);
+     EntityMove(graigchr,"Y91");
+     EntityMove(hero[0].ent,"X45Y90");
+     WaitForEntity(graigchr);
+     EntityStalk(hero[0].ent,graigchr);
+     EntityMove(graigchr,"X44Y94X34Y82X32Y80D0");
+     SetPortrait(0,"\f2Graig");
+     Text_Main("Have you been training as a hero for long?",0,0,1,0,0);
+     HSetPortrait(0);
+     Text_Main("Not exactly.",0,0,1,0,0);
+     SetPortrait(0,"\f2Graig");
+     Text_Main("You've chosen a \f4specialization\f0 at least, I hope.",0,0,1,0,0);
+     HSetPortrait(0);
+     Text_Main("Forgive me, father, but no.",0,0,1,0,0);
+     SetExecutionPaused(2);
+     hero[0].level=1; hero[0].next=1000;
+     hero[0].race="Human";
+     Hero_SetBaseStatistics(0,"Human");
+     hero[0].stats[0]++;
+     CharGen_ChangeClass(0,0,0);
+     hero[0].statpnt=3;
+     WaitForEntity(graigchr);
+     Text("Graig","What?  You haven't even thought about what you'd like to do as a \f4hero\f0?");
+     HSetPortrait(0);
+     Text_Main("Well...",0,0,20,0,40);
+     TextPlus("No.",0);
+     Text("Graig","How in the Light did you end up before the \f4Hero \f4Shrine\f0?");
+     HText(0,"I'm not certain.  I was making my annual pilgrimage to the \f3High Temple\f0 when something "+
+          "stopped me at the \f4Hero Shrine\f0.  I mean, I've seen them before, but this time was different.  It was "+
+          "as though the Light were calling to me.  So I called the \f2Tender\f0 and she performed the ritual.");
+     TextPlus("So I don't know for certain, father.  It seemed like the thing to do.",0);
+     Text("Graig","By the Light!  You could just as easily have ended up dead!");
+     HText(0,"I think I was dead.  For a time, at least.  I remember a \f4blue light\f0, and there was "+
+          "something past it, but it's hazy.  I can't seem to remember much about it.");
+     Text("Graig","Hopefully you won't have much cause to revisit that experience, but you'll likely end up there "+
+          "more than once in the future.");
+     TextPlus("At any rate, we have more pressing business.  You need a \f4specialization\f0 before we can "+
+              "get you any training at all.  I know it's a big decision, but you have to choose.",1);
+     TextPlus("What type of \f4hero\f0 will you be?",0);
+     SetExecutionPaused(2);
+     
+     UI_CharGenBoxes(0);
+     CharGen_WriteClassDesc("Gladiator");
+     TBlit(12,23,cur_arrl,sprite.image[chargensprite+5]);
+     TBlit(86,23,cur_arrr,sprite.image[chargensprite+5]);
+     TBlit(265,10,cur_arrl,sprite.image[chargensprite+1]);
+     TBlit(368,10,cur_arrr,sprite.image[chargensprite+1]);
+     done=0;
+     PlaySound(sfx_prompt,100);
+     SetExecutionPaused(1);
+     while(!done) {
+          Render();
+          if(left || right) {
+               PlaySound(sfx_click,volume);
+               y=GetClassIndex(hero[0].class);
+               x=y;
+               if(left) {
+                    Unpress(7);
+                    x--;
+                    if(x<0) x=5;
+               }
+               else {
+                    Unpress(8);
+                    x++;
+                    if(x>5) x=0;
+               }
+               CharGen_ChangeClass(0,y,x);
+               CharGen_WriteClassDesc(hero[0].class);
+               UI_HeroDetail(0,chargensprite+5);
+               UI_HeroStatus(0,0,chargensprite+3);
+               TBlit(12,23,cur_arrl,sprite.image[chargensprite+5]);
+               TBlit(86,23,cur_arrr,sprite.image[chargensprite+5]);
+               TBlit(265,10,cur_arrl,sprite.image[chargensprite+1]);
+               TBlit(368,10,cur_arrr,sprite.image[chargensprite+1]);
+          }
+          if(b1) {
+               Unpress(1);
+               done=1;
+               PlaySound(sfx_beep,100);
+          }
+          ShowPage();
+     }
+     
+     UI_ClearCharGen();
+     numchars=1;
+     UI_HeroDetail(0,heroframe);
+     if(GetClassIndex(hero[0].class)>2) {
+          hero[0].spellslots++;
+          hero[0].spell[0].use=1;
+     }
+
+     Text("Graig","Another \f4"+hero[0].class+"\f0, then.  Well, we can work with that.  Come.");
+     SetExecutionPaused(2);
+     EntityMove(graigchr,"PU7UR16R16TY76X36Y66PU7UR16R16TY57X39PU7UR16R16TY50X50Y40X54PR8U96TD0");
+     SetPortrait(0,"\f2Graig");
+     Text_Main("I assume you know your way around \f3Gelaham\f0.",0,0,1,0,0);
+     HSetPortrait(0);
+     Text_Main("More or less.  I normally only come during my pilgrimage.  So I know how to find "+
+               "the \f3High Temple\f0 up on the top terrace and the inn outside of it.  But I normally bypass all of the "+
+               "shops and homes on the lower terraces.",0,0,1,0,0);
+     SetPortrait(0,"\f2Graig");
+     Text_Main("You'll have greater use for those shops as a \f4hero\f0.  Though your basic needs will be "+
+               "filled by the Temple, of course.",0,0,1,0,0);
+     WaitForEntity(graigchr);
+     EntityMove(hero[0].ent,"L0");
+     EntityMove(16,"R0");
+     EntityMove(17,"L0");
+     WaitForEntity(17);
+     Text("Paladin","Is this your newest ward, father?");
+     Text("Graig","Indeed.  We prepare "+GetGenderObj(hero[0].gender)+" even now to go to \f3Achiela\f0.");
+     ShowTextBox();
+     EntityMove(hero[0].ent,"U0");
+     WaitForEntity(hero[0].ent);
+     HText(0,"What!  \f3Achiela\f0?  I thought the \f2Lukosians\f0 had destroyed the city with an army of \f4demons\f0!");
+     Text("Paladin","Ha!  I think part of "+GetGenderPos(hero[0].gender)+" training needs to be a review of what it "+
+          "is that \f4heroes\f0 actually do, father.");
+     Text("Graig","So it seems.  Come, \f2"+hero[0].name+"\f0.  You've got a lot to learn.");
+     EntityMove(graigchr,"U0");
+     WaitForEntity(graigchr);
+     FadeOut(30,0);
+     Map("world\\hitemple.map");
+}
+
+void Graig_Hostel() {
+     int i;
+     int h=Party_GetIndexFromName(Party_GetStoryHeroName(1));
+     int a=Party_GetIndexFromName("Adain");
+     int g=Party_GetIndexFromName("Grace");
+     if(Quest_PartyOnStage("Expedition to Achiela",2)) {
+          Text("Graig","You've arrived.  I take it you are fully rested.");
+          HText(h,"I do feel much better, thanks.");
+          Text("Graig","Good.  Come in and I'll introduce you to your companions.");
+          EntityMove(tempint[0],"Y91X45L0");
+          PlayerMove("X44Y90D0");
+          WaitForEntity(tempint[0]);
+          EntityMove(tempint[0],"X44Y92U0");
+          WaitForEntity(tempint[0]);
+          HText(h,"So where are they?");
+          Text("Graig","\f2Adain\f0 and \f2Grace\f0?  Downstairs in the back.  Every \f3Journeyman's Rest\f0 has long-term "+
+               "housing for \f4heroes\f0 waiting for an adventuring party.  So that's always where you want to go when "+
+               "you're looking to join up or part ways with your fellow heroes.  There's a branch in every major city.");
+          HText(h,"So I go downstairs to meet them?");
+          Text("Graig","No, they'll come when you call.  And the \f2tender\f0 will help you keep your party orgainized.");
+          showtext=1;
+          PlayerMove("U0");
+          Text("Keeper","Welcome back, by the way.  I see \f2Graig\f0 has been taking care of you.");
+          TextPlus("You go ahead and set up the party you want and I'll grab the others when you're ready.",0);
+          
+          hero[5].level=15; hero[5].statpnt=0;
+          hero[5].next=0;
+          hero[5].chrimg="humpalad";
+          hero[5].name="Adain";
+          hero[5].class="Knight";
+          hero[5].race="Human";
+          Hero_SetBaseStatistics(5,"Human");
+          hero[5].stats[1]++;
+          CharGen_ChangeClass(5,1,1);
+          hero[5].stats[0]+=18;
+          hero[5].stats[1]+=30;
+          hero[5].stats[2]+=12;
+          hero[5].stats[3]+=8;
+          hero[5].stats[4]+=5;
+          Hero_SetDerivedStats(5);
+          hero[5].curhp=hero[5].maxhp;
+          hero[5].curmp=hero[5].maxmp;
+          hero[5].exp=105000;
+          Hero_LearnAttack(5,202);
+          Hero_LearnAttack(5,210);
+          Hero_LearnAbility(5,103);
+          Hero_LearnAbility(5,111);
+          Hero_LearnAbility(5,40);
+          hero[5].trait[0].name="Crusader";
+          hero[5].spellslots=2;
+          Hero_LearnSpell(5,64,0);
+          Hero_LearnSpell(5,54,1);
+          CraftEquipment(2,"Human",2,0);
+          Item_AssignTemp(5,1,0);
+          CraftEquipment(25,"Human",3,0);
+          Item_AssignTemp(5,1,1);
+          CraftEquipment(20,"Human",3,0);
+          Item_AssignTemp(5,1,2);
+          CraftEquipment(28,"Human",1,0);
+          Item_AssignTemp(5,1,3);
+          CraftEquipment(31,"Human",0,0);
+          Item_AssignTemp(5,1,4);
+          Hero_SetDerivedStats(5);
+
+          hero[6].level=15; hero[6].statpnt=0;
+          hero[6].next=0;
+          hero[6].chrimg="hufcleri";
+          hero[6].name="Grace";
+          hero[6].class="Cleric";
+          hero[6].race="Human";
+          Hero_SetBaseStatistics(6,"Human");
+          hero[6].gender=2;
+          hero[6].stats[4]++;
+          CharGen_ChangeClass(6,4,4);
+          hero[6].stats[0]+=3;
+          hero[6].stats[1]+=6;
+          hero[6].stats[2]+=12;
+          hero[6].stats[3]+=3;
+          hero[6].stats[4]+=49;
+          Hero_SetDerivedStats(6);
+          hero[6].curhp=hero[6].maxhp;
+          hero[6].curmp=hero[6].maxmp;
+          hero[6].exp=105000;
+          Hero_LearnAttack(6,501);
+          Hero_LearnAttack(6,510);
+          Hero_LearnAbility(6,45);
+          Hero_LearnAbility(6,85);
+          Hero_LearnAbility(6,38);
+          hero[6].trait[0].name="Healing Presence";
+          hero[6].spellslots=4;
+          Hero_LearnSpell(6,183,0);
+          Hero_LearnSpell(6,181,1);
+          Hero_LearnSpell(6,175,2);
+          Hero_LearnSpell(6,195,3);
+          CraftEquipment(3,"Human",1,0);
+          Item_AssignTemp(6,1,0);
+          CraftEquipment(24,"Human",1,0);
+          Item_AssignTemp(6,1,1);
+          CraftEquipment(18,"Human",2,0);
+          Item_AssignTemp(6,1,2);
+          CraftEquipment(28,"Human",2,0);
+          Item_AssignTemp(6,1,3);
+          CraftEquipment(33,"Human",3,0);
+          Item_AssignTemp(6,1,4);
+          Hero_SetDerivedStats(6);
+
+          hostelchars=2;
+          inhostel=1;
+          Quest_Advance("Expedition to Achiela",2,"Press \f4Space\f0 to open your menu and organize your party","Amin",354,449);
+     }
+     else if(Quest_PartyOnStage("Expedition to Achiela",3) || Quest_PartyOnStage("Expedition to Achiela",4)) {
+          Text("Graig","Both \f2Adain\f0 and \f2Grace\f0 have been selected for the expedition.  You'll need to add "+
+               "both of them to your party before you set out.");
+          Quest_FlashTask("Expedition to Achiela");
+     }
+     else if(Quest_PartyOnStage("Expedition to Achiela",5)) {
+          Text("Graig","It is good to see you two again.");
+          HText(a,"You know us.  Always eager to come when the Light calls.");
+          HText(g,"Particularly when the Light-forsaken \f2Orcs\f0 kick us out of the country.");
+          Text("Graig","Are they at war again?  Ah well.  There is only so much we can do for our former brethren.");
+          HText(a,"I do have one question, though.  Is the Temple really sending such a green hero to \f3Achiela\f0?");
+          Text("Graig","We must work with what we have.  And I think you'll find \f2"+hero[h].name+"\f0 to be quite the quick "+
+               "learner.  Besdides, we also managed to enlist \f2Marty\f0 and \f2Aerin\f0.  They're waiting for you "+
+               "in \f3Erelikoth\f0.");
+          HText(g,"\f2Aerin\f0?  The Temple hired a \f2Lukosian\f0?");
+          HText(h,"What!  A \f2Lukosian\f0?");
+          Text("Graig","Indeed.  There might be hope for the \f2High Priest\f0 yet.");
+          HText(a,"I'll believe it when I see her.");
+          Text("Graig","Well, she's at the \f3Journeyman's Rest\f0 in \f3Erelikoth\f0, so you can see her there.  But "+
+               "you must be off.  No sense delaying here any longer.");
+          HText(g,"Thank you, \f2Graig\f0.  And we'll be sure to keep the rookie safe.");
+          HText(h,"I can take care of myself.");
+          HText(a,"There's a big difference between a \f4goo\f0 and a \f4riugan\f0, kid.");
+          HText(h,"...");
+          TextPlus("What's a \f4riugan\f0?",0);
+          Text("Graig","You'll find out soon enough.  Now off with you.");
+          Quest_Advance("Expedition to Achiela",5,"Meet with \f2Marty\f0 and \f2Aerin\f0 in \f3Erelikoth\f0","Amin",207,317);
+          EntityMove(tempint[0],"Y93PD8TX45D0");
+          WaitForEntity(tempint[0]);
+     }
+     else Text("Graig","Best of luck to you all, \f4heroes\f0.  I suspect you'll need it.");
+}

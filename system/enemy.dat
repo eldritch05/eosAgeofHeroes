@@ -1,0 +1,77 @@
+NAME            LOWNAME         IMAGE    DEATH                           ART GEN LV GP SPD DAM FLY RAT
+Goo             goo             goo      evaporates_into_nothing           1   0  1 15   0   2   0   5
+Simple and barely sentient, the goos found around \f3Mount Gela\f0 are remnants of the alchemy used to sculpt \f3Gelaham\f0.
+X0p090
+Ab'rbon         Ab'rbon         abrbon   cathces_fire_and_vanishes         1   0 14 10   5   1   0   5
+An unnatural construction, demons pieced these monstrosities together from common animals and weaker demons.
+T1e302 S0e174 S1e173
+Riugan          riugan          riugan   fades_away_with_a_roar            1  10 15  6  15   6   1   5
+Tortured husks of once mighty dragons, riugans are an exceptionally dangerous phantasmal demons.
+H0p075 R0a050 R1a050 S0e020
+Banished_Blade  banished_blade  dblade   falls_lifeless_to_the_ground      1  10 13 13   0   1   1   5
+A sword wielded by evil so long that it took on a life of its own before being banished to the shadow realms.
+A0a025 S0e133
+Cekkuske        cekkuske        cekkuske staggers,_then_dies               1   0 12  6  60   1   0   5
+Common and somewhat weak demons, cekkuskes survive by outrunning their more powerful brethren. 
+H0p060 D0a020 B0s025 X0p085
+Bovykh          bovykh          bovykh   fades_away_with_a_roar            1  10 15  7  15   1   0   5
+These demons attempt to catch mortals off guard by taking the face of placid animals.
+T1e602
+Sword_Djinn     sword_djinn     swordjin fades_away_with_a_roar            1   0 17  6  25   1   1   5
+An extraplanar mercenary often found in the employ of demons.  Well known for the quality of their \f4blades\f0.
+T1e101 S0e007
+Overlord        Overlord        diablo   catches_fire_and_vanishes         1  11 45  4  30   6   1   5
+This Overlord breached the interplanar walls at \f3Achiela\f2 and laid waste to the city.
+T1e601 H0p500 S0e189
+Goblin          goblin          gobrunt  drops_dead                        1   1  1  6   5   2   0   5
+Goblin runts are poorly armed but are sometimes found carrying \f4riches\f4 their tribe plundered from trade caravans.
+H0a010
+Hopper          hopper          hopper   flops_over_dead                   1   0  2 12   0   1   0   5
+The fanged frogs of southern \f3Amin\f0 are, unlike their swampland cousins, weak and useless as arcane components.
+S0e044
+Wisp		wisp		wispblue flickers_and_vanishes		   1  10  3 10  50   7   1   5
+Unbound fragments of light common around \f3Gelaham\f0.  The most powerful wisps \f4crystallize\f4 when slain.
+H0p050 D0e090
+Stirge		stirge		stirge	 bursts_in_a_cloud_of_blood	   1   0  1 14  10   1   1   5
+Though of little threat when alone, these parasitic birds almost always swarm their prey in flocks.
+T1e101 S0e167
+Goblin		goblin		gobscout drops_dead			   1   1  2  6  10   1   0   5
+Goblin scounts are well-trained with their bows, though still not much of a threat to even a single hero.
+M0e010 S0e208
+Goblin		goblin		gobblade drops_dead			   1   1  3  5   0   1   0   5
+Goblin soldiers do their best to guard their allies, but heroes can easily outthink their tactics.
+H0p125 R0a015 R1a015 B0a010 S0e043 X0P125
+Goblin		goblin		gobmyst  drops_dead			   1   1  5  5   5   2   0   5
+Goblin mystics lead most raiding parties through their connections to fallen spirits of nature.
+T1e302 S0e166 S1e172
+Wolf		wolf		wolfnorm yelps_then_collapses	 	   1   0  3 14  25   1   0   5
+These common predators stalk southern \f3Amin\f0 in packs and harrass the common trade caravans in the area.
+T1e102 B0a025 D0a010
+Muck		muck		muck	 evaporates_into_nothing	   1   0  3 14   4   2   0   5
+Remnants of ancient alchemical formulae, muck continues to replicate and torment the \f2Humans\f0 that made it.
+T1e302 H0e008 B1e100 B8e200
+Imp		imp		imp	 catches_fire_and_vanishes	   1   0  5  7   5   1   0   5
+Lowliest of the demons, these imps appeared in \f2Human\f0 lands after the fall of \f3Achiela\f0.
+M0p150 T1e602 S0e167 S1e168 S2e172
+Tiny_Bat	tiny_bat	tbat	 falls_silently			   1   0  2 13  10   1   1   5
+_
+T1e502 S0e167
+Fire_Beetle	fire_beetle	firebeet breaks_into_pieces		   1   0  1 10   0   2   0   5
+_
+R2e050
+Skeleton	skeleton	skeleton falls,_clattering_loudly	   1   4  3  8   5   2   0   5
+_
+R5e100 R8e100 R4s100 T1e602
+Grimlock	grimlock	grimlock collapses_silently		   1   1  4  7   8   1   0   5
+_
+C0a025 B1e050 S0e002
+Thoqqua		thoqqua		thoqqua	 goes_cold_and_dies		   1   0  3 10   3   3   0   5
+_
+B2e050 S0e209 E1e048
+Renegade	renegade	humfight groans_and_dies		   1   1  5  5   0   1   0  50
+_
+R0a020 R1a020 S0e004 S1e001
+Renegade	renegade	hufthief groans_and_dies		   1   2  5  5  12   1   0  50
+_
+C0a010 B8e050 S0e087
+_

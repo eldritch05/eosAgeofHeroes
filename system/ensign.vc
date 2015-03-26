@@ -1,0 +1,281 @@
+//- Eternal Nightmare Syndrome's Interactive Gaming Novel
+//- Created by Eldritch for Animus Lacrime
+//- Modified by Eldritch for use in Epic of Serinor
+
+int textsprite[7];
+int lastline,textbox,textimage,showtext,texttimer;
+int textboxtrans=25;
+
+void ClearBackdrop(int layer) {
+     if(sprite.image[layer])
+          FreeImage(sprite.image[layer]);
+     sprite.image[layer]=0;
+}
+
+void ClearPortrait() {
+     RectFill(0,0,309,39,clear,sprite.image[textsprite[0]]);
+     RectFill(0,0,319,49,clear,sprite.image[textsprite[1]]);
+     RectFill(0,0,319,49,clear,sprite.image[textsprite[2]]);
+}
+
+void ClearText() {
+     RectFill(0,0,639,170,clear,sprite.image[textsprite[6]]);
+     lastline=0;
+}
+
+void HideTextbox() {
+     showtext=0;
+     texttimer=systemtime;
+}
+
+void InitializeEnsign() {
+     textsprite[3]=GetSprite();    //- ??? Background, maybe?
+     sprite.x[textsprite[3]]=400; sprite.y[textsprite[3]]=0;
+     sprite.sc[textsprite[3]]=1;  sprite.image[textsprite[3]]=0;
+     textsprite[4]=GetSprite();    //- Textbox Background
+     sprite.x[textsprite[4]]=5;   sprite.y[textsprite[4]]=325;
+     sprite.sc[textsprite[4]]=1;  sprite.lucent[textsprite[4]]=100;
+     sprite.image[textsprite[4]]=NewImage(630,150);
+     RectFill(0,0,629,149,black,sprite.image[textsprite[4]]);
+     textsprite[5]=GetSprite();    //- Textbox Borders
+     sprite.x[textsprite[5]]=0;   sprite.y[textsprite[5]]=320;
+     sprite.sc[textsprite[5]]=1;  sprite.lucent[textsprite[5]]=100;
+     sprite.image[textsprite[5]]=LoadImage("images\\textbox.png");
+     textsprite[6]=GetSprite();    //- Text
+     sprite.x[textsprite[6]]=0;   sprite.y[textsprite[6]]=309;
+     sprite.sc[textsprite[6]]=1;  sprite.lucent[textsprite[6]]=100;
+     sprite.image[textsprite[6]]=NewImage(640,171);
+     RectFill(0,0,639,169,clear,sprite.image[textsprite[6]]);
+     textsprite[0]=GetSprite();    //- Portrait Background
+     sprite.x[textsprite[0]]=8;   sprite.y[textsprite[0]]=285;
+     sprite.sc[textsprite[0]]=1;  sprite.lucent[textsprite[0]]=100;
+     sprite.image[textsprite[0]]=NewImage(310,35);
+     RectFill(0,0,309,39,clear,sprite.image[textsprite[0]]);
+     textsprite[1]=GetSprite();    //- Portrait Borders
+     sprite.x[textsprite[1]]=0;   sprite.y[textsprite[1]]=278;
+     sprite.sc[textsprite[1]]=1;  sprite.lucent[textsprite[1]]=100;
+     sprite.image[textsprite[1]]=NewImage(320,47);
+     RectFill(0,0,319,49,clear,sprite.image[textsprite[1]]);
+     textsprite[2]=GetSprite();    //- Portrait Text/SPC
+     sprite.x[textsprite[2]]=0; sprite.y[textsprite[2]]=287;
+     sprite.sc[textsprite[2]]=1;  sprite.lucent[textsprite[2]]=100;
+     sprite.image[textsprite[2]]=NewImage(320,34);
+     RectFill(0,0,319,49,clear,sprite.image[textsprite[2]]);
+}
+
+void InsertBlankLine() {
+     Text_Main("",0,1,0,0,1);
+}
+
+int IsBreakingChar(string c) {
+     if(!strcmp(c," "))
+          return 1;
+     if(!strcmp(c,"_"))
+          return 1;
+     if(!strcmp(c,"-"))
+          return 1;
+     return 0;
+}
+
+int Prompt(string words, ... optext) {
+     int p,s,hi,ofs,empty;
+     SetExecutionPaused(1);
+     if(len(words)) {
+          Text_Main(words,0,0,1,0,1);
+          Text_Main("",0,1,0,1,1);
+     }
+     else ClearText();
+     ofs=lastline*21+330;
+     for(hi=0; hi<optext.length; hi++) {
+          if(len(optext.string[hi]))
+               Text_Main("_"+optext.string[hi],0,1,0,0,1);
+          else empty++;
+     }
+     hi-=empty+1;
+     s=GetSprite();
+     sprite.image[s]=LoadImage("images\\cur_arrr.png");
+     sprite.x[s]=13; sprite.y[s]=ofs;
+     sprite.sc[s]=1;
+     Unpress(0);
+     ShowTextbox();
+     PlaySound(sfx_prompt,100);
+     while(!b1) {
+          sprite.y[s]=p*21+ofs;
+          Render();
+          ShowPage();
+          if(up) {
+               PlaySound(sfx_click,100);
+               if(!p) p=hi;
+               else p--;
+               Unpress(5);
+          }
+          if(down) {
+               PlaySound(sfx_click,100);
+               if(p==hi) p=0;
+               else p++;
+               Unpress(6);
+          }
+     }
+     Unpress(1);
+     PlaySound(sfx_beep,100);
+     FreeImage(sprite.image[s]);
+     sprite.image[s]=0;
+     ClearText();
+     HideTextbox();
+     SetExecutionPaused(0);
+     return p+1;
+}
+
+void ResetEnsign() {
+     ClearText();
+     ClearPortrait();
+}
+
+void SetBackdrop(int layer, string image) {
+     if(sprite.image[layer])
+          ClearBackdrop(layer+1);
+     sprite.image[layer]=LoadImage("images\\backdrops\\"+image+".png");
+}
+
+void SetPortrait(int por, string name) {
+     int w;
+     ClearPortrait();
+     w=TextWidth(fontb,name)+10;
+     if(por) w+=32;
+     UI_BigBox(0,0,w+13,50,sprite.image[textsprite[1]]);
+     TBlit(0,42,ui_bline[12],sprite.image[textsprite[1]]);
+     TBlit(w+5,42,ui_bline[16],sprite.image[textsprite[1]]);
+     RectFill(0,0,w-3,40,black,sprite.image[textsprite[0]]);
+     if(por) {
+          TBlit(9,1,por,sprite.image[textsprite[2]]);
+          PrintString(44,4,sprite.image[textsprite[2]],fontb,name);
+     }
+     else PrintString(12,4,sprite.image[textsprite[2]],fontb,name);
+}
+
+void HSetPortrait(int h) {
+     SetPortrait(DictGetInt(spc,hero[h].chrimg),"\f2"+hero[h].name);
+}
+
+void ShowTextbox() {
+     showtext=1;
+     texttimer=systemtime;
+}
+
+void Sign(string speaker, string words) {
+     SetExecutionPaused(1);
+     if(len(speaker))
+          SetPortrait(0,"\f4"+speaker);
+     else ClearPortrait();
+     Text_Main(words,0,0,0,1,0);
+     SetExecutionPaused(0);
+}
+
+void Text(string speaker, string words) {
+     SetExecutionPaused(1);
+     if(len(speaker))
+          SetPortrait(0,"\f2"+speaker);
+     else ClearPortrait();
+     Text_Main(words,0,0,1,0,0);
+     SetExecutionPaused(0);
+}
+
+void HText(... args) {
+     //- Variadic, but first must be either a party index or a hero's name, and second must be the text.
+     int h;
+     SetExecutionPaused(1);
+     if(args.is_int[0]) h=args.int[0];
+     else h=Party_GetIndexFromName(args.string[0]);     
+     SetPortrait(DictGetInt(spc,hero[h].chrimg),"\f2"+hero[h].name);
+     Text_Main(args.string[1],0,0,1,0,0);
+     SetExecutionPaused(0);
+}
+
+void SText(string por, string speaker, string words) {
+     SetExecutionPaused(1);
+     SetPortrait(DictGetInt(spc,por),speaker);
+     Text_Main(words,0,0,1,0,0);
+     SetExecutionPaused(0);
+}
+
+void TextPlus(string words, int clrscr) {
+     SetExecutionPaused(1);
+     Text_Main(words,clrscr,1,1,0,0);
+     SetExecutionPaused(0);
+}
+
+void Text_Main(string words, int clrscr, int recursive, int scroll, int align, int p) {
+//- Prints words character by character to text box.
+//  Clrscr moves the text to the top of the box afterwards.
+//  Recursive=1: Scrolled from before.
+//  Scroll: Delay between characters
+//  Align=0: Left; Align=1: Center
+//  p=0: Wait for b1 after text; p=1: No pause.
+     int s,y,z;
+     int tempimg;
+     string curline;
+     ShowTextbox();
+     Unpress(1);
+     if(!recursive) ClearText();
+     else {y=lastline; tempimg=DuplicateImage(sprite.image[textsprite[6]]);}
+     words=WrapText(fontb,words,620);
+     while(s<7) {
+          
+          //- Break out current line from body of text.  Preserve body separately for recursion.
+          curline=GetToken(words,chr(10),0);
+          words=TokenRight(words,chr(10),1);
+          if(!strcmp(words,curline)) words="";
+          
+          //- Check to see if text highlighting was used, and pass last used highlight to next line of text.
+          else if(TokenCount(curline,chr(12)))
+               words="\f"+left(GetToken(curline,chr(12),TokenCount(curline,chr(12))-1),1)+words;
+          
+          if(recursive && y==7) {
+               timer=0;
+               while(timer<scroll*10 && !b1 && !mouse.l) {
+                    Render();
+                    GrabRegion(0,timer/scroll*2,639,169,0,0,tempimg,sprite.image[textsprite[6]]);
+                    RectFill(0,0,639,18,clear,sprite.image[textsprite[6]]);
+                    ShowPage();
+               }
+               GrabRegion(0,21,639,169,0,0,tempimg,sprite.image[textsprite[6]]);
+               RectFill(0,0,639,18,clear,sprite.image[textsprite[6]]);
+               RectFill(0,148,639,169,clear,sprite.image[textsprite[6]]);
+               y--;
+          }
+          timer=0;
+          while(timer<len(curline)*scroll && !b1 && !mouse.l && scroll) {
+               Render();
+               if(!align) PrintString(10,y*21+15,sprite.image[textsprite[6]],fontb,left(curline,timer/scroll+1));
+               else PrintString(320-(TextWidth(fontb,curline)/2),y*21+15,sprite.image[textsprite[6]],fontb,left(curline,timer/scroll+1));
+               ShowPage();
+          }
+          if(!align) PrintString(10,y*21+15,sprite.image[textsprite[6]],fontb,curline);
+          else PrintCenter(320,y*21+15,sprite.image[textsprite[6]],fontb,curline);
+          if(scroll) {
+               Render();
+               ShowPage();
+          }
+          y++; s++;
+          if(recursive) Blit(0,0,sprite.image[textsprite[6]],tempimg);
+          if(!clrscr && !len(words)) s=7;
+          else if(!len(words) && s<7) z++;
+     }
+     lastline=y-z;
+     Unpress(1); mouse.l=0;
+     while(!b1 && !mouse.l && !p) {
+          Render();
+          ShowPage();
+     }
+     if(p) {
+          timer=0;
+          while(timer<p) {
+               Render();
+               ShowPage();
+          }
+     }
+     if(recursive) FreeImage(tempimg);
+     if(len(words)) Text_Main(words,0,1,scroll,align,p);
+     Unpress(1); mouse.l=0;
+     HideTextbox();
+}

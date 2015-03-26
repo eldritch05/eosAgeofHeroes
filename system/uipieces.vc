@@ -1,0 +1,791 @@
+//- Global User Interface Graphics
+int ui_hmbar = LoadImage("images\\ui_hmbar.png");
+int ui_tempi = NewImage(640,480);
+int ui_sline[20], ui_bline[20];
+int ui_herobox[10];
+int spc = DictNew();
+
+int cur_arrr = LoadImage("images\\cur_arrr.png");
+int cur_arrl = LoadImage("images\\cur_arrl.png");
+int cur_arrd = LoadImage("images\\cur_arrd.png");
+int cur_arru = LoadImage("images\\cur_arru.png");
+int cur_ptrl = LoadImage("images\\cur_ptrl.png");
+
+int charframe, partyframe, heroframe, footframe, orderframe, chargensprite;
+
+void InitializeMenu() {
+     int i;
+     int simg=LoadImage("images\\ui_slin0.png");
+     int bimg=LoadImage("images\\ui_blin0.png");
+
+//- Load Menu Borders
+     for(i=0; i<20; i++) {
+          ui_sline[i]=NewImage(5,5);
+          GrabRegion(0,i*5,4,4+(i*5),0,0,simg,ui_sline[i]);
+          ui_bline[i]=NewImage(8,8);
+          GrabRegion(0,i*8,7,7+(i*8),0,0,bimg,ui_bline[i]);
+     }
+
+//- Create Hero Detail Frames
+     charframe=GetSprite();
+     for(i=0; i<5; i++) {
+          if(i) GetSprite();
+          sprite.image[charframe+i]=NewImage(336,343);
+          sprite.alphamap[charframe+i]=NewImage(336,343);
+          UI_HeroStatus(0,i,charframe+i);
+          sprite.x[charframe+i]=220+(i*360)-1280; sprite.y[charframe+i]=500;
+          sprite.sc[charframe+i]=1;
+          if(i>2) sprite.x[charframe+i]-=1800;
+     }
+     
+//- Create Party Detail Frames
+     partyframe=GetSprite();
+     for(i=0; i<5; i++) {
+          if(i) GetSprite();
+          sprite.image[partyframe+i]=NewImage(336,343);
+          sprite.alphamap[partyframe+i]=NewImage(336,343);
+          UI_HeroStatus(0,5+i,partyframe+i);
+          sprite.x[partyframe+i]=220+(i*360)-1280; sprite.y[partyframe+i]=41;
+          sprite.sc[partyframe+i]=1;
+          if(i>2) sprite.x[partyframe+i]-=1800;
+     }
+
+//- Create Hero Frames
+     heroframe=GetSprite();
+     for(i=0; i<5; i++) {
+          if(i) GetSprite();
+          sprite.image[heroframe+i]=NewImage(128,64);
+          sprite.alphamap[heroframe+i]=NewImage(128,64);
+          sprite.x[heroframe+i]=-128; sprite.y[heroframe+i]=i*64;
+          sprite.sc[heroframe+i]=1;
+     }
+     GetSprite();
+     sprite.image[heroframe+5]=NewImage(128,64);
+     sprite.alphamap[heroframe+5]=NewImage(128,64);
+     sprite.x[heroframe+5]=-128; sprite.y[heroframe+5]=320;
+     sprite.sc[heroframe+5]=1;
+
+//- Create Menu Footer Frame
+     footframe=GetSprite();
+     sprite.image[footframe]=NewImage(640,97);
+     sprite.alphamap[footframe]=NewImage(640,97);
+     sprite.x[footframe]=0; sprite.y[footframe]=511;
+     sprite.sc[footframe]=1;
+     RectFill(0,0,639,96,clear,ui_tempi);
+     UI_BigBox(0,0,640,97,ui_tempi);
+     UI_CreateAlpha(ui_tempi,8,footframe);
+
+//- Create Combat Order Frame
+     orderframe=GetSprite();
+     sprite.image[orderframe]=NewImage(640,31);
+     sprite.alphamap[orderframe]=NewImage(640,31);
+     sprite.x[orderframe]=0; sprite.y[orderframe]=481;
+     sprite.sc[orderframe]=1;
+     RectFill(0,0,639,30,clear,ui_tempi);
+     UI_SmallBox(0,0,640,31,ui_tempi);
+     UI_CreateAlpha(ui_tempi,3,orderframe);
+     
+     FreeImage(simg); FreeImage(bimg);
+}
+
+void InitializeSPC() {
+     int i,j,f;
+     string s;
+     for(i=0; i<10; i++) {
+          f=LoadImage("images\\spc\\"+GetRaceName(i)+".png");
+          for(j=0; j<20; j++) {
+               s=GetHeroChr(GetRaceName(i),j/10+1,j%10);
+               DictSetInt(spc,s,NewImage(32,32));
+               GrabRegion(j%5*33+1,j/5*33+1,j%5*33+33,j/5*33+33,0,0,f,DictGetInt(spc,s));
+               if(i==4 || i==5 || i==8) {  //- Fairies, Lizardmen, and Shadowkin have only one gender.
+                    if(j==9) j+=10;
+               }
+          }
+          FreeImage(f);
+     }
+     DictSetInt(spc,"Hero Shrine",LoadImage("images\\spc\\HeroShrine.png"));
+}
+
+void UI_CreateAlpha(int a, int b, int dest) {
+//- a: source image for alpha (typically ui_tempi)
+//  b: size of borders (3 for small, 8 for large)
+//  d: destination image (typically a sprite)
+
+//- Create Alpha-map
+     int w=ImageWidth(sprite.image[dest])-1;
+     int h=ImageHeight(sprite.image[dest])-1;
+     int t=textboxtrans*256/100;
+     if(ImageValid(sprite.alphamap[dest])) {
+          RectFill(0,0,w,h,black,sprite.alphamap[dest]);
+          RectFill(b,b,w-b,h-b,RGB(256-t,256-t,256-t),sprite.alphamap[dest]);
+          Silhouette(0,0,white,a,sprite.alphamap[dest]);
+     }
+
+//- Create Sprite
+     RectFill(0,0,w,h,clear,sprite.image[dest]);
+     if(ImageValid(sprite.alphamap[dest]))
+          RectFill(b,b,w-b,h-b,black,sprite.image[dest]);
+     TBlit(0,0,a,sprite.image[dest]);
+}
+
+void UI_CreateMini() {
+//- Creates a minimap of the current map.
+     int x,y;
+     int mini=NewImage(curmap.w,curmap.h);
+     RectFill(0,0,curmap.w,curmap.h,black,mini);
+     for(y=0; y<curmap.h; y++ ) {
+          for(x=0; x<curmap.w; x++) {
+               if(GetObs(x,y))
+                    SetPixel(x,y,white,mini);
+          }
+     }
+     CopyImagetoClipboard(mini);
+     FreeImage(mini);
+}
+
+void UI_HeroDetail(int h, int dest) {
+
+//- Draw Box
+     RectFill(0,0,128,64,clear,ui_tempi);
+     UI_SmallBox(0,0,128,64,ui_tempi);
+     if(hero[h].curhp) {
+          PrintString(5,0,ui_tempi,fontb,"\f2"+hero[h].name);
+          PrintString(5,24,ui_tempi,fontm,str(hero[h].level)+" "+hero[h].class);
+          TBlit(92,5,DictGetInt(spc,hero[h].chrimg),ui_tempi);
+     }
+     else {
+          PrintString(5,0,ui_tempi,fontb,"\f1"+hero[h].name);
+          PrintString(5,24,ui_tempi,fontm,"\f1"+str(hero[h].level)+" "+hero[h].class);
+          Silhouette(92,5,RGB(52,52,52),DictGetInt(spc,hero[h].chrimg),ui_tempi);
+     }
+     UI_SmallBar(4,37,120,0,ui_tempi);
+     if(!winflag && fighter[h].autoon)
+          PrintCenter(64,35,ui_tempi,fonts,"Auto");
+     else if(!hero[h].next)
+          PrintCenter(64,35,ui_tempi,fonts,"Guest");
+     else if(menuactive==2 && Hero_CanEquip(h,tempitem[0].eqtype-1))
+          PrintCenter(64,35,ui_tempi,fonts,"Current Equip");
+     if(menuactive<2) {
+          TBlit(4,42,ui_hmbar,ui_tempi);
+          RectFill(9,44,7+(hero[h].curhp*114/hero[h].maxhp),47,RGB(225,0,0),ui_tempi);
+          PrintCenter(64,40,ui_tempi,fontm,str(hero[h].curhp));
+          PrintRight(125,43,ui_tempi,fonts,str(hero[h].maxhp));
+          RectFill(9,54,7+(hero[h].curmp*114/hero[h].maxmp),57,RGB(0,0,225),ui_tempi);
+          PrintCenter(64,50,ui_tempi,fontm,str(hero[h].curmp));
+          PrintRight(125,53,ui_tempi,fonts,str(hero[h].maxmp));
+     }
+     else if(menuactive==2 && Hero_CanEquip(h,tempitem[0].eqtype-1) && hero[h].next) {
+          if(tempitem[0].eqtype<15)
+               PrintString(5,40,ui_tempi,fontm,"Dam: "+str(hero[h].equip[0].stats[0][0])+" "+GetDamageType(hero[h].equip[0].stats[0][1]));
+          else if(tempitem[0].eqtype<21) {
+               PrintString(5,40,ui_tempi,fontm,"Res: "+str(hero[h].equip[2].stats[0][0])+"% "+GetDamageType(hero[h].equip[2].stats[0][1]));
+               PrintString(5,50,ui_tempi,fontm,"Res: "+str(hero[h].equip[2].stats[1][0])+"% "+GetDamageType(hero[h].equip[2].stats[1][1]));
+          }
+          else if(tempitem[0].eqtype<27) {
+               PrintString(5,40,ui_tempi,fontm,"Phys. Def: "+str(hero[h].equip[1].stats[0][0])+"%");
+               PrintString(5,50,ui_tempi,fontm,"Other Def: "+str(hero[h].equip[1].stats[1][0])+"%");
+          }
+          else if(tempitem[0].eqtype<31) {
+               PrintString(5,40,ui_tempi,fontm,"Res: "+str(hero[h].equip[3].stats[0][0])+"% "+GetDamageType(hero[h].equip[3].stats[0][1]));
+               PrintString(5,50,ui_tempi,fontm,"Res: "+str(hero[h].equip[3].stats[1][0])+"% "+GetDamageType(hero[h].equip[3].stats[1][1]));
+          }
+          else PrintString(5,40,ui_tempi,fontm,"Acc: "+str(hero[h].equip[4].stats[0][0])+"% "+GetAttackType(hero[h].equip[4].stats[0][1]));
+     }
+     else if(menuactive==2)
+          PrintCenter(64,45,ui_tempi,fontm,"Cannot Equip");
+     UI_CreateAlpha(ui_tempi,3,dest);
+}
+
+void UI_PartyDetail(int dest) {
+
+//- Draw Box
+     RectFill(0,0,128,64,clear,ui_tempi);
+     UI_SmallBox(0,0,128,64,ui_tempi);
+     PrintCenter(64,5,ui_tempi,fontm,mapname);
+     PrintCenter(64,18,ui_tempi,fontm,areaname);
+     UI_SmallBar(4,31,120,0,ui_tempi);
+     PrintRight(125,36,ui_tempi,fontm,str(partygold)+"$");
+     PrintRight(125,50,ui_tempi,fontm,GetTime());
+     if(!len(actfact))
+          PrintCenter(32,32,ui_tempi,fontb,"\f1-");
+     else if(partyfact<4)
+          PrintCenter(32,32,ui_tempi,fontb,"\f3"+str(partyfact));
+     else if(partyfact>6)
+          PrintCenter(32,32,ui_tempi,fontb,"\f2"+str(partyfact));
+     else PrintCenter(32,32,ui_tempi,fontb,str(partyfact));
+     PrintCenter(32,53,ui_tempi,fonts,actfact);
+     UI_CreateAlpha(ui_tempi,3,dest);
+}
+
+void UI_PopulateEquipShop(string race, int rank, int maxrank, int magic, int active, int dest, int start, int stop, ... exclude) {
+     int i,v;
+     int f=FileOpen("system\\equip.dat",FILE_READ);
+     int totalitems=stop-start-exclude.length;
+     string s;
+     
+     //- Print top-level information
+     RectFill(0,0,335,342,clear,ui_tempi);
+     UI_BigBox(0,7,336,336,ui_tempi);
+     PrintCenter(168,-4,ui_tempi,fontb,"Available Weapons");
+     PrintCenter(168,30,ui_tempi,fontb,"Forge Rank: "+str(rank)+"/"+str(maxrank));
+     PrintCenter(168,57,ui_tempi,fonts,"(Press Left and Right to alter current rank.)");
+     UI_SmallBar(9,71,318,0,ui_tempi);
+     
+     //- Fill weapon list
+     FileSeekLine(f,GetRacialIndex(race)+35);
+     s=FileReadLn(f);
+     if(magic)
+          s=GetToken(s," ",2);
+     else if(!rank)
+          s=GetToken(s," ",0);
+     else s=GetToken(s," ",1);
+     for(i=0; i<=totalitems; i++) {
+          FileSeekLine(f,GenericShop_GetItemFromPointer(i,start,exclude)-1);
+          if(active!=i)
+               PrintString(25,i*15+75,ui_tempi,fontm,s+" "+FileReadToken(f));
+          else PrintString(25,i*15+75,ui_tempi,fontm,"\f4"+s+" "+FileReadToken(f));
+          FileReadToken(f); FileReadToken(f);
+          FileReadToken(f); FileReadToken(f);
+          v=val(FileReadToken(f));
+          if(partyfact && partyfact<6) v=v*2;
+          if(active!=i)
+               PrintRight(311,i*15+75,ui_tempi,fontm,str(v*pow(2,rank)*(magic+1))+"$");
+          else PrintRight(311,i*15+75,ui_tempi,fontm,"\f4"+str(v*pow(2,rank)*(magic+1))+"$");
+     }
+     
+     UI_CreateAlpha(ui_tempi,8,dest);
+     FileClose(f);
+}
+
+string UI_SaveDetail(int slot, int dest, int hide) {
+     int x,y;
+     int f=FileOpen("save\\eossave"+str(slot)+".sav",FILE_READ);
+     string desc;
+     RectFill(0,0,128,64,clear,ui_tempi);
+     UI_SmallBox(0,0,128,64,ui_tempi);
+     if(f) {
+          FileReadQuad(f); FileReadString(f);
+          if(!FileEOF(f)) {
+               for(y=0; y<48; y++) {
+                    for(x=0; x<64; x++)
+                         SetPixel(x+32,y+8,FileReadQuad(f),ui_tempi);
+               }
+               if(!hide) PrintCenter(64,5,ui_tempi,fontm,FileReadString(f));
+               else desc=FileReadString(f);
+               PrintCenter(64,18,ui_tempi,fontm,FileReadString(f));
+               UI_SmallBar(4,31,120,0,ui_tempi);
+               PrintRight(125,36,ui_tempi,fontm,str(FileReadQuad(f))+"$");
+               PrintCenter(32,32,ui_tempi,fontb,str(FileReadQuad(f)));
+               PrintCenter(32,53,ui_tempi,fonts,"Level");
+               PrintRight(125,50,ui_tempi,fontm,ProcessTimeString(FileReadQuad(f)));
+          }
+          else if(!hide) PrintCenter(64,25,ui_tempi,fontm,"Empty Slot");
+     }
+     else if(!hide) PrintCenter(64,25,ui_tempi,fontm,"Empty Slot");
+     UI_CreateAlpha(ui_tempi,3,dest);
+     FileClose(f);
+     return desc;
+}
+
+void UI_HeroStatus(int h, int w, int dest) {
+
+     int i,x;
+     string s;
+
+//- Draw Box
+     RectFill(0,0,335,342,clear,ui_tempi);
+     UI_BigBox(0,7,336,336,ui_tempi);
+     switch(w) {
+
+//- Basic Summary
+          case 0:   PrintCenter(168,-4,ui_tempi,fontb,"Basic Summary");
+                    
+                    x=hero[h].stats[0];
+                    PrintRight(103,20,ui_tempi,fontb,"Strength:");
+                    PrintString(112,20,ui_tempi,fontb,str(x));
+                    PrintString(10,42,ui_tempi,fontm,"+"+str(x/2)+"."+str(x%2*5)+"% sharp dmg");
+                    PrintString(10,53,ui_tempi,fontm,"+"+str(x/2)+"."+str(x%2*5)+"% blunt dmg");
+                    PrintString(10,64,ui_tempi,fontm,"+"+str(x/10)+"."+str(x%10)+" inven. slots");
+                    if(!strcmp(hero[h].class,"Gladiator"))
+                         PrintString(10,75,ui_tempi,fontm,"+"+str(x/20+hero[h].mpgain)+"."+str((x/2)%10)+" Mana / level");
+                    
+                    x=hero[h].stats[1];
+                    PrintRight(103,81,ui_tempi,fontb,"Vitality:");
+                    PrintString(112,81,ui_tempi,fontb,str(x));
+                    PrintString(10,103,ui_tempi,fontm,"+"+str(x/5)+"."+str(x%5*2)+"% poison res");
+                    PrintString(10,114,ui_tempi,fontm,"+"+str(x/10)+"."+str(x%10)+"% natural def");
+                    PrintString(10,125,ui_tempi,fontm,"+"+str(x/20+hero[h].hpgain)+"."+str((x/2)%10)+" Health / level");
+                    if(!strcmp(hero[h].class,"Knight"))
+                         PrintString(10,136,ui_tempi,fontm,"+"+str(x/20+hero[h].mpgain)+"."+str((x/2)%10)+" Mana / level");
+                    
+                    x=hero[h].stats[2];
+                    PrintRight(103,142,ui_tempi,fontb,"Agility:");
+                    PrintString(112,142,ui_tempi,fontb,str(x));
+                    PrintString(10,164,ui_tempi,fontm,"+"+str(x/10)+"."+str(x%10)+"% physical def");
+                    PrintString(10,175,ui_tempi,fontm,"+"+str(x/10)+"."+str(x%10)+"% elemental def");
+                    PrintString(10,186,ui_tempi,fontm,"+"+str(x/5)+"."+str(x%5*2)+"% action speed");
+                    if(!strcmp(hero[h].class,"Rogue"))
+                         PrintString(10,197,ui_tempi,fontm,"+"+str(x/20+hero[h].mpgain)+"."+str((x/2)%10)+" Mana / level");
+                    
+                    x=hero[h].stats[3];
+                    PrintRight(261,20,ui_tempi,fontb,"Wisdom:");
+                    PrintString(270,20,ui_tempi,fontb,str(x));
+                    PrintString(178,42,ui_tempi,fontm,"+"+str(x/2)+"."+str(x%2*5)+"% arcane dmg");
+                    PrintString(178,53,ui_tempi,fontm,"+"+str(x/2)+"."+str(x%2*5)+"% psychic dmg");
+                    PrintString(178,64,ui_tempi,fontm,"+"+str(x/10)+"."+str(x%10)+"% crit chance");
+                    if(!strcmp(hero[h].class,"Adept"))
+                         PrintString(178,75,ui_tempi,fontm,"+"+str(x/20+hero[h].mpgain)+"."+str((x/2)%10)+" Mana / level");
+                    
+                    x=hero[h].stats[4];
+                    PrintRight(261,81,ui_tempi,fontb,"Psyche:");
+                    PrintString(270,81,ui_tempi,fontb,str(x));
+                    PrintString(178,103,ui_tempi,fontm,"+"+str(x/2)+"."+str(x%2*5)+"% light dmg");
+                    PrintString(178,114,ui_tempi,fontm,"+"+str(x/2)+"."+str(x%2*5)+"% dark dmg");
+                    PrintString(178,125,ui_tempi,fontm,"+"+str(x/10)+"."+str(x%10)+"% planar def");
+                    if(!strcmp(hero[h].class,"Cleric"))
+                         PrintString(178,136,ui_tempi,fontm,"+"+str(x/20+hero[h].mpgain)+"."+str((x/2)%10)+" Mana / level");
+                    
+                    x=hero[h].stats[5];
+                    PrintRight(261,142,ui_tempi,fontb,"Will:");
+                    PrintString(270,142,ui_tempi,fontb,str(x));
+                    PrintString(178,164,ui_tempi,fontm,"+"+str(x/2)+"."+str(x%2*5)+"% fire dmg");
+                    PrintString(178,175,ui_tempi,fontm,"+"+str(x/2)+"."+str(x%2*5)+"% frost dmg");
+                    PrintString(178,186,ui_tempi,fontm,"+"+str(x/10)+"."+str(x%10)+"% magical def");
+                    if(!strcmp(hero[h].class,"Wizard"))
+                         PrintString(178,197,ui_tempi,fontm,"+"+str(x/20+hero[h].mpgain)+"."+str((x/2)%10)+" Mana / level");
+
+                    PrintString(10,203,ui_tempi,fontb,"Experience:");
+                    PrintRight(220,203,ui_tempi,fontb,str(hero[h].exp));
+                    if(menuactive) {
+                         if(hero[h].next) {
+                              PrintString(21,225,ui_tempi,fontm,"Next Level At:");
+                              PrintRight(220,225,ui_tempi,fontm,str(hero[h].next));
+                         }
+                         else PrintRight(220,225,ui_tempi,fontm,"Guest Hero");
+                         PrintCenter(275,207,ui_tempi,fontm,"Level");
+                         if(!hero[h].statpnt)
+                              PrintCenter(275,216,ui_tempi,fontb,str(hero[h].level));
+                         else PrintCenter(275,216,ui_tempi,fontb,"\f2"+str(hero[h].level));
+                    }
+                    else {
+                         PrintString(21,225,ui_tempi,fontm,"Starting Level:");
+                         PrintRight(220,225,ui_tempi,fontm,str(hero[h].level));
+                         PrintCenter(275,207,ui_tempi,fontm,"Points");
+                         if(hero[h].statpnt) 
+                              PrintCenter(275,216,ui_tempi,fontb,str(hero[h].statpnt));
+                         else PrintCenter(275,216,ui_tempi,fontb,"Done!");
+                    }
+                    
+                    UI_SmallBar(9,240,318,0,ui_tempi);
+                    
+                    PrintRight(72,245,ui_tempi,fontb,"Arms");
+                    PrintString(75,243,ui_tempi,fontm,"\f"+str(abs(hero[h].eqprof[0]-1))+"Knife");
+                    PrintString(118,243,ui_tempi,fontm,"\f"+str(abs(hero[h].eqprof[1]-1))+"Sword");
+                    PrintString(168,243,ui_tempi,fontm,"\f"+str(abs(hero[h].eqprof[2]-1))+"Mace");
+                    PrintString(213,243,ui_tempi,fontm,"\f"+str(abs(hero[h].eqprof[3]-1))+"Hatchet");
+                    PrintString(277,243,ui_tempi,fontm,"\f"+str(abs(hero[h].eqprof[4]-1))+"Spear");
+                    PrintString(75,253,ui_tempi,fontm,"\f"+str(abs(hero[h].eqprof[5]-1))+"Thrown");
+                    PrintString(134,253,ui_tempi,fontm,"\f"+str(abs(hero[h].eqprof[6]-1))+"Claymore");
+                    PrintString(207,253,ui_tempi,fontm,"\f"+str(abs(hero[h].eqprof[7]-1))+"Maul");
+                    PrintString(248,253,ui_tempi,fontm,"\f"+str(abs(hero[h].eqprof[8]-1))+"Axe");
+                    PrintString(282,253,ui_tempi,fontm,"\f"+str(abs(hero[h].eqprof[9]-1))+"Staff");
+                    if(hero[h].eqprof[10]) PrintString(75,263,ui_tempi,fontm,"Bow");
+                    if(hero[h].eqprof[11]) PrintString(112,263,ui_tempi,fontm,"Katana");
+                    if(hero[h].eqprof[12]) PrintString(168,263,ui_tempi,fontm,"Unarmed");
+                    if(hero[h].eqprof[13]) PrintString(234,263,ui_tempi,fontm,"Wand");
+                    
+                    PrintRight(72,271,ui_tempi,fontb,"Armor");
+                    PrintString(75,278,ui_tempi,fontm,"\f"+str(abs(hero[h].eqprof[15]-1))+"Cloth");
+                    PrintString(123,278,ui_tempi,fontm,"\f"+str(abs(hero[h].eqprof[16]-1))+"Leather");
+                    PrintString(184,278,ui_tempi,fontm,"\f"+str(abs(hero[h].eqprof[17]-1))+"Chain");
+                    PrintString(231,278,ui_tempi,fontm,"\f"+str(abs(hero[h].eqprof[18]-1))+"Scale");
+                    if(hero[h].eqprof[19]) PrintString(277,278,ui_tempi,fontm,"Plate");
+                    if(hero[h].eqprof[14]) PrintString(277,278,ui_tempi,fontm,"Robe");
+
+                    PrintRight(72,292,ui_tempi,fontb,"Shield");
+                    PrintString(75,293,ui_tempi,fontm,"\f"+str(abs(hero[h].eqprof[20]-1))+"Bracer");
+                    PrintString(130,293,ui_tempi,fontm,"\f"+str(abs(hero[h].eqprof[21]-1))+"Buckler");
+                    PrintString(191,293,ui_tempi,fontm,"\f"+str(abs(hero[h].eqprof[22]-1))+"Target");
+                    PrintString(245,293,ui_tempi,fontm,"\f"+str(abs(hero[h].eqprof[23]-1))+"Heater");
+                    PrintString(75,303,ui_tempi,fontm,"\f"+str(abs(hero[h].eqprof[24]-1))+"Kite");
+                    if(hero[h].eqprof[25]) PrintString(113,303,ui_tempi,fontm,"Tower");
+                    
+                    PrintRight(72,311,ui_tempi,fontb,"Spell");
+                    if(!strcmp(hero[h].class,"Gladiator"))
+                         PrintString(73,318,ui_tempi,fontm,"Strength");
+                    else if(!strcmp(hero[h].class,"Knight"))
+                         PrintString(73,318,ui_tempi,fontm,"Vitality");
+                    else if(!strcmp(hero[h].class,"Rogue"))
+                         PrintString(73,318,ui_tempi,fontm,"Agility");
+                    else if(!strcmp(hero[h].class,"Adept"))
+                         PrintString(73,318,ui_tempi,fontm,"Wisdom");
+                    else if(!strcmp(hero[h].class,"Cleric"))
+                         PrintString(73,318,ui_tempi,fontm,"Psyche");
+                    else PrintString(73,318,ui_tempi,fontm,"Will");
+
+          case 1:   PrintCenter(168,-4,ui_tempi,fontb,"Inventory");
+                    PrintCenter(84,18,ui_tempi,fontb,"Backpack");
+                    PrintCenter(252,18,ui_tempi,fontb,"Equipment");
+                    for(i=0; i<hero[h].packsize; i++) {
+                         if(len(hero[h].backpack[i].name))
+                              PrintString(17,i*15+39,ui_tempi,fontm,hero[h].backpack[i].name);
+                         else PrintString(17,i*15+39,ui_tempi,fontm,"-----");
+                    }
+                    UI_SmallBar(168,16,0,318,ui_tempi);
+
+                    PrintString(185,45,ui_tempi,fontm,"Weapon:");
+                    PrintString(185,80,ui_tempi,fontm,"Shield:");
+                    PrintString(185,115,ui_tempi,fontm,"Armor:");
+                    PrintString(185,150,ui_tempi,fontm,"Feature:");
+                    PrintString(185,185,ui_tempi,fontm,"Signet:");
+                    for(i=0; i<5; i++) {
+                         if(len(hero[h].equip[i].name))
+                              PrintRight(325,i*35+60,ui_tempi,fontm,hero[h].equip[i].name);
+                         else PrintRight(325,i*35+60,ui_tempi,fontm,"Nothing");
+                    }
+                    UI_SmallBar(173,215,154,0,ui_tempi);
+
+                    PrintString(185,215,ui_tempi,fontb,"Use / Equip");
+                    PrintString(185,240,ui_tempi,fontb,"Hand to Ally");
+                    PrintString(185,265,ui_tempi,fontb,"Reorganize");
+                    PrintString(185,290,ui_tempi,fontb,"Throw Away");
+                    PrintString(185,315,ui_tempi,fontb,"Cancel");
+          
+          case 2:   PrintCenter(168,-4,ui_tempi,fontb,"Abilities & Traits");
+                    UI_SmallBar(166,16,0,318,ui_tempi);
+                    PrintCenter(84,18,ui_tempi,fontb,"Skills");
+                    for(i=0; i<10; i++) {
+                         if(i<hero[h].spellslots && !len(hero[h].spell[i].name))
+                              PrintString(17,i*18+39,ui_tempi,fontm,"Open Skill Slot");
+                         else if(i<hero[h].spellslots)
+                              PrintString(17,i*18+39,ui_tempi,fontm,hero[h].spell[i].name);
+                         else PrintString(17,i*18+39,ui_tempi,fontm,"-----");
+                    }
+                    
+                    PrintCenter(252,18,ui_tempi,fontb,"Powers");
+                    for(i=0; i<10; i++) {
+                         if(len(hero[h].ability[i].name))
+                              PrintString(185,i*18+39,ui_tempi,fontm,hero[h].ability[i].name);
+                         else PrintString(185,i*18+39,ui_tempi,fontm,"-----");
+                    }
+                    UI_SmallBar(9,220,157,0,ui_tempi);
+                    UI_SmallBar(171,220,156,0,ui_tempi);
+                    
+                    PrintCenter(84,221,ui_tempi,fontb,"Attacks");
+                    for(i=0; i<5; i++) {
+                         if(len(hero[h].attack[i].name))
+                              PrintString(17,i*18+242,ui_tempi,fontm,hero[h].attack[i].name);
+                         else PrintString(17,i*18+242,ui_tempi,fontm,"-----");
+                    }
+                    
+                    PrintCenter(252,221,ui_tempi,fontb,"Traits");
+                    for(i=0; i<5; i++) {
+                         if(len(hero[h].trait[i].name))
+                              PrintString(185,i*18+242,ui_tempi,fontm,hero[h].trait[i].name);
+                         else PrintString(185,i*18+242,ui_tempi,fontm,"-----");
+                    }
+          
+          case 3:   PrintCenter(168,-4,ui_tempi,fontb,"Combat Attributes");
+                    PrintCenter(85,18,ui_tempi,fontb,"Weapon");
+                    PrintCenter(85,36,ui_tempi,fontb,str(Calc_BaseDamage(h,hero[h].equip[0].stats[0][0],hero[h].equip[0].stats[0][1])));
+                    PrintCenter(85,55,ui_tempi,fontm,GetDamageType(hero[h].equip[0].stats[0][1])+" damage");
+                    UI_SmallBar(9,69,152,0,ui_tempi);
+                    
+                    PrintCenter(85,70,ui_tempi,fontb,"Crit Chance");
+                    PrintCenter(85,90,ui_tempi,fontb,str(hero[h].combatstats[36]/10)+"."+str(hero[h].combatstats[36]%10)+"%");
+                    UI_SmallBar(9,111,152,0,ui_tempi);
+                    
+                    PrintCenter(85,113,ui_tempi,fontb,"Speed Bonus");
+                    if(hero[h].combatstats[37]<0)
+                         PrintCenter(85,133,ui_tempi,fontb,str(hero[h].combatstats[37]/10)+"."+str(abs(hero[h].combatstats[37]%10))+"%");
+                    else PrintCenter(85,133,ui_tempi,fontb,"+"+str(hero[h].combatstats[37]/10)+"."+str(hero[h].combatstats[37]%10)+"%");
+                    UI_SmallBar(9,154,152,0,ui_tempi);
+                    
+                    PrintCenter(85,157,ui_tempi,fontb,"Attack");
+                    PrintString(10,177,ui_tempi,fontm,"Accuracy");
+                    PrintRight(162,177,ui_tempi,fontm,"Evasion");
+                    for(i=0; i<5; i++) {
+                         s=GetAttackType(i+1);
+                         PrintCenter(85,i*29+187,ui_tempi,fontb,ToUpper(left(s,1))+right(s,len(s)-1));
+                         PrintCenter(28,i*29+202,ui_tempi,fontm,str(hero[h].combatstats[i+24]/10)+"."+str(hero[h].combatstats[i+24]%10)+"%");
+                         PrintCenter(143,i*29+202,ui_tempi,fontm,str(hero[h].combatstats[i+30]/10)+"."+str(hero[h].combatstats[i+30]%10)+"%");
+                    }
+                    UI_SmallBar(162,16,0,318,ui_tempi);
+                    
+                    PrintCenter(247,18,ui_tempi,fontb,"Damage");
+                    PrintString(168,38,ui_tempi,fontm,"Bonus");
+                    PrintRight(327,38,ui_tempi,fontm,"Resist");
+                    for(i=0; i<10; i++) {
+                         s=GetDamageType(i+1);
+                         PrintCenter(247,i*29+48,ui_tempi,fontb,ToUpper(left(s,1))+right(s,len(s)-1));
+                         PrintCenter(187,i*29+57,ui_tempi,fontm,str(hero[h].combatstats[i]/10)+"."+str(hero[h].combatstats[i]%10)+"%");
+                         PrintCenter(307,i*29+57,ui_tempi,fontm,str(hero[h].combatstats[i+12]/10)+"."+str(hero[h].combatstats[i+12]%10)+"%");
+                    }
+                    
+          case 4:   PrintCenter(168,-4,ui_tempi,fontb,"Factions & Quests");
+                    PrintCenter(168,20,ui_tempi,fontm,"Faction Standings");
+                    for(i=0; i<10; i++) {
+                         x=hero[h].factions[i];
+                         if(x<4) PrintCenter(i%5*63+41,i/5*30+35,ui_tempi,fontb,"\f3"+str(x));
+                         else if(x>6) PrintCenter(i%5*63+41,i/5*30+35,ui_tempi,fontb,"\f2"+str(x));
+                         else PrintCenter(i%5*63+41,i/5*30+35,ui_tempi,fontb,str(x));
+                         PrintCenter(i%5*63+41,i/5*30+55,ui_tempi,fonts,GetRaceName(i));
+                    }
+                    UI_SmallBar(10,95,316,0,ui_tempi);
+          
+          case 5:   PrintCenter(168,-4,ui_tempi,fontb,"Party Overview");
+                    PrintCenter(168,15,ui_tempi,fontb,str(lorexp));
+                    PrintCenter(168,35,ui_tempi,fontm,"Lore Experience");
+                    PrintCenter(84,40,ui_tempi,fontb,str(Calc_StartLevel(lorexp)));
+                    PrintCenter(84,60,ui_tempi,fontm,"Recruit Level");
+                    PrintCenter(252,40,ui_tempi,fontb,str(maxlevel));
+                    PrintCenter(252,60,ui_tempi,fontm,"Maximum Level");
+                    UI_SmallBar(10,75,316,0,ui_tempi);
+                    PrintCenter(168,75,ui_tempi,fontb,str(Party_GetAvgLevel()));
+                    PrintCenter(168,95,ui_tempi,fontm,"Active Party Level");
+                    PrintCenter(84,100,ui_tempi,fontb,str(Party_GetLowLevel()));
+                    PrintCenter(84,120,ui_tempi,fontm,"Lowest Level");
+                    PrintCenter(252,100,ui_tempi,fontb,str(Party_GetHiLevel()));
+                    PrintCenter(252,120,ui_tempi,fontm,"Highest Level");
+                    UI_SmallBar(10,135,316,0,ui_tempi);
+                    PrintCenter(168,135,ui_tempi,fontb,bindmapname+" - "+bindareaname);
+                    PrintCenter(168,157,ui_tempi,fontm,"Bind Location");
+                    UI_SmallBar(10,170,316,0,ui_tempi);
+                    PrintCenter(168,175,ui_tempi,fontm,"Faction Standings");
+                    for(i=0; i<10; i++) {
+                         x=Party_GetAvgFaction(i);
+                         if(x<4) PrintCenter(i%5*63+41,i/5*30+185,ui_tempi,fontb,"\f3"+str(x));
+                         else if(x>6) PrintCenter(i%5*63+41,i/5*30+185,ui_tempi,fontb,"\f2"+str(x));
+                         else PrintCenter(i%5*63+41,i/5*30+185,ui_tempi,fontb,str(x));
+                         PrintCenter(i%5*63+41,i/5*30+205,ui_tempi,fonts,GetRaceName(i));
+                    }
+                    UI_SmallBar(10,245,316,0,ui_tempi);
+                    PrintCenter(168,250,ui_tempi,fontm,"Active Effects");
+          
+          case 6:   PrintCenter(168,-4,ui_tempi,fontb,"Logbook");
+                    PrintCenter(168,20,ui_tempi,fontm,"Primary Quest");
+                    PrintString(25,30,ui_tempi,fontb,questlog[0].name);
+                    PrintString(25,50,ui_tempi,fontm,questlog[0].desc);
+                    PrintString(25,65,ui_tempi,fontm,"Task:");
+                    PrintString(70,65,ui_tempi,fontm,WrapText(fontm,questlog[0].task,255));
+                    UI_SmallBar(10,95,316,0,ui_tempi);
+                    for(x=1; x<6; x++) {
+                         if(questlog[x].idx) {
+                              PrintString(25,x-1*47+98,ui_tempi,fontb,questlog[x].name);
+                              PrintString(25,x-1*47+118,ui_tempi,fontm,"Task:");
+                              PrintString(70,x-1*47+118,ui_tempi,fontm,WrapText(fontm,questlog[x].task,255));
+                         }
+                    }
+          
+          case 7:   PrintCenter(168,-4,ui_tempi,fontb,"Cartography");
+                    PrintCenter(168,25,ui_tempi,fontb,"No Maps Available");
+          
+          case 8:   PrintCenter(168,-4,ui_tempi,fontb,"Learned Skills");
+                    if(!spellbook[0])
+                         PrintCenter(168,25,ui_tempi,fontb,"No Skill Book Available");
+                    else if(h<10) {
+                         if(h>=5) x=0;
+                         else x=1;
+                         PrintCenter(168,25,ui_tempi,fontm,"By Attribute");
+                         for(i=12; i<18; i++)
+                              PrintString(i%2*160+30,i-12/2*30+35,ui_tempi,fontb,"\f"+str(x)+GetSpellSchoolName(i+1));
+                         UI_SmallBar(10,130,316,0,ui_tempi);
+                         PrintCenter(168,145,ui_tempi,fontm,"By Class");
+                         for(i=0; i<12; i++)
+                              PrintString(i%2*160+30,i/2*30+155,ui_tempi,fontb,"\f"+str(x)+GetSpellSchoolName(i+1));
+                         if(h<5) {
+                              x=GetClassIndex(hero[h].class);
+                              PrintString(x%2*160+30,x/2*30+35,ui_tempi,fontb,GetSpellSchoolName(x+13));
+                              for(i=0; i<12; i++) {
+                                   if(Hero_HasTrait(h,GetSpellSchoolTrait(i+1)))
+                                        PrintString(i%2*160+30,i-12/2*30+35,ui_tempi,fontb,GetSpellSchoolName(i+1));
+                              }
+                              if(Hero_HasTrait(h,"Wise Ritualist"))
+                                   PrintString(190,65,ui_tempi,fontb,"Wisdom");
+                              if(Hero_HasTrait(h,"Willful Ritualist"))
+                                   PrintString(190,95,ui_tempi,fontb,"Will");
+                         }
+                    }
+                    else {
+                         Tech_PopulateSpellSchool(h-10);
+                         i=0; x=0;
+                         if(!tempspell[0].idx) {
+                              PrintCenter(168,25,ui_tempi,fontb,"No Skills Available");
+                              x=1;
+                         }
+                         while(!x) {
+                              PrintString(i/21*160+30,i%21*15+23,ui_tempi,fontm,tempspell[i].name);
+                              i++;
+                              if(i==41) x=1;
+                              else if(!tempspell[i].idx) x=1;
+                         }
+                    }
+          
+          case 9:   PrintCenter(168,-4,ui_tempi,fontb,"Marching Order");
+                    for(i=0; i<5; i++) {
+                         UI_SmallBox(25,i*65+25,38,38,ui_tempi);
+                         if(len(hero[i].name)) {
+                              TBlit(28,i*65+28,DictGetInt(spc,hero[i].chrimg),ui_tempi);
+                              PrintString(70,i*65+25,ui_tempi,fontb,"\f2"+hero[i].name);
+                              PrintString(70,i*65+50,ui_tempi,fontm,"Initial Hate: "+str((6-i)/2*Hero_HateMod(i)+(5-i*2)));
+                              if(numchars>1) PrintString(250,i*65+30,ui_tempi,fontm,"Move");
+                              if(inhostel && numchars-guestchars>1 && hero[i].next)
+                                   PrintString(250,i*65+45,ui_tempi,fontm,"Drop");
+                         }
+                         else if(inhostel && i==numchars && hostelchars)
+                              PrintString(70,i*65+32,ui_tempi,fontb,"Add Member");
+                    }
+     }
+
+     UI_CreateAlpha(ui_tempi,8,dest);
+}
+
+void UI_CharGenBoxes(int h) {
+     chargensprite=GetSprite();
+     sprite.image[chargensprite]=NewImage(640,97);
+     sprite.x[chargensprite]=0; sprite.y[chargensprite]=383;
+     sprite.sc[chargensprite]=1;
+     sprite.lucent[chargensprite]=50;
+     RectFill(0,0,639,96,clear,sprite.image[chargensprite]);
+     RectFill(8,8,632,89,black,sprite.image[chargensprite]);
+
+     GetSprite();
+     sprite.image[chargensprite+1]=NewImage(640,97);
+     sprite.x[chargensprite+1]=0; sprite.y[chargensprite+1]=383;
+     sprite.sc[chargensprite+1]=1;
+     RectFill(0,0,639,96,clear,sprite.image[chargensprite+1]);
+     UI_BigBox(0,0,640,97,sprite.image[chargensprite+1]);
+     
+     GetSprite();
+     sprite.image[chargensprite+2]=NewImage(336,343);
+     sprite.x[chargensprite+2]=152; sprite.y[chargensprite+2]=41;
+     sprite.sc[chargensprite+2]=1;
+     sprite.lucent[chargensprite+2]=50;
+     RectFill(0,0,335,342,clear,sprite.image[chargensprite+2]);
+     RectFill(8,8,328,335,black,sprite.image[chargensprite+2]);
+     
+     GetSprite();
+     sprite.image[chargensprite+3]=NewImage(336,343);
+     sprite.x[chargensprite+3]=152; sprite.y[chargensprite+3]=41;
+     sprite.sc[chargensprite+3]=1;
+     RectFill(0,0,335,342,clear,sprite.image[chargensprite+3]);
+     UI_HeroStatus(h,0,chargensprite+3);
+     
+     GetSprite();
+     sprite.image[chargensprite+4]=NewImage(128,64);
+     sprite.x[chargensprite+4]=256; sprite.y[chargensprite+4]=0;
+     sprite.sc[chargensprite+4]=1;
+     sprite.lucent[chargensprite+4]=50;
+     RectFill(0,0,127,63,clear,sprite.image[chargensprite+4]);
+     RectFill(3,3,125,61,black,sprite.image[chargensprite+4]);
+     
+     GetSprite();
+     sprite.image[chargensprite+5]=NewImage(128,64);
+     sprite.x[chargensprite+5]=256; sprite.y[chargensprite+5]=0;
+     sprite.sc[chargensprite+5]=1;
+     RectFill(0,0,127,63,clear,sprite.image[chargensprite+5]);
+     UI_HeroDetail(h,chargensprite+5);
+     
+}
+
+void UI_ClearCharGen() {
+     FreeImage(sprite.image[chargensprite]);   sprite.image[chargensprite]=0;
+     FreeImage(sprite.image[chargensprite+1]); sprite.image[chargensprite+1]=0;
+     FreeImage(sprite.image[chargensprite+2]); sprite.image[chargensprite+2]=0;
+     FreeImage(sprite.image[chargensprite+3]); sprite.image[chargensprite+3]=0;
+     FreeImage(sprite.image[chargensprite+4]); sprite.image[chargensprite+4]=0;
+     FreeImage(sprite.image[chargensprite+5]); sprite.image[chargensprite+5]=0;
+     chargensprite=0;
+}
+
+
+void UI_BigBox(int x, int y, int w, int h, int dest) {
+     int x1=x;
+     int x2=x+w-1;
+     int y2=y+h-1;
+     TBlit(x,y,ui_bline[4],dest);
+     TBlit(x,y2-7,ui_bline[6],dest);
+     TBlit(x2-7,y,ui_bline[5],dest);
+     TBlit(x2-7,y2-7,ui_bline[7],dest);
+     TBlit(x,y2-15,ui_bline[2],dest);
+     TBlit(x2-15,y,ui_bline[0],dest);
+     TBlit(x2-7,y2-15,ui_bline[3],dest);
+     TBlit(x2-15,y2-7,ui_bline[1],dest);
+     x+=8;
+     while(x<x2-15) {
+          TBlit(x,y,ui_bline[0],dest);
+          TBlit(x,y2-7,ui_bline[1],dest);
+          x+=8;
+     }
+     y+=8;
+     while(y<y2-15) {
+          TBlit(x1,y,ui_bline[2],dest);
+          TBlit(x2-7,y,ui_bline[3],dest);
+          y+=8;
+     }
+}
+
+void UI_SmallBox(int x, int y, int w, int h, int dest) {
+     int x1=x;
+     int x2=x+w-1;
+     int y1=y;
+     int y2=y+h-1;
+     TBlit(x,y,ui_sline[4],dest);
+     TBlit(x,y2-4,ui_sline[6],dest);
+     TBlit(x2-4,y,ui_sline[5],dest);
+     TBlit(x2-4,y2-4,ui_sline[7],dest);
+     TBlit(x,y2-9,ui_sline[2],dest);
+     TBlit(x2-9,y,ui_sline[0],dest);
+     TBlit(x2-4,y2-9,ui_sline[3],dest);
+     TBlit(x2-9,y2-4,ui_sline[1],dest);
+     while(x1<x2-14) {
+          x1+=5;
+          TBlit(x1,y,ui_sline[0],dest);
+          TBlit(x1,y2-4,ui_sline[1],dest);
+     }
+     while(y1<y2-14) {
+          y1+=5;
+          TBlit(x,y1,ui_sline[2],dest);
+          TBlit(x2-4,y1,ui_sline[3],dest);
+     }
+}
+
+void UI_SmallBar(int x, int y, int w, int h, int dest) {
+     int i,j,z;
+     int x2=x+w;
+     int y2=y+h;
+     if(!h) {
+          TBlit(x,y,ui_sline[8],dest);
+          TBlit(x2-5,y,ui_sline[9],dest);
+          TBlit(x2-10,y,ui_sline[0],dest);
+          x+=5; i=x;
+          j=x2-5; z=0;
+     }
+     else {
+          x--;
+          TBlit(x,y,ui_sline[10],dest);
+          TBlit(x,y2-5,ui_sline[11],dest);
+          TBlit(x,y2-10,ui_sline[3],dest);
+          y+=5; i=y;
+          j=y2-5; z=3;
+     }
+     while(i<j) {
+          TBlit(x,y,ui_sline[z],dest);
+          if(!h) x+=5;
+          else y+=5;
+          i+=5;
+     }
+}
+
+void UI_SlideSprite(int s, int dx, int dy, int t) {
+     int x=sprite.x[s];
+     int y=sprite.y[s];
+     timer=0;
+     while(timer<t) {
+          Render();
+          sprite.x[s]=x+(dx-x*timer/t);
+          sprite.y[s]=y+(dy-y*timer/t);
+          ShowPage();
+     }
+     sprite.x[s]=dx; sprite.y[s]=dy;
+}

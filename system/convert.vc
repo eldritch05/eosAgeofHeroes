@@ -1,0 +1,70 @@
+void ConvertFiles() {
+     int i=0;
+     int source=FileOpen("system\\ability.txt",FILE_READ);
+     int dest=FileOpen("system\\ability.dat",FILE_WRITE);
+     string s;
+     while(!FileEOF(source)) {
+          FileSeekPos(dest,i*128,SEEK_SET);
+          FileWriteString(dest,FileReadToken(source));
+          FileWriteString(dest,FileReadToken(source));
+          FileWriteQuad(dest,val(FileReadToken(source)));
+          FileWriteQuad(dest,val(FileReadToken(source)));
+          FileWriteQuad(dest,val(FileReadToken(source)));
+          FileWriteQuad(dest,val(FileReadToken(source)));
+          FileWriteQuad(dest,val(FileReadToken(source)));
+          FileWriteQuad(dest,val(FileReadToken(source)));
+          FileWriteQuad(dest,val(FileReadToken(source)));
+          FileWriteQuad(dest,val(FileReadToken(source)));
+          s=FileReadLn(source);
+          FileWriteString(dest,right(s,len(s)-1));
+          i++;
+     }
+     FileClose(source);
+     FileClose(dest);
+     i=0;
+     source=FileOpen("system\\attack.txt",FILE_READ);
+     dest=FileOpen("system\\attack.dat",FILE_WRITE);
+     while(!FileEOF(source)) {
+          FileSeekPos(dest,i*128,SEEK_SET);
+          FileWriteString(dest,FileReadToken(source));
+          FileWriteString(dest,FileReadToken(source));
+          FileWriteQuad(dest,val(FileReadToken(source)));
+          FileWriteQuad(dest,val(FileReadToken(source)));
+          FileWriteQuad(dest,val(FileReadToken(source)));
+          FileWriteQuad(dest,val(FileReadToken(source)));
+          FileWriteQuad(dest,val(FileReadToken(source)));
+          FileWriteQuad(dest,val(FileReadToken(source)));
+          FileWriteQuad(dest,val(FileReadToken(source)));
+          s=FileReadLn(source);
+          FileWriteString(dest,right(s,len(s)-1));
+          i++;
+     }
+     FileClose(source);
+     FileClose(dest);
+     i=0;
+     source=FileOpen("system\\spell.txt",FILE_READ);
+     dest=FileOpen("system\\spell.dat",FILE_WRITE);
+     while(!FileEOF(source)) {
+          FileSeekPos(dest,i*128,SEEK_SET);
+          FileWriteString(dest,FileReadToken(source));
+          FileSeekPos(dest,i*128+17,SEEK_SET);
+          FileWriteString(dest,FileReadToken(source));
+          FileSeekPos(dest,i*128+50,SEEK_SET);
+          FileWriteQuad(dest,val(FileReadToken(source)));
+          FileWriteQuad(dest,val(FileReadToken(source)));
+          FileWriteQuad(dest,val(FileReadToken(source)));
+          FileWriteQuad(dest,val(FileReadToken(source)));
+          FileWriteQuad(dest,val(FileReadToken(source)));
+          FileWriteQuad(dest,val(FileReadToken(source)));
+          FileWriteQuad(dest,val(FileReadToken(source)));
+          FileWriteQuad(dest,val(FileReadToken(source)));
+          FileWriteQuad(dest,val(FileReadToken(source)));
+          FileWriteQuad(dest,val(FileReadToken(source)));
+          FileWriteQuad(dest,val(FileReadToken(source)));
+          s=FileReadLn(source);
+          FileWriteString(dest,right(s,len(s)-1));
+          i++;
+     }
+     FileClose(source);
+     FileClose(dest);
+}

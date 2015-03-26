@@ -1,0 +1,249 @@
+Chosen_Foe      Mark_a_foe_for_future_attacks   1  15  9  4 1  80  0  20 49   5  10 Mark, Rank I
+Stone_Toss      Inflict_damage                  1  15  7  4 2  95  2  10 60   0   3 Blunt Damage, Rank I
+Cutting_Words   _                               1  30  3 00 0 000 00 000 00 000 000 Sharp Damage, Rank I
+Gas_Bomb        Decrease_regeneration           1  30  8  4 5  90  9  10 39   5  10 Health Degeneration, Rank I
+Amplify_Pain    Decrease_dark_resist            1  45 11  4 3  80  6  20 17   5  25 Lower Dark Resistance
+Armormelt       _                               1  45  5 00 0 000 00 000 00 000 000 Lower Blunt Resistance
+Biting_Wounds   Decrease_sharp_resist           1  45  9  4 1  80  1  20 12   5  25 Lower Sharp Resistance
+Condemnation    _                               1  45  1 00 0 000 00 000 00 000 000 Lower Light Resistance
+Focus_Hearing   _                               1  45  6 00 0 000 00 000 00 000 000 Lower Sonic Resistance
+Inject_Primer   _                               1  45  6 00 0 000 00 000 00 000 000 Lower Poison Resistance
+Last_Wish       _                               1  45  6 00 0 000 00 000 00 000 000 Deadman's Trigger, Rank I
+Magic_Amplifier _                               1  45  5 00 0 000 00 000 00 000 000 Lower Arcane Resistance
+Pound           _                               1  45  9 00 0 000 00 000 00 000 000 Blunt Damage, Rank II
+Raincloud       _                               1  45  4 00 0 000 00 000 00 000 000 Decrease Frost Resistance
+Riposte         _                               1  45  6 00 0 000 00 000 00 000 000 Counter, Rank I
+Veil_of_Ashes   _                               1  45  4 00 0 000 00 000 00 000 000 Lower Fire Resistance
+Weaken_Mind     _                               1  45  2 00 0 000 00 000 00 000 000 Lower Psychic Resistance
+Arcane_Insight  _                               1  60 12 00 0 000 00 000 00 000 000 Boost Arcane Damage
+Air_Blade       _                               1  60  7 00 0 000 00 000 00 000 000 Sharp Damage, Rank II
+Atrophic_Aura   Increase_dark_damage            1  60 11 12 3 100  6  20  5   5  25 Boost Dark Damage
+Boastful_Bellow _                               1  60  3 00 0 000 00 000 00 000 000 Boost Sonic Damage
+Divine_Aura     _                               1  60  1 00 0 000 00 000 00 000 000 Boost Light Damage
+Earthen_Fist    _                               1  60  7 00 0 000 00 000 00 000 000 Boost Blunt Damage
+Internal_Flame  _                               1  60  7 00 0 000 00 000 00 000 000 Boost Fire Damage
+Internal_Frost  _                               1  60  7 00 0 000 00 000 00 000 000 Boost Frost Damage
+Mnemonic        _                               1  60  2 00 0 000 00 000 00 000 000 Boost Psychic Damage
+Poison          _                               1  60  6 00 0 000 00 000 00 000 000 Health Degeneration, Rank II
+Spirit_of_Tiger _                               1  60 10 00 0 000 00 000 00 000 000 Boost Sharp Damage
+Venom_Tonic     _                               1  60  8 00 0 000 00 000 00 000 000 Boost Poison Damage
+Catapult        _                               1  75  5 00 0 000 00 000 00 000 000 Blunt Damage, Rank III
+Honored_Foe     _                               1  75  9 00 0 000 00 000 00 000 000 Mark, Rank II
+Plague          _                               1  75  4 00 0 000 00 000 00 000 000 Health Degeneration, Rank III
+Stun            _                               1  75 12 00 0 000 00 000 00 000 000 Stun, Rank I
+Enrapture       _                               1  90  2 00 0 000 00 000 00 000 000 Stun, Rank II
+Flask_Bomb      _                               1  90  8 00 0 000 00 000 00 000 000 Sharp Damage, Rank III
+Blade_Thicket   _                               1 105  9 00 0 000 00 000 00 000 000 Counter, Rank II
+Boiling_Blood   _                               1 105  8 00 0 000 00 000 00 000 000 Deadman's Trigger, Rank II
+Crush           _                               1 105  9 00 0 000 00 000 00 000 000 Blunt Damage, Rank IV
+Acid_Explosion  _                               1 120  8 00 0 000 00 000 00 000 000 Health Degeneration, Rank IV
+Concussion      _                               1 120  9 00 0 000 00 000 00 000 000 Stun, Rank III
+Wind_Scar       _                               1 120  7 00 0 000 00 000 00 000 000 Sharp Damage, Rank IV
+Blessed_Aid     Restore_health                  2  15  1  2 6 100  5  20 60   0   2 Efficient Heal, Rank I
+Guide_Hatred    Force_a_foe_to_attack_you       2  15  2  4 4 100  8 100 46   1   5 Block, Rank I
+Josian’s_Shout  Inflict_damage                  2  15  3  4 5  95 10  10 60   0   4 Sonic Damage, Rank I
+Provoke         _                               2  15  9 00 0 000 00 000 00 000 000 Increase Hate, Rank I
+Bodyguard       _                               2  30  9 00 0 000 00 000 00 000 000 Guard, Rank I
+Decrepify       _                               2  30 11 00 0 000 00 000 00 000 000 Lower Speed, Rank I
+Silence_Sound   _                               2  30  3 00 0 000 00 000 00 000 000 Seal, Rank I
+Song_of_Rest    Restore_health                  2  30  3  2 6 100 10  50 60   0   5 Efficient Heal, Rank II
+Arcane_Guard    Increase_arcane_resistance      2  45 12 12 4 100  7  20 18   5  20 Boost Arcane Resistance
+Flame_Barrier   Increase_fire_resistance        2  45 12 12 2 100  3  20 14   5  20 Boost Fire Resistance
+Frost_Barrier   _                               2  45  7 00 0 000 00 000 00 000 000 Boost Frost Resistance
+Iron_Bones      _                               2  45  8 00 0 000 00 000 00 000 000 Boost Blunt Resistance
+Night_Barrier   Increase_dark_resistance        2  45 11 12 3 100  6  20 17   5  20 Boost Dark Resistance
+Parry_Blades    Increase_sharp_resistance       2  45  9 12 1 100  1  20 12   5  20 Boost Sharp Resistance
+Noisemaker      _                               2  45  5 00 0 000 00 000 00 000 000 Sonic Damage, Rank II
+Sacred_Barrier  _                               2  45  1 00 0 000 00 000 00 000 000 Boost Light Resistance
+Sound_Dampener  _                               2  45  5 00 0 000 00 000 00 000 000 Boost Sonic Resistance
+Steel_Stomach   _                               2  45  9 00 0 000 00 000 00 000 000 Boost Poison Resistance
+Thought_Shield  _                               2  45  2 00 0 000 00 000 00 000 000 Boost Psychic Resistance
+Challenge       _                               2  60  9 00 0 000 00 000 00 000 000 Increase Hate, Rank II
+Devenom         _                               2  60  6 00 0 000 00 000 00 000 000 Lower Poison Damage
+Gleaming_Aura   _                               2  60  1 00 0 000 00 000 00 000 000 Lower Dark Damage
+Healing_Potion  Restore_health                  2  60  8  2 6 100  9  75 60   0   8 Efficient Heal, Rank III
+Maul_Mangler    _                               2  60  5 00 0 000 00 000 00 000 000 Lower Blunt Damage
+Mental_Static   _                               2  60  2 00 0 000 00 000 00 000 000 Lower Psychic Damage
+Nullify_Magic   _                               2  60 12 00 0 000 00 000 00 000 000 Lower Arcane Damage
+Rot_Armaments   _                               2  60 11 00 0 000 00 000 00 000 000 Lower Sharp Damage
+Sap_Soul        _                               2  60 11 00 0 000 00 000 00 000 000 Lower Light Damage
+Sonic_Disruptor _                               2  60  5 00 0 000 00 000 00 000 000 Lower Sonic Damage
+Spirit_of_Sloth _                               2  60 10 00 0 000 00 000 00 000 000 Lower Speed, Rank II
+Still_of_Winter _                               2  60  4 00 0 000 00 000 00 000 000 Seal, Rank II
+Summer’s_Herald _                               2  60  4 00 0 000 00 000 00 000 000 Lower Frost Damage
+Winter’s_Herald _                               2  60  4 00 0 000 00 000 00 000 000 Lower Fire Damage
+Bola_Blower     _                               2  75  5 00 0 000 00 000 00 000 000 Decrease Speed, Rank III
+Contain_Foe     _                               2  75  9 00 0 000 00 000 00 000 000 Block, Rank II
+Josian’s_Cry    _                               2  75  3 00 0 000 00 000 00 000 000 Sonic Damage, Rank III
+Close_Mind      _                               2  90  2 00 0 000 00 000 00 000 000 Seal, Rank III
+Divine_Aid      Restore_health                  2  90  1  2 6 100  5 100 60   0  10 Efficient Heal, Rank IV
+Shield_Ally     _                               2  90  9 00 0 000 00 000 00 000 000 Guard, Rank II
+Tranquilizer    _                               2 105  8 00 0 000 00 000 00 000 000 Lower Speed, Rank IV
+True_Nemesis    _                               2 120  9 00 0 000 00 000 00 000 000 Block, Rank III
+Amiable_Guise   _                               3  15  2 00 0 000 00 000 00 000 000 Lower Hate Modifier
+Rogue's_Retreat Remove_party_from_battle        3  15  6 11 5  90 12 100 73   0  15 Flee
+Gather_Shadows  _                               3  15 11 00 0 000 00 000 00 000 000 Concealment, Rank I
+Pilfer          _                               3  15  6 00 0 000 00 000 00 000 000 Theft, Rank I
+Venom_Spirit    Inflict_damage                  3  15 10  4 4  95  9  10 60   0   3 Poison Damage, Rank I
+Belladonna      Inflict_damage                  3  30  4  4 5  95  9  25 60   0   6 Poison Damage, Rank II
+Defuse_Hatred   _                               3  30 12 00 0 000 00 000 00 000 000 Lower Hate, Rank I
+Disarming_Chant _                               3  30  3 00 0 000 00 000 00 000 000 Disarm Trap, Rank I
+Exit_Gate       _                               3  30 12 00 0 000 00 000 00 000 000 Return to Surface
+Padfoot         _                               3  30  6 00 0 000 00 000 00 000 000 Sneak, Rank I
+Agile_Brew      Increase_speed_bonus            3  45  8 12 5 100  9  10 37   5  15 Boost Speed, Rank I
+Furious_Guise   _                               3  45  2 00 0 000 00 000 00 000 000 Boost Hate Modifier
+Opening_Chant   _                               3  45  3 00 0 000 00 000 00 000 000 Open Lock, Rank I
+Return_Gate     _                               3  45 12 00 0 000 00 000 00 000 000 Return to Bind
+Speed_Brew      _                               3  60  8 00 0 000 00 000 00 000 000 Speed Travel, Rank I
+Spirit_Form     _                               3  60 10 00 0 000 00 000 00 000 000 Concealment, Rank II
+Spirit_Walk     _                               3  60 10 00 0 000 00 000 00 000 000 Sneak, Rank II
+Envenom_Blood   _                               3  60 11 00 0 000 00 000 00 000 000 Poison Damage, Rank III
+Wolf_Gate       _                               3  60 12 00 0 000 00 000 00 000 000 Return to Esselte
+Elven_Gate      _                               3  75  4 00 0 000 00 000 00 000 000 Return to Leguviel
+Fay_Gate        _                               3  75  7 00 0 000 00 000 00 000 000 Return to Sheresar
+Island_Gate     _                               3  75 10 00 0 000 00 000 00 000 000 Return to Grbok
+Memory_Blur     _                               3  75  2 00 0 000 00 000 00 000 000 Lower Hate, Rank II
+Spirit_of_Fox   Increase_speed_bonus            3  75 10 12 4 100  8  20 37   5  30 Boost Speed, Rank II
+Stealing_Chant  _                               3  75  3 00 0 000 00 000 00 000 000 Theft, Rank II
+Tartarus_Gate   _                               3  75 11 00 0 000 00 000 00 000 000 Return to Tartarus Gate
+Temple_Gate     _                               3  75  1 00 0 000 00 000 00 000 000 Return to Gelaham
+Untrap          Disarm_traps                    3  75  6 21 1 100  1  50 69   0 000 Disarm Trap, Rank II
+Lockpickers     _                               3  90  5 00 0 000 00 000 00 000 000 Open Lock, Rank II
+Poison_Infusion _                               3  90  8 00 0 000 00 000 00 000 000 Poison Damage, Rank IV
+Repellant       _                               3  90  8 00 0 000 00 000 00 000 000 Sneak, Rank III
+Spirit_of_Wolf  _                               3  90 10 00 0 000 00 000 00 000 000 Speed Travel, Rank II
+Wind_Step       _                               3  90  7 00 0 000 00 000 00 000 000 Return to Elemental Vortex
+Ancient_Gate    _                               3 105  5 00 0 000 00 000 00 000 000 Return to Miriliclyn
+Disable_Device  _                               3 105  5 00 0 000 00 000 00 000 000 Disarm Trap, Rank III
+Fluid_Speed     Increase_speed_bonus            3 105  9 12 2 100  4  30 37   5  45 Boost Speed, Rank III
+Hidden_in_View  _                               3 105  6 00 0 000 00 000 00 000 000 Concealment, Rank III
+Rob             _                               3 105  6 00 0 000 00 000 00 000 000 Theft, Rank III
+Beneficence     _                               3 120  2 00 0 000 00 000 00 000 000 Decrease Hate, Rank III
+Leaguestep_Boot _                               3 120  5 00 0 000 00 000 00 000 000 Speed Travel, Rank III
+Open_Lock       _                               3 120  6 00 0 000 00 000 00 000 000 Open Lock, Rank III
+Antivenom       _                               4  15  8 00 0 000 00 000 00 000 000 Mend Ailment, Rank I
+Mind_Stab       Inflict_damage                  4  15  2  4 4  95  8  10 60   0   3 Psychic Damage, Rank I
+Sixpence_Song   _                               4  15  3 00 0 000 00 000 00 000 000 Boost Spoils, Rank I
+Charming_Ballad _                               4  30  3 00 0 000 00 000 00 000 000 Confuse, Rank I
+Ferocity        _                               4  30  9 00 0 000 00 000 00 000 000 Boost Crit Chance, Rank I
+Litan’s_Luck    _                               4  30  3 00 0 000 00 000 00 000 000 Boost Drop Rate, Rank I
+Magic_Missile   _                               4  30 12 00 0 000 00 000 00 000 000 Arcane Damage, Rank I
+Warrior_Tonic   _                               4  30  8 00 0 000 00 000 00 000 000 Berserk, Rank I
+Midas_Melody    _                               4  45  3 00 0 000 00 000 00 000 000 Boost Spoils, Rank II
+Psychic_Sword   Inflict_damage                  4  45  2  4 4  95  8  25 60   0   6 Psychic Damage, Rank II
+Pure_Mind       _                               4  45  2 00 0 000 00 000 00 000 000 Mend Ailment, Rank II
+Ancestral_Guide _                               4  60 10 00 0 000 00 000 00 000 000 Boost Natural Accuracy
+Arcane_Focus    _                               4  60 12 00 0 000 00 000 00 000 000 Boost Magical Accuracy
+Aria_of_Lore    _                               4  60  3 00 0 000 00 000 00 000 000 Boost Lore Gain
+Cloud_Thoughts  _                               4  60  2 00 0 000 00 000 00 000 000 Lower Magical Accuracy
+Deflector_Guard _                               4  60  5 00 0 000 00 000 00 000 000 Lower Natural Accuracy
+Dim_Vision      _                               4  60 11 00 0 000 00 000 00 000 000 Lower Planar Accuracy
+Divine_Guidance _                               4  60  1 00 0 000 00 000 00 000 000 Boost Planar Accuracy
+Elemental_Scope _                               4  60  5 00 0 000 00 000 00 000 000 Boost Elemental Accuracy
+Heat_Shimmer    _                               4  60  4 00 0 000 00 000 00 000 000 Lower Elemental Accuracy
+Magic_Blade     _                               4  60 12 00 0 000 00 000 00 000 000 Arcane Damage, Rank II
+Phantom_Friends _                               4  60 10 00 0 000 00 000 00 000 000 Confuse, Rank II
+Rage            _                               4  60 18 00 0 000 00 000 00 000 000 Berserk, Rank II
+Tempest         _                               4  60  4 00 0 000 00 000 00 000 000 Delay Action, Rank I
+Throw_Dirt      _                               4  60  6 00 0 000 00 000 00 000 000 Lower Physical Accuracy
+Aimed_Strike    _                               4  60  9 00 0 000 00 000 00 000 000 Boost Physical Accuracy
+Vital_Strike    _                               4  60  6 00 0 000 00 000 00 000 000 Boost Crit Chance, Rank II
+Litan’s_Fortune _                               4  75  3 00 0 000 00 000 00 000 000 Boost Drop Rate, Rank II
+Psychic_Crush   _                               4  75  2 00 0 000 00 000 00 000 000 Psychic Damage, Rank III
+Purifying_Light _                               4  75  1 00 0 000 00 000 00 000 000 Mend Ailment, Rank III
+Aria_of_Wisdom  _                               4  90  3 00 0 000 00 000 00 000 000 Boost Experience Gain
+Destroy_Mind    _                               4  90  2 00 0 000 00 000 00 000 000 Psychic Damage, Rank IV
+Domination      _                               4  90  2 00 0 000 00 000 00 000 000 Confuse, Rank III
+Luck_of_the_Fay _                               4  90  7 00 0 000 00 000 00 000 000 Boost Crit Chance, Rank III
+Panacea         _                               4  90  8 00 0 000 00 000 00 000 000 Mend Ailment, Rank IV
+Snap_Mind       _                               4  90  2 00 0 000 00 000 00 000 000 Berserk, Rank III
+Trip            _                               4  90  6 00 0 000 00 000 00 000 000 Delay Action, Rank II
+Magic_Blast     _                               4 105 12 00 0 000 00 000 00 000 000 Arcane Damage, Rank III
+Delay_Device    _                               4 120  5 00 0 000 00 000 00 000 000 Delay Action, Rank III
+Dispel_Magic    _                               4 120 12 00 0 000 00 000 00 000 000 Mend Ailment, Rank V
+Magic_Vortex    _                               4 120 12 00 0 000 00 000 00 000 000 Arcane Damage, Rank IV
+Shining_Lance   Inflict_damage                  5  15  1  4 3  95  5  10 60   0   3 Light Damage, Rank I
+Spectral_Mercy  Restore_health                  5  15 10  2 6 100  8  50 60   0  10 Power Heal, Rank I
+Spirit_of_Bat   Steal_health                    5  15 10  4 4  90  8  10 74   0   8 Absorb Health, Rank I
+Body_of_Steel   Prevents_damage                 5  30  8 12 5 100  2  25 47  10  10 Wall, Rank I
+Floral_Vitae    _                               5  30  4 00 0 000 00 000 00 000 000 Vitae, Rank I
+Infuse_Vigor    Increase_regeneration           5  30 10 12 6 100  8  10 39  10  15 Regeneration, Rank I
+Infused_Brew    _                               5  30  8 00 0 000 00 000 00 000 000 Transfer Mana, Rank I
+Twilight_Bolt   Inflict_damage                  5  30 11  4 3  95  6  10 60   0   3 Dark Damage, Rank I
+Dusk_Bolt       Inflict_damage                  5  45 11  4 3  95  6  25 60   0   8 Dark Damage, Rank II
+Sap_Health      Steal_health                    5  45 11  4 3  90  6  50 74   0  35 Absorb Health, Rank II
+Soothing_Rain   Restore_health_to_party         5  45  4  3 6 100  4  50 60   0  25 Group Heal, Rank I
+Blessed_Shield  _                               5  60  1 00 0 000 00 000 00 000 000 Boost Planar Defense
+Block           _                               5  60  9 00 0 000 00 000 00 000 000 Boost Physical Defense
+Gleaming_Lance  Inflict_damage                  5  60  1  4 3  95  5  25 60   0   8 Light Damage, Rank II
+Grim_Gift       _                               5  60 11 00 0 000 00 000 00 000 000 Transfer Mana, Rank II
+Magic_Shield    _                               5  60 12 00 0 000 00 000 00 000 000 Boost Magical Defense
+Mending_Melody  Increase_regeneration           5  60  3 12 6 100 10  25 39  10  40 Regeneration, Rank II
+Miracle_Brew    Revives_an_ally                 5  60  8  2 6  50 12   1 75   0  25 Revive, Rank I
+Radiant_Heal    Restore_health                  5  60  1  2 6 100  5 100 60   0  20 Power Heal, Rank II
+Rock_Wall       _                               5  60  7 00 0 000 00 000 00 000 000 Wall, Rank II
+Shield_of_Song  _                               5  60  3 00 0 000 00 000 00 000 000 Boost Natural Defense
+Smokescreen     _                               5  60  5 00 0 000 00 000 00 000 000 Boost Elemental Defense
+Vital_Brew      _                               5  60  8 00 0 000 00 000 00 000 000 Vitae, Rank II
+Mental_Heal     Restore_health                  5  75  2  2 6 100  8 200 60   0  40 Power Heal, Rank III
+Midnight_Bolt   Inflict_damage                  5  75 11  4 3  95  6  75 60   0  25 Dark Damage, Rank III
+Reanimate       Revives_an_ally                 5  75 11  2 6 100 12   1 75   0  50 Revive, Rank II
+Spirit_Shield   _                               5  75 10 00 0 000 00 000 00 000 000 Wall, Rank III
+Theft_of_Vitae  _                               5  75  6 00 0 000 00 000 00 000 000 Absorb Health, Rank III
+Infuse_Life     Increase_regeneration           5  90 10 12 6 100 12  50 39  10  75 Regeneration, Rank III
+Radiant_Lance   _                               5  90  1 00 0 000 00 000 00 000 000 Light Damage, Rank III
+Resuscitate     Revives_an_ally                 5  90 10  2 6 100 12  50 75   0  75 Revive, Rank III
+Sacred_Prayer   Restore_health_to_party         5  90  1  3 6 100  5 100 60   0  50 Group Heal, Rank II
+Transfer_Spirit _                               5  90 10 00 0 000 00 000 00 000 000 Transfer Mana, Rank III
+Vernal_Well     _                               5  90  4 00 0 000 00 000 00 000 000 Vitae, Rank III
+Brilliant_Heal  Restore_health                  5 105  1  2 6 100  5 500 60   0 100 Power Heal, Rank IV
+Draining_Vines  _                               5 105  4 00 0 000 00 000 00 000 000 Absorb Health, Rank IV
+Hand_of_Light   _                               5 105  1 00 0 000 00 000 00 000 000 Light Damage, Rank IV
+Wall_of_Words   _                               5 105  3 00 0 000 00 000 00 000 000 Wall, Rank IV
+Avatar_of_Night _                               5 120 11 00 0 000 00 000 00 000 000 Dark Damage, Rank IV
+Divine_Prayer   Restore_health_to_party         5 120  1  3 6 100  5 200 60   0 100 Group Heal, Rank III
+Resurrect       Revives_an_ally                 5 120  1  2 6 100 12 100 75   0 100 Revive, Rank IV
+Absorb_Magic    _                               6  15 12 00 0 000 00 000 00 000 000 Absorb Mana, Rank I
+Frost_Shard     Inflict_damage                  6  15  7  4 2  95  4  10 60   0   2 Frost Damage, Rank I
+Pipe_Bomb       Inflict_damage_to_all_foes      6  15  5  5 1  80  3   8 60   0  10 Area Damage, Rank I
+Spark           Inflict_damage                  6  15  7  4 2  95  3  10 60   0   2 Fire Damage, Rank I
+Thorn_Shield    _                               6  15  4 00 0 000 00 000 00 000 000 Damage Shield, Rank I
+Firestarter     _                               6  30  5 00 0 000 00 000 00 000 000 Fire Damage, Rank II
+Hail_Storm      _                               6  30  4 00 0 000 00 000 00 000 000 Summon Storm, Rank I
+Summon_Torch    _                               6  30 12 00 0 000 00 000 00 000 000 Create Torch
+Autumnal_Decay  _                               6  45  4 00 0 000 00 000 00 000 000 Lower Natural Defense
+Craft_Bandage   _                               6  45  6 00 0 000 00 000 00 000 000 Create Bandage
+Dazzle          _                               6  45  1 00 0 000 00 000 00 000 000 Blind, Rank I
+Element_Malaise _                               6  45  7 00 0 000 00 000 00 000 000 Lower Elemental Defense
+Freezing_Aura   _                               6  45  7 00 0 000 00 000 00 000 000 Damage Shield, Rank II
+Frosty_Breath   _                               6  45  8 00 0 000 00 000 00 000 000 Frost Damage, Rank II
+Magic_Magnet    _                               6  45  5 00 0 000 00 000 00 000 000 Lower Magical Defense
+Nova            _                               6  45 12  5 4  80  7  20 60   0  25 Area Damage, Rank II
+Steal_Shield    _                               6  45  6 00 0 000 00 000 00 000 000 Lower Physical Defense
+Taint_Defense   _                               6  45 11 00 0 000 00 000 00 000 000 Lower Planar Defense
+Terrify         _                               6  45  2 00 0 000 00 000 00 000 000 Fear, Rank I
+Autocartography _                               6  60  5 00 0 000 00 000 00 000 000 Create Map
+Fiery_Blade     Inflict_damage                  6  60  7  4 2  95  3  75 60   0  15 Fire Damage, Rank III
+Lightning_Storm Creates_a_damaging_storm        6  60  4 11 5  80  3  10 67  10  25 Summon Storm, Rank II
+Autoscarecrow   _                               6  75  5 00 0 000 00 000 00 000 000 Fear, Rank II
+Eye_Gouge       _                               6  75  9 00 0 000 00 000 00 000 000 Blind, Rank II
+Frost_Fall      Inflict_damage                  6  75  7  4 2  95  4  75 60   0  15 Frost Damage, Rank III
+Gift_of_Thorns  _                               6  75  4 00 0 000 00 000 00 000 000 Damage Shield, Rank III
+Phantom_Army    Inflict_damage_to_all_foes      6  75 10  5 4  80  8  50 60   0  60 Area Damage, Rank III
+Summon_Stone    _                               6  75 12 00 0 000 00 000 00 000 000 Create Mana Stone
+Theft_of_Mentae _                               6  75  6 00 0 000 00 000 00 000 000 Absorb Mana, Rank II
+Fire_Totem      _                               6  90 10 00 0 000 00 000 00 000 000 Fire Damage, Rank IV
+Frost_Totem     _                               6  90 10 00 0 000 00 000 00 000 000 Frost Damage, Rank IV
+Hurricane       _                               6  90  4 00 0 000 00 000 00 000 000 Storm, Rank III
+Reverberation   _                               6  90  3  5 5  80 10 000 60   0 000 Area Damage, Rank IV
+Summon_Bomb     _                               6  90 12 00 0 000 00 000 00 000 000 Create Bomb
+Frozen_Breath   _                               6 105  7 00 0 000 00 000 00 000 000 Frost Damage, Rank V
+Nightfall       _                               6 105 11 00 0 000 00 000 00 000 000 Blind, Rank III
+Nightmare       _                               6 105 11 00 0 000 00 000 00 000 000 Fear, Rank III
+Sap_Mana        _                               6 105 11 00 0 000 00 000 00 000 000 Absorb Mana, Rank III
+Earthquake      _                               6 120  7  5 2  80  2 000 60   0 000 Area Damage, Rank V
+Primal_Flare    _                               6 120  7 00 0 000 00 000 00 000 000 Fire Damage, Rank V
+Star_Storm      _                               6 120  4 00 0 000 00 000 00 000 000 Summon Storm, Rank IV
+Torchlight	Create_a_small_light_source	0   0  0 21 5 100  3 100 90   0   0 A weak light source
+Lamplight	Create_a_light_source		0   0  0 21 5 100  3 150 90   0   0 An average light source
+Sunlight	Create_a_large_light_source	0   0  0 21 5 100  3 200 90   0   0 A strong light source

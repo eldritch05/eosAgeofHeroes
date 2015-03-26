@@ -1,0 +1,142 @@
+void Start() {
+     if(GetFlag("GelaCaveChest1")) SetTile(31,76,1,163);
+     if(GetFlag("GelaCaveChest2")) SetTile(16,37,1,163);
+     if(GetFlag("GelaCaveChest3")) SetTile(86,86,1,163);
+     if(GetFlag("GelaCaveChest4")) SetTile(21,20,1,163);
+     if(!Quest_PartyOnStage("Search for Grymah",1)) {
+          entity.visible[0]=0;
+          entity.visible[1]=0;
+          entity.visible[2]=0;
+     }
+     if(!Quest_PartyOnStage("Search for Grymah",1) && !Quest_PartyOnStage("Search for Grymah",2))
+          SetTile(22,19,1,163);
+     Lighting_SetDarkness(1);
+     Lighting_SetSource(5,17,15,256);
+     Batt_SetTimer(2,24);
+     Map_Initialize("Bandit Cave","Tunnels","cavern.xm","");
+}
+
+void Leave() {
+     battleindex=1;
+     areaname="Gelaham Area";
+     Map_Switch("amin.map",289,457,1);
+}
+
+void EnterCamp() {
+     Warp(11,14);
+     Area_Change("","Campsite","");
+     battleactive=0;
+     battleindex=3;
+     if(!Quest_PartyOnStage("Search for Grymah",1)) return;
+     Text("Renegade Fighter","Hey, guys.  Looks like we've got some company.");
+     entity.face[1]=3; entity.face[2]=3;
+     Text("Renegade Thief","Heroes!  I told you we should've steered clear of \f2Grymah\f0!");
+     Text("Renegade Fighter","Too late now! They'll never take us alive!");
+     runflag=1;
+     estring="71 74 71 0";
+     Battle();
+     entity.visible[0]=0;
+     entity.visible[1]=0;
+     entity.visible[2]=0;
+     Quest_Advance("Search for Grymah",1,"Find \f4Grymah's belongings\f0","Amin",289,457);
+}
+
+void ExitCamp() {
+     Warp(87,13);
+     Area_Change("","Tunnels","");
+     battleactive=1;
+     battleindex=2;
+}
+
+void Chest1() {
+     CraftEquipment(33,"Human",0,0);
+     GenericChest(0,"GelaCaveChest1");       //- Apprentice Ring
+}
+
+void Chest2() {
+     CraftEquipment(21,"Human",0,0);
+     tempitem[0].name="Tin Bracelet";
+     GenericChest(0,"GelaCaveChest2");       //- Tin Bracelet
+}
+
+void Chest3() {
+     CraftEquipment(27,"Human",0,0);
+     GenericChest(0,"GelaCaveChest3");       //- Bronze Visor
+}
+
+void Chest4() {
+     if(!Quest_PartyOnStage("Search for Grymah",2))
+          return;
+     PlaySound(sfx_open,volume);
+     SetTile(22,19,1,163);
+     PlaySound(sfx_success,volume);
+     ClearPortrait();
+     Text_Main("The chest contains a lone signet ring set with the draconic character `Gri.`",0,0,0,0,0);
+     Quest_Advance("Search for Grymah",2,"Return \f4Grymah's Signet\f0 to his \f2wife\f0 in \f3Gelaham\f0","Amin",354,450);
+}
+
+void Chest5() {
+     GenericChest(500,"GelaCaveChest4");     //- 500gp
+}
+
+void Pot() {
+     GenericCraftItem("Healing Salve");
+     FindTreasure(0,"GelaCaveChest5");
+}
+
+void Barrel() {
+     CraftItem("Small Gold Ingot","Valuable metal","",0,0,500);
+     FindTreasure(0,"GelaCaveChest6");                   //- Small Gold Ingot
+}
+
+void Local_BattleSetup() {
+     runflag=0;
+     switch(Random(0,10)) {
+          case 0:   estring="59 68 59 0";
+          case 1:   estring="56 56 56 56 0";
+          case 2:   estring="68 68 0";
+          case 3:   estring="29 29 0";
+          case 4:   estring="65 59 0";
+          case 5:   estring="62 59 62 0";
+          case 6:   estring="65 65 0";
+          case 7:   estring="68 56 0";
+          case 8:   estring="29 59 29 0";
+          case 9:   estring="65 29 65 0";
+          case 10:  estring="62 62 0";
+     }
+}
+
+void Local_BattleLoot() {
+     int f=fighter[dropflag%100].index;
+     int stealing=dropflag/100;
+     if(battleindex==3) {
+          if(f==71 && !stealing)
+               CraftEquipment(2,"Human",0,0);
+          else if(f==71)
+               CraftEquipment(25,"Human",0,0);
+          else if(stealing)
+               CraftEquipment(22,"Human",0,0);
+          else CraftItem("Small Gold Ingot","Valuable metal","",0,0,500);
+     }
+     else {
+          if((f==56 || f==65) && !stealing) {
+               CraftEquipment(21,"Shadowkin",1,0);
+               tempitem[0].name="Bat Fur Armband";
+               tempitem[0].desc="Shadowy Bracer";
+               tempitem[0].lore="Crafted from dark fur.  Valued at "+str(tempitem[0].price)+"$.";
+               tempitem[0].stats[4][0]=5;
+               tempitem[0].stats[4][1]=5;
+          }
+          else if(f==59 && stealing)
+               CraftItem("Fire Beetle Gland","","",1,247,80);
+          else if(f==62 && !stealing) {
+               CraftEquipment(1,"Shadowkin",0,0);
+               tempitem[0].name="Bone Dagger";
+          }
+          else if(f==68)
+               CraftItem("Thoqqua Flame","","The fiery remains of a blazing bug.",1,209,120);
+          else if(!Random(0,2))
+               GenericCraftItem("Antidote Herb");
+          else GenericCraftItem("Healing Salve");
+     }
+}

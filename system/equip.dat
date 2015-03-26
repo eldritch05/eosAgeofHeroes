@@ -1,0 +1,45 @@
+Knife		 4  1  10  2  95
+Sword		 8  1   0  4 180
+Mace		 8  2   0  4 180
+Hatchet		 6  1   0  4 170
+Spear		 8  1  -5  6 245
+Sling		 4  1   0  4 165
+Claymore	10  1  -2  6 255
+Maul		10  2  -2  6 255
+Axe		12  1  -5  8 330
+Staff		 8  2   0  4 175
+Bow		10  1  -2  6 260
+Katana		10  1   0  8 330
+Gauntlet	 6  2   5  8 330
+Wand		 6  7   0  4 180
+Robe		10 15  -5  2 110
+Cloth		 5  5   0  1  50
+Leather		10 10   0  2 110
+Chain		15 15  -5  3 170
+Scale		20 20 -10  3 190
+Plate		25 25 -15  5 300
+Bracer		 2  0   0  1  45
+Buckler		 4  0   0  1  50
+Target		 5  0  -2  2  95
+Heater		10  0  -4  2 120
+Kite		15  0  -6  2 140
+Tower		18  0 -15  3 200
+Cloak		10 10   0  5 200
+Circlet		10 10   0  5 200
+Helmet		10 10   0  5 200
+Amulet		10 10   0  5 200
+Warrior		 5  0   0  2 300
+Druid		 5  0   0  2 300
+Priest		 5  0   0  2 300
+Mage		 5  0   0  2 300
+Scout		 5  0   0  2 300
+Temple     Crusader  Blessed    5  3  5 5
+Forest     Silver    Mythril   10  5 10 9
+Iron       Steel     Adamant    2  1  7 9
+Small      Lakeside  Tinkered   8  4  8 7
+Spritely   Fey       Elemental  3  2  3 3
+Hatchling  Reptilian Draconic   1  1  8 7
+Tribal     Tempered  Veteran    9  5  9 9
+Island     Ocean     Ancestral  4  2  4 3
+Twilight   Black     Soulless   6  3  6 5
+Scholarly  Wise      Enchanted  7  4  7 7

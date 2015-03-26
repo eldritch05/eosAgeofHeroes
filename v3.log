@@ -1,0 +1,52 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+VC System Compilation stats: 
+480 globals (132420 expanded), 262 functions, 10310 total lines
+
+Compiled ./world/achiela.map, (250 lines), 21 functions
+Compiled ./world/achiferr.map, (250 lines), 16 functions
+Compiled ./world/amin.map, (820 lines), 83 functions
+Compiled ./world/erelikot.map, (620 lines), 47 functions
+Compiled ./world/gelacave.map, (141 lines), 13 functions
+Compiled ./world/gelaham.map, (800 lines), 41 functions
+Compiled ./world/hitemple.map, (935 lines), 38 functions

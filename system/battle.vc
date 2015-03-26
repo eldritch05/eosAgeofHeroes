@@ -1,0 +1,2620 @@
+int winflag=1;
+int battlespeed=3;
+int runflag, dropflag, autobattle;
+int battleactive, battleindex, battletimer, battledistance;
+int blinkfighter, flashfighter, shakefighter, fighteffx, fighteffy, fightefft;
+int turnorder[10], storm[2][2];
+string fightingwords,estring;
+
+//- Target Autoselection Constants
+int WEAKESTENEMY=1;
+int WEAKESTALLY=2;
+
+
+struct combatant {
+     string name, lowname, deathtext, race, lore;
+     int article, gender, image, autoaction, autoon;
+     int level, curhp, maxhp, trumaxhp, curmp, maxmp;
+     int exp, gold, drop, index;
+     int actspeed, tempspeed, damage, damagetype;
+     int combatstats[38][2], conditions[60][2], hate[5];
+     tech attack[6], ability[10], spell[10];
+     item loot;
+};
+
+int battlebonus[4]; //- 0=Gold, 1=Item, 2=Lore, 3=XP
+combatant fighter[15];
+
+void Battle() {
+     int i;
+     SetExecutionPaused(1);
+     while(val(GetToken(estring," ",i))) {
+          Batt_LoadEnemy(val(GetToken(estring," ",i)),i);
+          i++;
+     }
+     Batt_Open();
+     while(!winflag) {
+          CallFunction("Local_BattleSpecial");
+          Batt_CalculateOrder();
+          if(turnorder[0]<6)
+               Batt_HeroTurn(turnorder[0]-1);
+          else Batt_EnemyTurn(turnorder[0]-1);
+          winflag=Batt_CheckVictory();
+     }
+     Batt_Close(winflag);
+     Batt_ResetDistance();
+     if(firstlevelup==1)
+          Tutorial_LevelUp();
+     if(firstmaxedlevel==1)
+          Tutorial_MaxedLevel();
+     CallFunction("Local_BattleSpecial");
+     SetExecutionPaused(0);
+     if(winflag==2) {
+          RectFill(0,0,639,479,black,sprite.image[sizedscreen]);
+          xdest=bindx; ydest=bindy;
+          fdest=0; loaded=1;
+          Map(bindmap);
+     }
+}
+
+int Batt_AbilityMenu(int idx, int cur, int dest) {
+     int a,h,i,q,w,x,y;
+     int done,temp,acc,def;
+     int base=NewImage(180,291);
+     for(i=0; i<10; i++) {
+          if(TextWidth(fontm,fighter[idx].ability[i].name)+20>w)
+               w=TextWidth(fontm,fighter[idx].ability[i].name)+20;
+          if(len(fighter[idx].ability[i].name)) y++;
+     }
+     x=128-w/2;
+     h=289-(y*13);
+     if(!idx && x<0)
+          x=0;
+     else if(idx==4 && x<0)
+          x=x*2;
+     RectFill(0,0,179,290,clear,base);
+     for(i=0; i<y; i++) {
+          if(fighter[idx].curmp<fighter[idx].ability[i].cost)
+               PrintString(15,i*13+h-1,base,fontm,"\f1"+fighter[idx].ability[i].name);
+          else PrintString(15,i*13+h-1,base,fontm,fighter[idx].ability[i].name);
+     }
+     UI_SmallBox(0,h-5,w,y*13+7,base);
+     Batt_CreateAlpha(0,h-5,w,y*13+7,base,dest);
+     Batt_WriteTechDesc(idx,2,0);
+     sprite.x[dest]=idx*128+x;
+     sprite.x[cur]=idx*128+x+5;
+     sprite.y[cur]=h-2;
+     Unpress(1);
+     while(!done) {
+          Render();
+          ShowPage();
+          q=sprite.y[cur];
+          Batt_MenuMove(h-2,y-1*13+h-2,cur);
+          if(sprite.y[cur]!=q)
+               Batt_WriteTechDesc(idx,2,sprite.y[cur]-285/13+y-1);
+          if(b1) {
+               Unpress(1);
+               PlaySound(sfx_beep,100);
+               RectFill(0,0,159,290,black,sprite.alphamap[dest]);
+               temp=sprite.y[cur];
+               sprite.x[cur]=640; sprite.y[cur]=480;
+               Tech_CopyAbility(idx,temp-285/13+y-1,0);
+               done=Batt_Skill(idx,0);
+               if(!done) {
+                    Batt_CreateAlpha(0,h-5,w,y*13+7,base,dest);
+                    sprite.x[cur]=idx*128+x+5; sprite.y[cur]=temp;
+               }
+               else fighter[idx].autoaction=temp-285/13+y+19;
+          }
+          else if(b2) {
+               Unpress(2);
+               PlaySound(sfx_cancel,100);
+               done=-1;
+          }
+     }
+     FreeImage(base);
+     return done+1;
+}
+
+void Batt_AddHate(int target, int source, int hate) {
+     int i;
+     if(source>=numchars) return;
+     if(!strcmp(hero[source].class,"Adept"))
+          hate-=hate/5;
+     else if(!strcmp(hero[source].class,"Knight"))
+          hate+=hate/5;
+     if(target>4) Batt_ApplyEffect(62,target,hate,source);
+     else {
+          for(i=5; i<15; i++)
+               Batt_ApplyEffect(62,i,hate,source);
+     }
+}
+
+void Batt_ApplyEffect(int e, int f, int m, int d) {
+     string scrtext,boxtext;
+     if(!fighter[f].curhp && e!=75) return;
+     
+     //- Modify Combat Stats
+     if(e<38) {
+          if(e<12) Batt_ApplyEffectCommon(e,f,m*10,d,"weakness","dealing less damage","power","dealing more damage","Power");
+          else if(e<24) Batt_ApplyEffectCommon(e,f,m*10,d,"vulnerability","taking more damage","resistance","taking less damage","Resist");
+          else if(e<30) Batt_ApplyEffectCommon(e,f,m*10,d,"inaccuracy","missing more often","accuracy","missing less often","Accuracy");
+          else if(e<36) Batt_ApplyEffectCommon(e,f,m*10,d,"clumsiness","dodging less often","defensiveness","blocking more often","Defense");
+          else if(e==36) Batt_ApplyEffectCommon(e,f,m*10,d,"ineptitude","making ineffective attacks","ferocity","making devastating attacks","Crit");
+          else Batt_ApplyEffectCommon(e,f,m*10,d,"sloth","moving slowly","haste","moving quickly","Speed");
+     }
+     
+     //- Modify Regeneration
+     else if(e==39)
+          Batt_ApplyEffectCommon(e,f,m,d,"health loss","losing health","regeneration","regenerating health","Regen");
+     
+     //- Aim, Evade, Focus, Defend, Enchant
+     else if(e<44) {
+          fighter[f].conditions[e][0]=m;
+          fighter[f].conditions[e][1]=d+1;
+          if(e==40) {
+               scrtext="+Aim";
+               boxtext=Batt_HighlightName(f,0)+" takes careful aim.";
+          }
+          else if(e==41) {
+               scrtext="+Evade";
+               boxtext=Batt_HighlightName(f,0)+" prepares to dodge attacks.";
+          }
+          else if(e==42) {
+               scrtext="+Focus";
+               boxtext=Batt_HighlightName(f,0)+" gathers "+GetGenderPos(fighter[f].gender)+" power.";
+          }
+          else if(e==43) {
+               scrtext="+Defend";
+               boxtext=Batt_HighlightName(f,0)+" sets "+GetGenderObj(fighter[f].gender)+"self against attacks.";
+          }
+     }
+     
+     //- Weapon Enchantment
+     else if(e==44) {
+          fighter[f].conditions[e][0]=1;
+          fighter[f].conditions[e][1]=d+1;
+          fighter[f].damagetype=m;
+          scrtext="+Enchant";
+          boxtext=Batt_HighlightName(f,0)+"'s weapon gleams with "+GetDamageType(m)+" energy.";
+     }
+     //- Guard
+     else if(e==45) {
+          fighter[f].conditions[e][0]=m+1;
+          fighter[f].conditions[e][1]=d+1;
+          scrtext="+Guard";
+          boxtext=Batt_HighlightName(f,0)+" is being protected by "+Batt_HighlightName(m,1)+".";
+     }
+     
+     //- Block
+     else if(e==46) {
+          fighter[f].conditions[e][0]=m+1;
+          fighter[f].conditions[e][1]=d+1;
+          scrtext="+Block";
+          boxtext=Batt_HighlightName(f,0)+" can only target "+Batt_HighlightName(m,1)+".";
+     }
+     
+     //- Wall
+     else if(e==47) {
+          fighter[f].conditions[e][0]=m;
+          fighter[f].conditions[e][1]=d+1;
+          scrtext="+Wall";
+          boxtext=Batt_HighlightName(f,0)+" is protected from all damage.";
+     }
+     
+     //- Target Marks an Opponent
+     else if(e==49) {
+          if(fighter[m].curhp) {
+               fighter[f].conditions[e][0]=m+1;
+               fighter[f].conditions[e][1]=d+1;
+               scrtext="+Mark";
+               boxtext=Batt_HighlightName(f,0)+" marks "+Batt_HighlightName(m,1)+" for additional attacks.";
+          }
+     }
+     
+     //- Target Becomes Concealed
+     else if(e==57 && m) {
+          if(f<5) {
+               if(Hero_HasTrait(f,"Sneaky"))
+                    m+=m*fighter[f].level/100;
+          }
+          fighter[f].conditions[e][0]=m;
+          fighter[f].conditions[e][1]=d+1;
+          scrtext="+Conceal";
+          boxtext=Batt_HighlightName(f,0)+" fades from sight.";
+     }
+     
+     //- Modify Current Health
+     else if(e==60) {
+          fighter[f].curhp+=m;
+          if(fighter[f].curhp<=0)
+               fighter[f].curhp=0;
+          else if(fighter[f].curhp>fighter[f].maxhp)
+               fighter[f].curhp=fighter[f].maxhp;
+          if(f<5) {
+               hero[f].curhp=fighter[f].curhp;
+               UI_HeroDetail(f,heroframe+f);
+          }
+          if(m<0) {
+               PlaySound(sfx_hit,100);
+               Batt_Text(Batt_HighlightName(f,0)+" takes \f3"+str(0-m)+"\f0 damage.");
+               Batt_BlinkFighter(f,1);
+               Batt_ScrollText("\f3"+str(0-m),ImageWidth(sprite.image[fighter[f].image])/2+sprite.x[fighter[f].image],sprite.y[fighter[f].image]+30);
+               Wait(20,1);
+               Batt_BlinkFighter(f,0);
+               if(f<5 && !fighter[f].curhp) Batt_HeroDeath(f);
+               else if(!fighter[f].curhp) Batt_EnemyDeath(f);
+          }
+          else if(m==0) {
+               scrtext="0";
+               boxtext=Batt_HighlightName(f,0)+" is unaffected.";
+          }
+          else {
+               PlaySound(sfx_recover,100);
+               scrtext="\f2"+str(m);
+               boxtext=Batt_HighlightName(f,0)+" recovers \f2"+str(m)+"\f0 health.";
+          }
+     }
+     
+     //- Modify Current Mana
+     else if(e==61) {
+          fighter[f].curmp+=m;
+          if(fighter[f].curmp<0)
+               fighter[f].curmp=0;
+          else if(fighter[f].curmp>fighter[f].maxmp)
+               fighter[f].curmp=fighter[f].maxmp;
+          scrtext="\f4"+str(m)+"mp";
+          if(m<0)
+               boxtext=Batt_HighlightName(f,0)+" loses \f4"+str(0-m)+"\f0 mana.";
+          else if(m==0)
+               boxtext=Batt_HighlightName(f,0)+" is unaffected.";
+          else boxtext=Batt_HighlightName(f,0)+" regains \f4"+str(m)+"\f0 mana.";
+     }
+     
+     //- Modify Hate
+     else if(e==62) fighter[f].hate[d]+=m;
+     
+     //- Modify Action Delay
+     else if(e==63 && m) {
+          fighter[f].actspeed-=m*25;
+          if(m>0) {
+               scrtext="+Delay";
+               boxtext=Batt_HighlightName(f,0)+"'s next action is delayed.";
+          }
+          else {
+               scrtext="-Delay";
+               boxtext=Batt_HighlightName(f,0)+"'s next action is hastened.";
+          }
+     }
+     
+     //- Weapon Special Attack (heroes only)
+     else if(e==65)
+          Batt_ApplyEffect(60,f,0-m,d);
+     
+     //- Create Storm
+     else if(e==67) {
+          if(f<5) f=1;
+          else f=0;
+          storm[f][0]=m;
+          storm[f][1]=d;
+          boxtext="An ominous storm gathers...";
+     }
+     
+     //- Steal Gold (heroes only)
+     else if(e==70) {
+          m=fighter[f].gold*m/100;
+          Party_EarnGold(m);
+          fighter[f].gold=0;
+          scrtext="-"+str(m)+"$";
+          boxtext=Batt_HighlightName(f,0)+" loses "+str(m)+"$.";
+     }
+     
+     //- Flee From Combat
+     else if(e==73) {
+          if(!runflag) {
+               winflag=3;
+               StopMusic();
+               PlaySound(sfx_escape,100);
+               boxtext=Batt_HighlightName(f,0)+" safely leads the party away from the battle.";
+               for(m=0; m<10; m++) {
+                    timer=0;
+                    Render();
+                    ShowPage();
+                    for(d=5; d<15; d++) {
+                         if(fighter[d].curhp) sprite.x[fighter[d].image]+=64;
+                         while(timer<1) ShowPage();
+                    }
+               }
+          }
+          else {
+               scrtext="No Escape";
+               boxtext="...but there can be no escape from this fight!";
+          }
+     }
+     
+     //- Drain Health
+     else if(e==74) {
+          m=Batt_DamageHP(f,0-m,10);
+          if(m) {
+               Batt_ApplyEffect(60,d,m,0);
+               Batt_AddHate(0,d,m/2);
+          }
+     }
+     
+     //- Revival
+     else if(e==75) {
+          if(fighter[f].curhp) {
+               scrtext="No Effect";
+               boxtext=Batt_HighlightName(f,0)+" is already alive!";
+          }
+          else {
+               m=fighter[f].maxhp*m/100;
+               fighter[f].curhp=m;
+               scrtext="\f2"+str(m);
+               boxtext=Batt_HighlightName(f,0)+" returns to life!";
+               if(f<5) {
+                    ChangeCHR(hero[f].ent,"images\\chrs\\"+hero[f].chrimg+".chr");
+                    hero[f].curhp=fighter[f].curhp;
+                    UI_HeroDetail(f,heroframe+f);
+                    Batt_AddHate(0,d,m);
+               }
+          }
+     }
+     
+     //- Gold Bonus
+     else if(e==83) {
+          if(m>battlebonus[0]) {
+               scrtext="+Gold";
+               boxtext=Batt_HighlightName(f,0)+" begins collecting extra spoils.";
+               battlebonus[0]=m;
+          }
+          else {
+               scrtext="No Effect";
+               boxtext=Batt_HighlightName(f,0)+" can collect no more extra spoils.";
+          }
+     }
+     
+     //- Item Drop Bonus
+     else if(e==84) {
+          if(m>battlebonus[1]) {
+               scrtext="+Loot";
+               boxtext=Batt_HighlightName(f,0)+" begins searching carefully for loot.";
+               battlebonus[1]=m;
+          }
+          else {
+               scrtext="No Effect";
+               boxtext=Batt_HighlightName(f,0)+" can search for loot no more carefully.";
+          }
+     }
+     
+     //- Lore Experience Bonus
+     else if(e==85) {
+          if(m>battlebonus[2]) {
+               scrtext="+Lore";
+               boxtext=Batt_HighlightName(f,0)+" begins recording extra lore.";
+               battlebonus[2]=m;
+          }
+          else {
+               scrtext="No Effect";
+               boxtext=Batt_HighlightName(f,0)+" can record no more extra lore.";
+          }
+     }
+     
+     //- Group Experience Bonus
+     else if(e==86) {
+          if(m>battlebonus[3]) {
+               scrtext="+XP";
+               boxtext=Batt_HighlightName(f,0)+" expands what can be learned from battle.";
+               battlebonus[3]=m;
+          }
+          else {
+               scrtext="No Effect";
+               boxtext=Batt_HighlightName(f,0)+" cannot further increase learning from this battle.";
+          }
+     }
+     
+     //- Display Effect Text
+     if(len(boxtext)) Batt_Text(boxtext);
+     if(len(scrtext)) {
+          Batt_ShakeFighter(f,1);
+          Batt_ScrollText(scrtext,ImageWidth(sprite.image[fighter[f].image])/2+sprite.x[fighter[f].image],sprite.y[fighter[f].image]+30);
+          Wait(battlespeed*10,1);
+          Batt_ShakeFighter(f,0);
+     }
+     else if(len(boxtext))
+          Wait(battlespeed*25,1);
+}
+
+void Batt_ApplyEffectCommon(int e, int f, int m, int d, string neg, string negact, string pos, string posact, string scr) {
+     string scrtext,boxtext;
+     if(!fighter[f].curhp) return;
+     if(!m) return;
+     if(m<0) {
+          if(fighter[f].conditions[e][0]<=m) {
+               scrtext="No Effect";
+               boxtext=Batt_HighlightName(f,0)+" is already "+negact+".";
+          }
+          else {
+               fighter[f].conditions[e][1]=d+1;
+               fighter[f].conditions[e][0]+=m;
+               scrtext="-"+scr;
+               if(fighter[f].conditions[e][0]<0)
+                    boxtext=Batt_HighlightName(f,0)+" begins "+negact+".";
+               else if(fighter[f].conditions[e][0]>0)
+                    boxtext=Batt_HighlightName(f,0)+"'s "+pos+" lessens.";
+               else boxtext=Batt_HighlightName(f,0)+" stops "+posact+".";
+          }
+     }
+     else {
+          if(fighter[f].conditions[e][0]>=m) {
+               scrtext="No Effect";
+               boxtext=Batt_HighlightName(f,0)+" is already "+posact+".";
+          }
+          else {
+               fighter[f].conditions[e][1]=d+1;
+               fighter[f].conditions[e][0]+=m;
+               scrtext="+"+scr;
+               if(fighter[f].conditions[e][0]>0)
+                    boxtext=Batt_HighlightName(f,0)+" begins "+posact+".";
+               else if(fighter[f].conditions[e][0]<0)
+                    boxtext=Batt_HighlightName(f,0)+"'s "+neg+" lessens.";
+               else boxtext=Batt_HighlightName(f,0)+" stops "+negact+".";
+          }
+     }
+     if(e<38)
+          fighter[f].combatstats[e][0]=fighter[f].combatstats[e][1]+fighter[f].conditions[e][0];
+     if(len(boxtext)) Batt_Text(boxtext);
+     if(len(scrtext)) {
+          Batt_ShakeFighter(f,1);
+          Batt_ScrollText(scrtext,ImageWidth(sprite.image[fighter[f].image])/2+sprite.x[fighter[f].image],sprite.y[fighter[f].image]+30);
+          Wait(battlespeed*5,1);
+          Batt_ShakeFighter(f,0);
+     }
+     else if(len(boxtext))
+          Wait(battlespeed*25,1);
+}
+
+void Batt_ApplyEffectGroup(int s, int e, int f, int m, int d, int t) {     //- This needs to have hate added in.
+     int i,x,dam,hi;
+     if(f<5) hi=numchars;
+     else hi=15;
+     for(i=f; i<hi; i++) {
+          if(fighter[i].curhp) {
+               x=i;
+               Batt_AttackAnimation(t,
+                                    sprite.x[fighter[i].image]+(ImageWidth(sprite.image[fighter[i].image])/2)-50,
+                                    sprite.y[fighter[i].image]+(ImageHeight(sprite.image[fighter[i].image])/2)-50);
+               x=Batt_TargetRedirection(x,s);
+               if(e!=45 && e!=46 && e!=49) {
+                    if(m>0) {
+                         dam=Batt_CalculateDamage(s,x,m,t);
+                         if(dam<1) dam=0;
+                    }
+                    else {
+                         dam=0-Batt_CalculateDamage(s,x,0-m,t);
+                         if(dam>0-1) dam=0;
+                    }
+               }
+               Batt_ApplyEffect(e,x,dam,d);
+          }
+     }
+}
+
+void Batt_Attack(int idx, int source, int target) {
+     int hit,dam,dam2,eff,efft,effd,ani2,lmod,dtype;
+     int threshold=fighter[source].level/5+1;
+     hit=Batt_AttackRoll(source,target,fighter[source].attack[idx].attack,fighter[source].attack[idx].accuracy);
+     Batt_FlashFighter(source,1);
+     Batt_ClearText();
+     Batt_Text(Batt_HighlightName(source,0)+" uses \f4"+fighter[source].attack[idx].name+"\f0 on "+Batt_HighlightName(target,1)+"!");
+     Wait(battlespeed*10,1);
+     Batt_FlashFighter(source,0);
+     dtype=fighter[source].attack[idx].damage;
+     if(!dtype) dtype=fighter[source].damagetype;
+     Batt_AttackAnimation(dtype,
+                          sprite.x[fighter[target].image]+(ImageWidth(sprite.image[fighter[target].image])/2)-50,
+                          sprite.y[fighter[target].image]+(ImageHeight(sprite.image[fighter[target].image])/2)-50);
+     
+     if(!hit) {
+          PlaySound(sfx_miss,100);
+          Batt_Text("The attack misses.");
+          Batt_ScrollText("Miss",ImageWidth(sprite.image[fighter[target].image])/2+sprite.x[fighter[target].image],sprite.y[fighter[target].image]+30);
+     }
+     else {
+     //- Calculate base damage
+          target=Batt_TargetRedirection(target,source);
+          dam=Batt_CalculateDamage(source,target,fighter[source].damage,dtype);
+          dam=dam*fighter[source].attack[idx].power/100;
+          if(dam<threshold) dam=Random(threshold,threshold+2);
+          if(fighter[source].conditions[44][0])                  //- Source is enchanted
+               dam+=dam*fighter[source].conditions[44][0]/100;
+     //- Calculate added effect
+          dtype=fighter[source].attack[idx].effect;
+          if(!dtype) dtype=fighter[source].damagetype;
+          dam2=Batt_CalculateDamage(source,target,fighter[source].damage,dtype);
+          dam2=dam2*fighter[source].attack[idx].magnitude/100;
+          if(dam2<1) dam2=0;
+          if(fighter[source].conditions[44][0])                  //- Source is enchanted
+               dam2+=dam2*fighter[source].conditions[44][0]/100;
+          switch(fighter[source].attack[idx].idx) {
+          //- Gladiator Attacks
+               case 101: eff=39; efft=target; dam2=0-dam2; effd=8;
+               case 102: eff=49; efft=source; dam2=target; effd=1;
+
+          //- Knight Attacks
+               case 201: eff=61; efft=target; ani2=1; dam2=0-dam2;
+               case 202: eff=62; efft=target; effd=source;
+               case 210: eff=46; efft=target; effd=dam2; dam2=source;
+
+          //- Rogue Attacks
+               case 301: eff=62; efft=target; dam2=0-dam2; effd=source;
+               case 302: ani2=1; dam+=dam2;
+               case 310: eff=57; efft=source; effd=1;
+
+          //- Adept Attacks
+               case 401: ani2=1; dam+=dam2;
+               case 402: ani2=1; dam+=dam2;
+
+          //- Cleric Attacks
+               case 510: eff=60; efft=Party_GetMostDamaged();
+
+          //- Wizard Attacks
+               case 601: ani2=1; dam+=dam2;
+               case 602: ani2=1; dam+=dam2;
+               case 610: eff=60; efft=25; dam2=0-(fighter[source].damage*fighter[source].attack[idx].magnitude/100);
+          }
+          if(ani2 && dam2) Batt_AttackAnimation(dtype,
+                    sprite.x[fighter[target].image]+(ImageWidth(sprite.image[fighter[target].image])/2)-50,
+                    sprite.y[fighter[target].image]+(ImageHeight(sprite.image[fighter[target].image])/2)-50);
+          
+          Batt_DamageHP(target,dam,source);
+          if(eff && efft>=20) Batt_ApplyEffectGroup(source,eff,efft-20,dam2,effd,dtype);
+          else if(eff) Batt_ApplyEffect(eff,efft,dam2,effd);
+          if(fighter[target].conditions[48][0]) {
+               Batt_FlashFighter(target,1);
+               Batt_Text(Batt_HighlightName(source,0)+" is damaged by "+Batt_HighlightName(target,1)+"'s damage shield!");
+               Wait(battlespeed*10,1);
+               Batt_FlashFighter(target,0);
+               Batt_DamageHP(source,fighter[target].conditions[48][0],target);
+          }
+          if(fighter[target].curhp && !strcmp(fighter[source].lore,"Gladiator")) {
+               if(hero[source].equip[1].eqtype<15 && hero[source].equip[1].eqtype) {
+                    Batt_FlashFighter(source,1);
+                    Batt_Text(Batt_HighlightName(source,0)+" makes an offhand attack!");
+                    Wait(battlespeed*10,1);
+                    Batt_FlashFighter(source,0);
+                    Batt_AttackAnimation(hero[source].equip[1].stats[0][1],
+                                         sprite.x[fighter[target].image]+(ImageWidth(sprite.image[fighter[target].image])/2)-50,
+                                         sprite.y[fighter[target].image]+(ImageHeight(sprite.image[fighter[target].image])/2)-50);
+                    dam=Batt_CalculateDamage(source,target,hero[source].equip[1].stats[0][0],hero[source].equip[1].stats[0][1])/5;
+                    if(dam<threshold) dam=Random(threshold,threshold+2);
+                    Batt_DamageHP(target,dam,source);
+                    if(fighter[target].conditions[48][0]) {
+                         Batt_FlashFighter(target,1);
+                         Batt_Text(Batt_HighlightName(source,0)+" is damaged by "+Batt_HighlightName(target,1)+"'s damage shield!");
+                         Wait(battlespeed*10,1);
+                         Batt_FlashFighter(target,0);
+                         Batt_DamageHP(source,fighter[target].conditions[48][0],target);
+                    }
+               }
+          }
+     }
+}
+
+void Batt_AttackAnimation(int damtype, int x, int y) {
+     int srcimg=LoadImage("images\\ani\\"+GetDamageType(damtype)+".png");
+     int srcaimg=LoadImage("images\\ani\\"+GetDamageType(damtype)+"a.png");
+     int i=GetSprite();
+     sprite.image[i]=NewImage(100,100);
+     sprite.alphamap[i]=NewImage(100,100);
+     sprite.sc[i]=1;
+     sprite.x[i]=x; sprite.y[i]=y;
+     timer=0;
+     if(damtype<15) PlaySound(sfx_damage[damtype-1],100);
+     while(timer<battlespeed*10) {
+          Blit(0,0-(timer/(battlespeed*2)*100),srcimg,sprite.image[i]);
+          Blit(0,0-(timer/(battlespeed*2)*100),srcaimg,sprite.alphamap[i]);
+          Render();
+          ShowPage();
+     }
+     RectFill(0,0,99,99,black,sprite.alphamap[i]);
+     while(timer<battlespeed*10) {
+          Render();
+          ShowPage();
+     }
+     FreeImage(srcimg);  FreeImage(srcaimg);
+     FreeImage(sprite.image[i]);
+     FreeImage(sprite.alphamap[i]);
+     sprite.image[i]=0;
+     sprite.alphamap[i]=0;
+}
+
+int Batt_AttackMenu(int idx, int cur, int dest) {
+     int h,i,q,w,x,y;
+     int done,temp;
+     int base=NewImage(180,291);
+     for(i=0; i<6; i++) {
+          if(TextWidth(fontm,fighter[idx].attack[i].name)+20>w)
+               w=TextWidth(fontm,fighter[idx].attack[i].name)+20;
+          if(len(fighter[idx].attack[i].name)) y++;
+     }
+     x=128-w/2;
+     h=289-(y*13);
+     if(!idx && x<0)
+          x=0;
+     else if(idx==4 && x<0)
+          x=x*2;
+     RectFill(0,0,179,290,clear,base);
+     for(i=0; i<y; i++)
+          PrintString(15,i*13+h-1,base,fontm,fighter[idx].attack[i].name);
+     UI_SmallBox(0,h-5,w,y*13+7,base);
+     Batt_CreateAlpha(0,h-5,w,y*13+7,base,dest);
+     Batt_WriteTechDesc(idx,1,0);
+     sprite.x[dest]=idx*128+x;
+     sprite.x[cur]=idx*128+x+5;
+     sprite.y[cur]=h-2;
+     Unpress(1);
+     while(!done) {
+          Render();
+          ShowPage();
+          q=sprite.y[cur];
+          Batt_MenuMove(h-2,y-1*13+h-2,cur);
+          if(sprite.y[cur]!=q)
+               Batt_WriteTechDesc(idx,1,sprite.y[cur]-285/13+y-1);
+          if(b1) {
+               Unpress(1);
+               PlaySound(sfx_beep,100);
+               RectFill(0,0,159,290,black,sprite.alphamap[dest]);
+               temp=sprite.y[cur];
+               sprite.x[cur]=640; sprite.y[cur]=480;
+               done=Batt_SelectEnemy();
+               if(done) {
+                    Batt_Attack(temp-285/13+y-1,idx,done+4);
+                    fighter[idx].autoaction=temp-285/13+y+9;
+               }
+               else {
+                    Batt_CreateAlpha(0,h-5,w,y*13+7,base,dest);
+                    sprite.x[cur]=idx*128+x+5; sprite.y[cur]=temp;
+               }
+          }
+          else if(b2) {
+               Unpress(2);
+               PlaySound(sfx_cancel,100);
+               done=-1;
+          }
+     }
+     FreeImage(base);
+     return done+1;
+}
+
+int Batt_AttackRoll(int source, int target, int type, int base) {
+     int acc=fighter[source].combatstats[type+23][0];
+     int def=fighter[target].combatstats[type+29][0];
+     acc+=base*10;
+     acc+=fighter[source].conditions[40][0]*10;
+     def+=fighter[target].conditions[41][0]*10;
+     if(target<5 && source<5) def=0;
+     else if(target>4 && source>4) def=0;
+     if(Random(0,999)<acc-def)
+          return 1;
+     return 0;
+}
+
+int Batt_AutoTarget(int class) {
+     int i,t,x;
+     if(class==WEAKESTENEMY) {
+          t=5; x=200;
+          for(i=5; i<15; i++) {
+               if(fighter[i].curhp) {
+                    if((fighter[i].curhp*100/fighter[i].maxhp)<x) {
+                         x=fighter[i].curhp*100/fighter[i].maxhp;
+                         t=i;
+                    }
+               }
+          }
+          return t;
+     }
+     else if(class==WEAKESTALLY) {
+          x=200;
+          for(i=0; i<numchars; i++) {
+               if(fighter[i].curhp) {
+                    if((fighter[i].curhp*100/fighter[i].maxhp)<x) {
+                         x=fighter[i].curhp*100/fighter[i].maxhp;
+                         t=i;
+                    }
+               }
+          }
+          return t;
+     }
+     else return 0;
+}
+
+void Batt_BlinkFighter(int f, int on) {
+     if(!on) {
+          blinkfighter=0;
+          sprite.x[fighter[f].image]=fighteffx;
+          sprite.y[fighter[f].image]=fighteffy;
+     }
+     else {
+          blinkfighter=f+1;
+          fighteffx=sprite.x[fighter[f].image];
+          fighteffy=sprite.y[fighter[f].image];
+          fightefft=systemtime;
+     }
+}
+
+int Batt_CalculateDamage(int source, int target, int dam, int damagetype) {
+     int lvmod=fighter[source].level-fighter[target].level*15;
+     int threshold=fighter[source].level/5+1;
+     int critical;
+     if(Random(0,999)<fighter[source].combatstats[36][0]) {
+          critical=1;
+          PlaySound(sfx_barrier,100);
+          Batt_Text("\f3CRITICAL EFFECT!\f0");
+          Wait(battlespeed*10,1);
+          lvmod=75;
+          threshold=fighter[source].level*2;
+     }
+     if(lvmod<0-75) lvmod=-75;
+     if(lvmod>75) lvmod=75;
+     dam+=dam*fighter[source].combatstats[damagetype-1][0]/1000;
+     if(critical) dam-=dam*fighter[target].combatstats[damagetype+11][0]/2000;
+     else dam-=dam*fighter[target].combatstats[damagetype+11][0]/1000;
+     dam+=dam*lvmod/100;
+     if(critical) dam+=dam/10+1;
+     else dam+=Random(0-(dam/10+1),dam/10+1);
+     if(dam<threshold) dam=Random(threshold,threshold+2);
+     
+     //- Check for party characteristics that influence damage output.
+     if(source<numchars) {
+          if(target>4) {      //- Damage Increases
+               if(!strcmp(hero[source].class,"Rogue") && fighter[source].conditions[57][0])
+                    dam+=dam/5;
+               if(Hero_HasTrait(source,"Crusader") && fighter[target].gender==4)
+                    dam+=dam*fighter[source].level/50;
+          }
+          else {              //- Heal/Buff Increases
+               if(Hero_HasTrait(source,"Healing Presence"))
+                    dam+=dam*fighter[source].level/100;
+          }
+     }
+     
+     if(fighter[source].conditions[42][0])                            //- Source is focusing
+          dam+=dam*fighter[source].conditions[42][0]/100;
+     if(fighter[target].conditions[43][0] && source<5 && target>4 && !critical)    //- Target is defending
+          dam-=dam*fighter[target].conditions[43][0]/100;
+     if(fighter[target].conditions[43][0] && source>4 && target<5 && !critical)    //- Target is defending
+          dam-=dam*fighter[target].conditions[43][0]/100;
+     return dam;
+}
+
+void Batt_CalculateOrder() {
+     int i,j,x,z;
+     RectFill(0,0,639,30,clear,ui_tempi);
+     UI_SmallBox(0,0,640,31,ui_tempi);
+     for(i=0; i<15; i++)
+          fighter[i].tempspeed=fighter[i].actspeed;
+     while(j<10) {
+          x=0; z=0;
+          for(i=0; i<15; i++) {
+               if(fighter[i].tempspeed>=25000 && fighter[i].tempspeed>z && fighter[i].curhp) {
+                    x=i+1; z=fighter[i].tempspeed;
+               }
+          }
+          if(x) {
+               turnorder[j]=x;
+               fighter[x-1].tempspeed-=25000;
+               if(!j) PrintString(j/2*128+4,j%2*14+3,ui_tempi,fontm,"\f20-"+fighter[x-1].name);
+               else if(x<6) PrintString(j/2*128+4,j%2*14+3,ui_tempi,fontm,str(j)+"-\f4"+fighter[x-1].name);
+               else PrintString(j/2*128+4,j%2*14+3,ui_tempi,fontm,str(j)+"-\f3"+fighter[x-1].name);
+               j++;
+               if(j==1) {
+                    for(i=0; i<15; i++)
+                         fighter[i].actspeed=fighter[i].tempspeed;
+               }
+          }
+          for(i=0; i<15; i++) {
+               if(fighter[i].curhp)
+                    fighter[i].tempspeed+=1000+(1000*fighter[i].combatstats[37][0]/1000);
+          }
+     }
+     UI_CreateAlpha(ui_tempi,3,orderframe);
+}
+
+int Batt_CheckVictory() {
+     int i,x;
+     if(winflag) return winflag;
+     for(i=0; i<numchars; i++) {
+          if(fighter[i].curhp) x++;
+     }
+     if(!x) return 2;
+     x=0;
+     for(i=5; i<15; i++) {
+          if(fighter[i].curhp) x++;
+     }
+     if(!x) return 1;
+     return 0;
+}
+
+void Batt_ClearText() {
+     fightingwords="";
+     RectFill(0,0,639,96,clear,ui_tempi);
+     UI_BigBox(0,0,640,97,ui_tempi);
+     UI_CreateAlpha(ui_tempi,8,footframe);
+     if(autobattle && !Batt_CheckVictory())
+          Batt_Text("\f1Press <Space> to end auto battle.\f0");
+}
+
+void Batt_ClearVariables() {
+     int i,j;
+     for(i=0; i<15; i++) {
+          fighter[i].index=0;
+          fighter[i].name="";
+          fighter[i].lowname="";
+          fighter[i].deathtext="";
+          fighter[i].race="";
+          fighter[i].lore="";
+          fighter[i].article=0;
+          fighter[i].gender=0;
+          fighter[i].autoon=0;
+          fighter[i].level=0;
+          fighter[i].curhp=0;
+          fighter[i].maxhp=0;
+          fighter[i].trumaxhp=0;
+          fighter[i].curmp=0;
+          fighter[i].maxmp=0;
+          fighter[i].exp=0;
+          fighter[i].gold=0;
+          fighter[i].drop=0;
+          fighter[i].actspeed=0;
+          fighter[i].tempspeed=0;
+          fighter[i].damage=0;
+          fighter[i].damagetype=0;
+          fighter[i].autoaction=0;
+          fighter[i].autoon=0;
+          for(j=0; j<5; j++)
+               fighter[i].hate[j]=0;
+          for(j=0; j<38; j++) {
+               fighter[i].combatstats[j][0]=0;
+               fighter[i].combatstats[j][1]=0;
+               fighter[i].conditions[j][0]=0;
+               fighter[i].conditions[j][1]=0;
+          }
+          for(j=38; j<60; j++) {
+               fighter[i].conditions[j][0]=0;
+               fighter[i].conditions[j][1]=0;
+          }
+          for(j=0; j<5; j++) {
+               fighter[i].attack[j+1].name="";
+               fighter[i].attack[j+1].desc="";
+               fighter[i].attack[j+1].idx=0;
+               fighter[i].attack[j+1].attack=0;
+               fighter[i].attack[j+1].accuracy=0;
+               fighter[i].attack[j+1].damage=0;
+               fighter[i].attack[j+1].power=0;
+               fighter[i].attack[j+1].effect=0;
+               fighter[i].attack[j+1].magnitude=0;
+               fighter[i].attack[j+1].lore="";
+          }
+          for(j=0; j<10; j++) {
+               fighter[i].ability[j].name="";
+               fighter[i].ability[j].desc="";
+               fighter[i].ability[j].idx=0;
+               fighter[i].ability[j].cost=0;
+               fighter[i].ability[j].use=0;
+               fighter[i].ability[j].attack=0;
+               fighter[i].ability[j].accuracy=0;
+               fighter[i].ability[j].damage=0;
+               fighter[i].ability[j].power=0;
+               fighter[i].ability[j].effect=0;
+               fighter[i].ability[j].magnitude=0;
+               fighter[i].ability[j].lore="";
+          }
+          for(j=0; j<10; j++) {
+               fighter[i].spell[j].name="";
+               fighter[i].spell[j].desc="";
+               fighter[i].spell[j].idx=0;
+               fighter[i].spell[j].cost=0;
+               fighter[i].spell[j].use=0;
+               fighter[i].spell[j].attack=0;
+               fighter[i].spell[j].accuracy=0;
+               fighter[i].spell[j].damage=0;
+               fighter[i].spell[j].power=0;
+               fighter[i].spell[j].effect=0;
+               fighter[i].spell[j].magnitude=0;
+               fighter[i].spell[j].lore="";
+          }
+          fighter[i].loot.name="";
+          fighter[i].loot.desc="";
+          fighter[i].loot.lore="";
+          fighter[i].loot.use=0;
+          fighter[i].loot.effect=0;
+          fighter[i].loot.eqtype=0;
+          fighter[i].loot.price=0;
+          for(j=0; j<6; j++) {
+               fighter[i].loot.stats[j][0]=0;
+               fighter[i].loot.stats[j][1]=0;
+          }
+          if(ImageValid(sprite.image[fighter[i].image]) && fighter[i].image && i>4) {
+               FreeImage(sprite.image[fighter[i].image]);
+               FreeImage(sprite.alphamap[fighter[i].image]);
+               sprite.image[fighter[i].image]=0;
+               sprite.alphamap[fighter[i].image]=0;
+               fighter[i].image=0;
+          }
+     }
+     for(i=0; i<4; i++)
+          battlebonus[i]=0;
+     autobattle=0;
+}
+
+void Batt_Close(int outcome) {
+     int battlevel,goldgain,expgain,itemgain;
+     int i,x,z;
+     string foename;
+     winflag=0;
+     if(fighter[6].level)
+          foename="the \f3enemies\f0";
+     else foename=Batt_HighlightName(5,1);
+     if(outcome==1) {
+          Unpress(1);
+          PlayMusic("sound\\victory.it");
+          Batt_ClearText();
+          if(numchars>1) Batt_Text("The \f2party\f0 has defeated "+foename+"!");
+          else Batt_Text(Batt_HighlightName(0,0)+" has defeated "+foename+"!");
+          timer=0;
+          for(i=5; i<15; i++) {
+               if(fighter[i].level) {
+                    x+=fighter[i].level;
+                    z++;
+                    goldgain+=fighter[i].gold;
+                    expgain+=fighter[i].exp;
+                    if(len(fighter[i].loot.name))
+                         itemgain++;
+               }
+          }
+          battlevel=x/z;
+          
+          //- Adjust base experience
+          x=Party_GetAvgLevel();
+          if(x<=battlevel) {
+               z=battlevel-x*15;
+               if(z>75) z=75;
+               expgain+=expgain*z/100;
+          }
+          else {
+               z=x-battlevel*15;
+               if(z>75) z=75;
+               expgain-=expgain*z/100;
+          }
+          
+          //- Award individual experience
+          RectFill(0,0,639,30,clear,ui_tempi);
+          UI_SmallBox(0,0,640,31,ui_tempi);
+          x=expgain/numchars;
+          for(i=0; i<numchars; i++) {
+               if(!hero[i].next) fighter[i].exp=0;
+               else if(fighter[i].level<=battlevel) {
+                    z=battlevel-fighter[i].level*15;
+                    if(z>100) z=100;
+                    fighter[i].exp=x*z/100+x;
+               }
+               else {
+                    z=fighter[i].level-battlevel*15;
+                    if(z>100) z=100;
+                    fighter[i].exp=100-z*x/100;
+               }
+               if(!fighter[i].curhp) fighter[i].exp=0;
+               fighter[i].exp+=fighter[i].exp*battlebonus[3]/100;
+               PrintCenter(i*128+64,4,ui_tempi,fontm,"+"+str(fighter[i].exp)+" XP");
+               if(Hero_EarnExp(i,fighter[i].exp)) {
+                    PlaySound(sfx_increase,100);
+                    PrintCenter(i*128+64,15,ui_tempi,fontm,"\f2Level Up!");
+                    if(hero[i].level==2 && hero[i].story==1)
+                         firstlevelup=1;
+               }
+          }
+          UI_CreateAlpha(ui_tempi,3,orderframe);
+          
+          while(!b1 && timer<200) {
+               Render();
+               ShowPage();
+          }
+          foename=ToUpper(left(foename,1))+right(foename,len(foename)-1);
+
+          //- Award gold
+          timer=0;
+          if(goldgain) {
+               goldgain+=goldgain*battlebonus[0]/100;
+               Unpress(1);
+               Batt_Text(foename+" left spoils worth "+str(goldgain)+" gold pieces.");
+               Party_EarnGold(goldgain);
+          }
+          while(!b1 && timer<150) {
+               Render();
+               ShowPage();
+          }
+          
+          //- Award lore experience
+          timer=0;
+          if(expgain && spellbook[0]) {
+               x=expgain/30;
+               x+=x*battlebonus[2]/100;
+               Unpress(1);
+               if(numchars>1) Batt_Text("The \f2party\f0 records lore worth "+str(x)+" experience.");
+               else Batt_Text(Batt_HighlightName(0,0)+" records lore worth "+str(x)+" experience.");
+               Party_EarnLore(x);
+          }
+          while(!b1 && timer<150) {
+               Render();
+               ShowPage();
+          }
+          
+          //- Award item drops
+          x=5;
+          while(itemgain) {
+               timer=0;
+               while(!len(fighter[x].loot.name)) x++;
+               Unpress(1);
+               Batt_Text(Batt_HighlightName(x,0)+" was carrying \f4"+fighter[x].loot.name+"\f0!");
+               i=0;
+               while(!Hero_PackSpace(i)) i++;
+               Item_Copy(x,2,0);
+               Item_AssignTemp(i,0,hero[i].numitems);
+               while(!b1 && timer<150) {
+                    Render();
+                    ShowPage();
+               }
+               Item_Clear(x,3,0);
+               itemgain--;
+          }
+          Unpress(1);
+     }
+          
+     else if(outcome==2) {
+          StopMusic();
+          if(numchars>1) Batt_Text("The party has fallen...");
+          else Batt_Text(Batt_HighlightName(0,0)+" has fallen...");
+          SetLucent(30);
+          RectFill(0,0,639,479,RGB(135,14,0),sprite.image[sizedscreen]);
+          SetLucent(0);
+          ShowPage();
+          partygold=partygold/2;
+          Wait(200,1);
+          for(i=0; i<numchars; i++) fighter[i].curhp=1;
+          timer=0;
+          while(timer<50) {
+               for(i=5; i<15; i++) {
+                    if(fighter[i].curhp) {
+                         Render();
+                         Silhouette(0,0,white,sprite.image[fighter[i].image],sprite.alphamap[fighter[i].image]);
+                         SetLucent(100-(timer*2));
+                         RectFill(0,0,ImageWidth(sprite.image[fighter[i].image]),ImageHeight(sprite.image[fighter[i].image]),black,sprite.alphamap[fighter[i].image]);
+                         SetLucent(0);
+                         ShowPage();
+                    }
+               }
+          }
+     }
+
+     if(outcome!=2){
+          SetSongPaused(mainsong,0);
+          timer=0;
+          while(timer<50) {
+               SetMusicVolume((volume*2/5)-(GetSongVolume(mainsong)*2/5));
+               SetSongVolume(mainsong,timer*volume/50);
+          }
+          StopMusic();
+     }
+     x=0;
+     for(i=0; i<numchars; i++) {
+          hero[i].curhp=fighter[i].curhp;
+          hero[i].curmp=fighter[i].curmp;
+          hero[i].autoaction=fighter[i].autoaction;
+     }
+     while(x<numchars) {
+          for(i=0; i<numchars-x; i++) {
+               if(!hero[i].curhp && i<numchars-1)
+                    Party_SwapHeroes(i,i+1);
+          }
+          x++;
+     }
+     winflag=outcome;
+     timer=0;
+     while(timer<25) {
+          Render();
+          sprite.y[footframe]=timer*5+383;
+          sprite.y[orderframe]=timer*5+353;
+          for(i=0; i<numchars; i++)
+               sprite.x[heroframe+i]=i*128-(i+1*timer*5);
+          if(winflag!=3) Mosaic(8-(timer/3),8-(timer/3),sprite.image[sizedscreen]);
+          if(winflag==2) {
+               SetLucent(30);
+               RectFill(0,0,639,479,RGB(135,14,0),sprite.image[sizedscreen]);
+               SetLucent(100-(timer*4));
+               RectFill(0,0,639,479,black,sprite.image[sizedscreen]);
+               SetLucent(0);
+          }
+          ShowPage();
+     }
+     for(i=0; i<numchars; i++) {
+          sprite.x[heroframe+i]=-128;
+          sprite.y[heroframe+i]=i*64;
+     }
+     sprite.y[footframe]=511;
+     sprite.y[orderframe]=481;
+     RectFill(0,0,639,30,clear,ui_tempi);
+     UI_SmallBox(0,0,640,31,ui_tempi);
+     UI_CreateAlpha(ui_tempi,3,orderframe);
+     Batt_ClearVariables();
+     Batt_ClearText();
+}
+
+void Batt_CopyBattParty() {
+     int i,j;
+     for(i=0; i<numchars; i++) {
+          fighter[i].name=hero[i].name;
+          fighter[i].lowname=hero[i].name;
+          fighter[i].deathtext="dies";
+          fighter[i].lore=hero[i].class;
+          fighter[i].article=0;
+          fighter[i].exp=0;
+          fighter[i].gender=hero[i].gender;
+          fighter[i].image=heroframe+i;
+          fighter[i].autoaction=hero[i].autoaction;
+          fighter[i].level=hero[i].level;
+          fighter[i].maxhp=hero[i].maxhp;
+          fighter[i].trumaxhp=hero[i].maxhp;
+          fighter[i].curhp=hero[i].curhp;
+          fighter[i].maxmp=hero[i].maxmp;
+          fighter[i].curmp=hero[i].curmp;
+          fighter[i].damage=hero[i].equip[0].stats[0][0];
+          fighter[i].damagetype=hero[i].equip[0].stats[0][1];
+          for(j=0; j<38; j++) {
+               fighter[i].combatstats[j][0]=hero[i].combatstats[j];
+               fighter[i].combatstats[j][1]=hero[i].combatstats[j];
+          }
+          for(j=0; j<5; j++) {
+               fighter[i].attack[j+1].name=hero[i].attack[j].name;
+               fighter[i].attack[j+1].desc=hero[i].attack[j].desc;
+               fighter[i].attack[j+1].idx=hero[i].attack[j].idx;
+               fighter[i].attack[j+1].attack=hero[i].attack[j].attack;
+               fighter[i].attack[j+1].accuracy=hero[i].attack[j].accuracy;
+               fighter[i].attack[j+1].damage=hero[i].attack[j].damage;
+               fighter[i].attack[j+1].power=hero[i].attack[j].power;
+               fighter[i].attack[j+1].effect=hero[i].attack[j].effect;
+               fighter[i].attack[j+1].magnitude=hero[i].attack[j].magnitude;
+               fighter[i].attack[j+1].lore=hero[i].attack[j].lore;
+          }
+          for(j=0; j<10; j++) {
+               fighter[i].ability[j].name=hero[i].ability[j].name;
+               fighter[i].ability[j].desc=hero[i].ability[j].desc;
+               fighter[i].ability[j].idx=hero[i].ability[j].idx;
+               fighter[i].ability[j].cost=hero[i].ability[j].cost;
+               fighter[i].ability[j].use=hero[i].ability[j].use;
+               fighter[i].ability[j].attack=hero[i].ability[j].attack;
+               fighter[i].ability[j].accuracy=hero[i].ability[j].accuracy;
+               fighter[i].ability[j].damage=hero[i].ability[j].damage;
+               fighter[i].ability[j].power=hero[i].ability[j].power;
+               fighter[i].ability[j].effect=hero[i].ability[j].effect;
+               fighter[i].ability[j].magnitude=hero[i].ability[j].magnitude;
+               fighter[i].ability[j].lore=hero[i].ability[j].lore;
+          }
+          for(j=0; j<10; j++) {
+               fighter[i].spell[j].name=hero[i].spell[j].name;
+               fighter[i].spell[j].desc=hero[i].spell[j].desc;
+               fighter[i].spell[j].idx=hero[i].spell[j].idx;
+               fighter[i].spell[j].cost=hero[i].spell[j].cost;
+               fighter[i].spell[j].use=hero[i].spell[j].use;
+               fighter[i].spell[j].attack=hero[i].spell[j].attack;
+               fighter[i].spell[j].accuracy=hero[i].spell[j].accuracy;
+               fighter[i].spell[j].damage=hero[i].spell[j].damage;
+               fighter[i].spell[j].power=hero[i].spell[j].power;
+               fighter[i].spell[j].effect=hero[i].spell[j].effect;
+               fighter[i].spell[j].magnitude=hero[i].spell[j].magnitude;
+               fighter[i].spell[j].lore=hero[i].spell[j].lore;
+          }
+          for(j=5; j<15; j++)
+               Batt_AddHate(j,i,(6-i)/2*Hero_HateMod(i)+(5-i*2));
+     }
+}
+
+void Batt_CountSteps() {
+     int i;
+     if(!battleactive) return;
+     battletimer--;
+     if(fieldeffect[0][1]) {
+          fieldeffect[0][1]--;
+          if(fieldeffect[0][1]==0) {
+               battletimer-=battletimer*fieldeffect[0][0]/100;
+               if(battletimer<1) battletimer=1;
+               fieldeffect[0][0]=0;
+               Sign("","The party is no longer sneaking.");
+          }
+     }
+     if(battletimer<1) {
+          CallFunction("Local_BattleSetup");
+          if(len(estring)) Battle();
+          else Batt_ResetDistance();
+     }
+}
+
+void Batt_CreateAlpha(int x, int y, int w, int h, int base, int dest) {
+//- This is ONLY used to properly place shaded backdrops in hero action menus.
+     int t=textboxtrans*256/100;
+     RectFill(0,0,179,290,clear,sprite.image[dest]);
+     RectFill(0,0,179,290,black,sprite.alphamap[dest]);
+     RectFill(x+3,y+3,x+w-3,y+h-3,RGB(256-t,256-t,256-t),sprite.alphamap[dest]);
+     RectFill(x+3,y+3,x+w-3,y+h-3,black,sprite.image[dest]);
+     Silhouette(0,0,white,base,sprite.alphamap[dest]);
+     TBlit(0,0,base,sprite.image[dest]);     
+}
+
+int Batt_DamageHP(int target, int dam, int source) {
+     int truedam;
+     if(fighter[target].conditions[47][0]) {           //- Target protected by wall
+          if(dam>=fighter[target].conditions[47][0]) {
+               dam-=fighter[target].conditions[47][0];
+               fighter[target].conditions[47][0]=0;
+               fighter[target].conditions[47][1]=0;
+          }
+          else {
+               fighter[target].conditions[47][0]-=dam;
+               dam=0;
+          }
+     }
+     if(dam>fighter[target].curhp)                     //- Only an issue for life steal effects
+          truedam=fighter[target].curhp;
+     else truedam=dam;
+     Batt_ApplyEffect(60,target,0-dam,0);
+     Batt_AddHate(target,source,dam/2);
+     return truedam;
+}
+
+void Batt_EndEffects(int f) {
+     int i;
+     string words;
+     for(i=0; i<60; i++) {
+          if(fighter[f].conditions[i][0]) {
+               fighter[f].conditions[i][1]--;
+               if(f<5) {
+                    if(!strcmp(hero[f].class,"Cleric")) {
+                         if(i<45 && fighter[f].conditions[i][0]<0)
+                              fighter[f].conditions[i][1]--;
+                         else if(i>50 && i<57)
+                              fighter[f].conditions[i][1]--;
+                    }
+               }
+               if(fighter[f].conditions[i][1]<1) {
+                    fighter[f].conditions[i][0]=0;
+                    fighter[f].conditions[i][1]=0;
+                    if(i<38)
+                         fighter[f].combatstats[i][0]=fighter[f].combatstats[i][1];
+                    else if(i==42)
+                         fighter[f].maxhp=fighter[f].trumaxhp;
+                    else if(i==44 && f<5)
+                         fighter[f].damagetype=hero[f].equip[0].stats[0][1];
+               }
+          }
+     }
+     if(f<5 && storm[0][1]) {
+          storm[0][1]--;
+     }
+     else if(f>4 && storm[1][1]) {
+          storm[1][1]--;
+     }
+}
+
+int Batt_EnemyAvgLevel() {
+     int i,l,q;
+     for(i=5; i<15; i++) {
+          if(fighter[i].level) {
+               l+=fighter[i].level;
+               q++;
+          }
+     }
+     return l/q;
+}
+
+void Batt_EnemyDeath(int e) {
+     int h,i,w,x,y;
+     int dup,sil;
+     PlaySound(sfx_death,50);
+     Batt_Text(Batt_HighlightName(e,0)+" "+fighter[e].deathtext+".");
+     dup=DuplicateImage(sprite.image[fighter[e].image]);
+     sil=DuplicateImage(sprite.image[fighter[e].image]);
+     Silhouette(0,0,black,sprite.image[fighter[e].image],sil);
+     w=ImageWidth(sprite.alphamap[fighter[e].image]);
+     h=ImageHeight(sprite.alphamap[fighter[e].image]);
+     timer=0;
+     while(timer<20) {
+          Blit(0,0,dup,sprite.image[fighter[e].image]);
+          BlitLucent(0,0,100-(timer*5),sil,sprite.image[fighter[e].image]);
+          Render();
+          ShowPage();
+     }
+     Blit(0,0,sil,sprite.image[fighter[e].image]);
+     FreeImage(sil); sil=0;
+     FreeImage(dup);
+     dup=DuplicateImage(sprite.alphamap[fighter[e].image]);
+     x=sprite.x[fighter[e].image];
+     y=sprite.y[fighter[e].image];
+     timer=0;
+     while(timer<30) {
+          sprite.x[fighter[e].image]=x+Random(0-2,2);
+          sprite.y[fighter[e].image]=timer/2+y;
+          Blit(0,0,dup,sprite.alphamap[fighter[e].image]);
+          SetLucent(100-timer);
+          RectFill(0,0,w,h,black,sprite.alphamap[fighter[e].image]);
+          Render();
+          ShowPage();
+     }
+     timer=0;
+     while(timer<30) {
+          sprite.x[fighter[e].image]=x+Random(0-5,5);
+          sprite.y[fighter[e].image]=timer+y+15;
+          Blit(0,0,dup,sprite.alphamap[fighter[e].image]);
+          SetLucent(70-(timer*7/3));
+          RectFill(0,0,w,h,0,sprite.alphamap[fighter[e].image]);
+          Render();
+          ShowPage();
+     }
+     FreeImage(dup); dup=0;
+     SetLucent(0);
+     RectFill(0,0,w,h,0,sprite.alphamap[fighter[e].image]);
+     fighter[e].curhp=0;
+     x=fighter[e].drop*battlebonus[1]/100+fighter[e].drop;
+     if(Random(0,99)<x && spellbook[0] && Party_PackSpace()) {
+          Item_Clear(0,2,0);
+          dropflag=e;
+          CallFunction("Local_BattleLoot");
+          if(len(tempitem[0].name)) Item_AssignTemp(e,2,0);
+     }
+}
+
+void Batt_EnemyTurn(int idx) {
+     int i,j,done;
+     int t=Foe_SelectTarget(idx,4);
+     Batt_ProcessEffects(idx);
+     if(!fighter[idx].curhp) return;
+     if(winflag) return;
+     
+     //- Enemy has no special abilities (though potentially has special attack)
+     if(!fighter[idx].ability[0].idx && !fighter[idx].spell[0].idx) {
+          if(!fighter[idx].attack[1].idx)
+               Batt_Attack(0,idx,t);
+          else Batt_Attack(1,idx,t);
+     }
+     
+     else {
+          while(i<10 && !done) {
+               //- Abilities are prioritized from lowest index to highest index.  Slot accordingly.
+               if(fighter[idx].spell[i].idx && fighter[idx].curmp>=fighter[idx].spell[i].cost) {
+                    Tech_CopySpell(idx,i,0);
+                    
+                    //- Foes will heal themselves when efficient or when below 30% health. (100%)
+                    if(tempspell[0].use%10<4 && tempspell[0].effect==60 &&
+                       fighter[idx].curhp<fighter[idx].maxhp/3)
+                         done=Batt_Skill(idx,idx+1);
+                    else if(tempspell[0].use%10<4 && tempspell[0].effect==60 &&
+                            fighter[idx].curhp<fighter[idx].maxhp-tempspell[0].power)
+                         done=Batt_Skill(idx,idx+1);
+                    else if(tempspell[0].effect==74 && fighter[idx].curhp<fighter[idx].maxhp/3)
+                         done=Batt_Skill(idx,t+1);
+                    else if(tempspell[0].effect==74 && fighter[idx].curhp<fighter[idx].maxhp-tempspell[0].power)
+                         done=Batt_Skill(idx,t+1);
+                    
+                    //- Foes will heal allies when efficient or when ally is below 30% health (100%)
+                    if(tempspell[0].use%10<4 && tempspell[0].effect==60 && !done) {
+                         j=5;
+                         while(j<15 && !done) {
+                              if((fighter[j].curhp<fighter[j].maxhp/3 ||
+                                 fighter[j].curhp<fighter[j].maxhp-tempspell[0].power) &&
+                                 fighter[j].curhp)
+                                   done=Batt_Skill(idx,j+1);
+                              j++;
+                         }
+                    }
+                    
+                    if(tempspell[0].effect<60) {
+                         //- Foes will self-buff before using other abilities (70%)
+                         if(tempspell[0].use%10==1 &&
+                            fighter[idx].conditions[tempspell[0].effect][0]<1 &&
+                            Random(0,9)>2 && !done)
+                              done=Batt_Skill(idx,idx+1);
+                         else if(tempspell[0].use%10==2 &&
+                                 fighter[idx].conditions[tempspell[0].effect][0]<1 &&
+                                 Random(0,9)>2 && !done)
+                              done=Batt_Skill(idx,idx+1);
+
+                         //- Foes will use damage buffs on allies whose normal attacks deal that damage type (50%)
+                         if(tempspell[0].use%10==2 &&
+                                 tempspell[0].effect<12 &&
+                                 Random(0,9)>4 && !done) {
+                              j=5;
+                              while(j<15 && !done) {
+                                   if(fighter[j].damagetype==tempspell[0].effect+1 &&
+                                      fighter[j].conditions[tempspell[0].effect][0]<1)
+                                        done=Batt_Skill(idx,j+1);
+                                   j++;
+                              }
+                         }
+
+                         //- Foes will use non-damage buffs on any ally (50%)
+                         if(tempspell[0].use%10<4 &&
+                            tempspell[0].effect>11 && tempspell[0].effect<60 &&
+                            Random(0,5)>4 && !done) {
+                              j=5;
+                              while(j<15 && !done) {
+                                   if(fighter[j].conditions[tempspell[0].effect][0]<1)
+                                        done=Batt_Skill(idx,j+1);
+                                   j++;
+                              }
+                         }
+                    }
+                    
+                    //- Foes will use damage and debuff skills based on how full their mana pool is
+                    if(tempspell[0].use%10>3 && tempspell[0].effect<60 &&
+                       Random(2,10)<fighter[idx].curmp*10/fighter[idx].maxmp && !done) {
+                         if(fighter[t].conditions[tempspell[0].effect][0]>=0)
+                              done=Batt_Skill(idx,t+1);
+                    }
+                    else if(tempspell[0].use%10>3 && tempspell[0].effect==60 &&
+                            Random(2,10)<fighter[idx].curmp*10/fighter[idx].maxmp && !done)
+                         done=Batt_Skill(idx,t+1);
+                    
+               }
+               i++;
+          }
+          if(!done) {
+               if(!fighter[idx].attack[1].idx)
+                    Batt_Attack(0,idx,t);
+               else Batt_Attack(1,idx,t);
+          }
+     }
+     
+     Batt_EndEffects(idx);
+}
+
+void Batt_FlashFighter(int f, int on) {
+     if(!on) {
+          flashfighter=0;
+          Blit(0,0,fighteffx,sprite.image[fighter[f].image]);
+          sprite.silhouette[fighter[f].image]=0;
+          FreeImage(fighteffx);
+     }
+     else {
+          flashfighter=f+1;
+          fighteffx=DuplicateImage(sprite.image[fighter[f].image]);
+          Silhouette(0,0,0,fighteffx,sprite.image[fighter[f].image]);
+          sprite.silhouette[fighter[f].image]=1;
+          fightefft=systemtime;
+     }
+}
+
+void Batt_HeroDeath(int h) {
+     int i,x;
+     Batt_Text(Batt_HighlightName(h,0)+" dies!");
+     fighter[h].curhp=0;
+     fighter[h].actspeed=0;
+     fighter[h].tempspeed=0;
+     ChangeCHR(hero[h].ent,"images\\chrs\\g_"+left(hero[h].race,6)+".chr");
+     UI_HeroDetail(h,heroframe+h);
+     ShowPage();
+     for(i=5; i<15; i++) fighter[i].hate[h]=0;
+     for(i=0; i<numchars; i++) {
+          if(!fighter[i].curhp)
+               x++;
+     }
+     if(x==numchars)
+          winflag=2;
+     Wait(battlespeed*15,0);
+}
+
+void Batt_HeroTurn(int idx) {
+//- This function runs the entirety of the hero idx's action in combat.
+     int w,x,y;
+     int base,cur,dest,done;
+     string menuops,choice,lastact;
+     Batt_ProcessEffects(idx);
+     if(winflag) return;
+     if(!fighter[idx].curhp) return;
+     
+//- Initialize Images
+     UI_HeroDetail(idx,heroframe+idx);
+     PlaySound(sfx_prompt,100);
+     base=NewImage(180,291);
+     dest=GetSprite();
+     sprite.image[dest]=NewImage(180,291);
+     sprite.alphamap[dest]=NewImage(180,291);
+     RectFill(0,0,179,290,clear,sprite.image[dest]);
+     sprite.sc[dest]=1;
+     sprite.y[dest]=0;
+     cur=GetSprite();
+     sprite.image[cur]=LoadImage("images\\cur_arrr.png");
+     sprite.sc[cur]=1;
+     
+//- Check for Automatic Action
+     if(fighter[idx].autoaction && fighter[idx].autoon)
+          done=Batt_RepeatAction(idx,cur,dest);
+     else if(fighter[idx].autoaction) {
+          switch(fighter[idx].autoaction/10) {
+               case 1:   lastact=fighter[idx].attack[fighter[idx].autoaction%10].name;
+               case 2:   lastact=fighter[idx].ability[fighter[idx].autoaction%10].name;
+               case 3:   lastact=fighter[idx].spell[fighter[idx].autoaction%10].name;
+               case 4:   if(fighter[idx].autoaction%10==0) lastact="Defend";
+                         else if(fighter[idx].autoaction%10==1) lastact="Delay";
+                         else if(fighter[idx].autoaction%10==2) lastact="Flee";
+          }
+     }
+
+//- Action Selection Loop
+     while(!done) {
+
+     //- Draw top action menu
+          w=68; x=30; y=0;
+          RectFill(0,0,179,290,clear,base);
+          menuops="Other";
+          if(len(hero[idx].backpack[0].name)) {
+               y+=13;
+               menuops="Item\n"+menuops;
+          }
+          if(hero[idx].spell[0].idx) {
+               y+=13;
+               menuops="Skill\n"+menuops;
+          }
+          if(hero[idx].ability[0].idx) {
+               y+=13;
+               menuops="Power\n"+menuops;
+          }
+          menuops="Attack\n"+menuops;
+          if(fighter[idx].autoaction) {
+               menuops="Repeat\n"+menuops;
+               y+=13;
+          }
+          PrintString(15,264-y,base,fontm,menuops);
+          UI_SmallBox(0,260-y,w,31+y,base);
+          Batt_CreateAlpha(0,260-y,w,31+y,base,dest);
+          sprite.x[dest]=idx*128+x;
+          sprite.x[cur]=idx*128+x+5;
+          sprite.y[cur]=263-y;
+          if(fighter[idx].autoaction) sprite.y[cur]+=13;
+          Unpress(1);
+          Batt_ClearText();
+          Batt_Text("\f2"+fighter[idx].name+"\f0 prepares "+GetGenderPos(fighter[idx].gender)+" action...");
+          if(len(lastact))
+               Batt_Text("Previous Action: \f4"+lastact);
+     
+     //- Select action type
+          while(!b1) {
+               Render();
+               ShowPage();
+               Batt_MenuMove(263-y,276,cur);
+               if(b1) PlaySound(sfx_beep,100);
+          }
+    
+     //- Action selection
+          choice=GetToken(menuops,chr(10),sprite.y[cur]-263+y/13);
+          if(!strcmp(choice,"Attack"))
+               done=Batt_AttackMenu(idx,cur,dest);
+          else if(!strcmp(choice,"Power"))
+               done=Batt_AbilityMenu(idx,cur,dest);
+          else if(!strcmp(choice,"Skill"))
+               done=Batt_SpellMenu(idx,cur,dest);
+          else if(!strcmp(choice,"Other"))
+               done=Batt_OtherMenu(idx,cur,dest);
+          else if(!strcmp(choice,"Repeat")) {
+               autobattle=1;
+               fighter[idx].autoon=1;
+               UI_HeroDetail(idx,heroframe+idx);
+               done=Batt_RepeatAction(idx,cur,dest);
+          }
+     }
+     Batt_EndEffects(idx);
+     
+//- Free Images
+     FreeImage(base);
+     FreeImage(sprite.image[dest]);
+     FreeImage(sprite.alphamap[dest]);
+     sprite.image[dest]=0;
+     sprite.alphamap[dest]=0;
+     FreeImage(sprite.image[cur]);
+     sprite.image[cur]=0;
+}
+
+string Batt_HighlightName(int f, int tolo) {
+     string s;
+     if(f<5) s="\f2";
+     else s="\f3";
+     if(fighter[f].article && !tolo)
+          return "The "+s+fighter[f].lowname+"\f0";
+     else if(fighter[f].article)
+          return "the "+s+fighter[f].lowname+"\f0";
+     else if(!tolo)
+          return s+fighter[f].name+"\f0";
+     else return s+fighter[f].lowname+"\f0";
+}
+
+void Batt_LoadEnemy(int i, int e) {
+     int x;
+     string s;
+     int f=FileOpen("system\\enemy.dat",FILE_READ);
+     e+=5;
+     FileSeekLine(f,i-1);
+     fighter[e].index=i;
+     fighter[e].name=FileReadToken(f);
+     fighter[e].lowname=FileReadToken(f);
+     fighter[e].image=GetSprite();
+     s=FileReadToken(f);
+     sprite.image[fighter[e].image]=LoadImage("images\\enemy\\"+s+".png");
+     sprite.sc[fighter[e].image]=1;
+     sprite.x[fighter[e].image]=640;
+     sprite.y[fighter[e].image]=280-ImageHeight(sprite.image[fighter[e].image]);
+     fighter[e].deathtext=FileReadToken(f);
+     fighter[e].article=val(FileReadToken(f));  
+     fighter[e].gender=val(FileReadToken(f));
+     if(fighter[e].gender>9)
+          sprite.alphamap[fighter[e].image]=LoadImage("images\\enemy\\"+s+"a.png");
+     else {
+          sprite.alphamap[fighter[e].image]=DuplicateImage(sprite.image[fighter[e].image]);
+          RectFill(0,0,ImageWidth(sprite.alphamap[fighter[e].image]),ImageHeight(sprite.alphamap[fighter[e].image]),0,sprite.alphamap[fighter[e].image]);
+          Silhouette(0,0,white,sprite.image[fighter[e].image],sprite.alphamap[fighter[e].image]);
+     }
+     fighter[e].gender=fighter[e].gender%10;
+     fighter[e].level=val(FileReadToken(f));
+     fighter[e].maxhp=(3*pow(fighter[e].level,2)/10)+(5*fighter[e].level)+20;
+     x=fighter[e].maxhp/10;
+     fighter[e].maxhp+=Random(-x,x);
+     fighter[e].trumaxhp=fighter[e].maxhp;
+     fighter[e].curhp=fighter[e].maxhp;
+     fighter[e].maxmp=fighter[e].maxhp;
+     fighter[e].curmp=fighter[e].maxhp;
+     fighter[e].exp=17*fighter[e].level+150;
+     fighter[e].gold=100*pow(2,fighter[e].level-3/5);
+     x=fighter[e].gold/10;
+     fighter[e].gold=fighter[e].gold+Random(-x,x)/val(FileReadToken(f));
+     fighter[e].combatstats[36][0]=fighter[e].level*3;
+     fighter[e].combatstats[37][0]=val(FileReadToken(f))*10;   //- Speed
+     fighter[e].damage=fighter[e].maxhp/5;
+     fighter[e].damagetype=val(FileReadToken(f));
+     if(val(FileReadToken(f)))   //- Creature is flying
+          sprite.y[fighter[e].image]=290-ImageHeight(sprite.image[fighter[e].image])/2;
+     
+     fighter[e].drop=val(FileReadToken(f));   //- Drop Rate
+     
+     FileSeekLine(f,i);
+     fighter[e].lore=FileReadLn(f);
+     s=FileReadLn(f);
+     for(x=0; x<TokenCount(s," "); x++)
+          Foe_ParseModifier(e,GetToken(s," ",x));
+     FileClose(f);
+}
+
+int Batt_MenuMove(int lo, int hi, int cur) {
+     int y=sprite.y[cur];
+     if(up) {
+          Unpress(5);
+          sprite.y[cur]-=13;
+          if(sprite.y[cur]<lo)
+               sprite.y[cur]=hi;
+     }
+     else if(down) {
+          Unpress(6);
+          sprite.y[cur]+=13;
+          if(sprite.y[cur]>hi)
+               sprite.y[cur]=lo;
+     }
+     if(sprite.y[cur]!=y) {
+          PlaySound(sfx_click,100);
+          return 1;
+     }
+     return 0;
+}
+
+void Batt_Open() {
+     int i,t,w,x,z;
+     SetSongPaused(mainsong,1);
+     PlayMusic("sound\\bpath.it");
+     SetMusicVolume(volume/2);
+     Batt_ClearText();
+     timer=0;
+     Party_RedrawDetailFrames();
+     for(i=0; i<numchars; i++)
+          sprite.y[heroframe+i]=290;
+     while(timer<120) {
+          Render();
+          Mosaic(timer/5+2,timer/5+2,sprite.image[sizedscreen]);
+          ShowPage();
+     }
+     timer=0;
+     while(timer<120) {
+          Render();
+          Mosaic(26-(timer*3/20),26-(timer*3/20),sprite.image[sizedscreen]);
+          sprite.y[footframe]=511-(timer*16/15);
+          sprite.y[orderframe]=481-(timer*16/15);
+          for(i=0; i<numchars; i++)
+               sprite.x[heroframe+i]=-128+(i+1*timer*16/15);
+          ShowPage();
+     }
+     sprite.y[footframe]=383;
+     sprite.y[orderframe]=353;
+     Mosaic(8,8,sprite.image[sizedscreen]);
+     for(i=0; i<numchars; i++)
+          sprite.x[heroframe+i]=i*128;
+     winflag=0;
+     HookButton(4,"Batt_ToggleAuto");
+     for(i=5; i<15; i++) {
+          if(fighter[i].curhp) {
+               w+=ImageWidth(sprite.image[fighter[i].image]);
+               t++;
+          }
+     }
+     if(t>1) Batt_Text("\f3Enemies\f0 appear!");
+     else Batt_Text("\f3"+fighter[5].name+"\f0 appears!");
+     i=Batt_EnemyAvgLevel()-Party_GetAvgLevel();
+     if(i<0) Batt_Text("Relative Level: \f2"+str(i));
+     else if(i==0) Batt_Text("Relative Level: Even");
+     else Batt_Text("Relative Level: \f3+"+str(i));
+     w=640-w/2;
+     for(i=0; i<t; i++) {
+          z=DuplicateImage(sprite.alphamap[fighter[i+5].image]);
+          RectFill(0,0,ImageWidth(sprite.alphamap[fighter[i+5].image]),ImageHeight(sprite.alphamap[fighter[i+5].image]),black,sprite.alphamap[fighter[i+5].image]);
+          sprite.x[fighter[i+5].image]=w+x;
+          x+=ImageWidth(z);
+          timer=0;
+          while(timer<50) {
+               Blit(0,0,z,sprite.alphamap[fighter[i+5].image]);
+               SetLucent(timer*2);
+               RectFill(0,0,ImageWidth(sprite.alphamap[fighter[i+5].image]),ImageHeight(sprite.alphamap[fighter[i+5].image]),black,sprite.alphamap[fighter[i+5].image]);
+               Render();
+               ShowPage();
+          }
+          Blit(0,0,z,sprite.alphamap[fighter[i+5].image]);
+          FreeImage(z);
+     }
+     timer=0;
+     Batt_CopyBattParty();
+     while(timer<250-(t*50)) {
+          Render();
+          ShowPage();
+     }
+     for(i=0; i<15; i++) {
+          if(fighter[i].combatstats[37][0]>0)
+               fighter[i].actspeed=Random(0,fighter[i].combatstats[37][0]*100)+Random(0,5000);
+          else fighter[i].actspeed=Random(fighter[i].combatstats[37][0]*100,0)+Random(0,5000);
+          if(fighter[i].actspeed>50000) fighter[i].actspeed=50000;
+     }
+}
+
+int Batt_OtherMenu(int idx, int cur, int dest) {
+     int h,i,w,x,y;
+     int done,temp;
+     int base=NewImage(180,291);
+     string choice;
+     string menuops="Defend\nDelay\nFlee"; //- Update as needed with 'Other' menu options.
+     y=TokenCount(menuops,chr(10));
+     for(i=0; i<y; i++) {
+          if(TextWidth(fontm,GetToken(menuops,chr(10),i))+20>w)
+               w=TextWidth(fontm,GetToken(menuops,chr(10),i))+20;
+     }
+     x=128-w/2;
+     h=289-(y*13);
+     if(!idx && x<0)
+          x=0;
+     else if(idx==4 && x<0)
+          x=x*2;
+     RectFill(0,0,179,290,clear,base);
+     PrintString(15,h-1,base,fontm,menuops);
+     UI_SmallBox(0,h-5,w,y*13+7,base);
+     Batt_CreateAlpha(0,h-5,w,y*13+7,base,dest);
+     sprite.x[dest]=idx*128+x;
+     sprite.x[cur]=idx*128+x+5;
+     sprite.y[cur]=h-2;
+     Unpress(1);
+     while(!done) {
+          Render();
+          ShowPage();
+          Batt_MenuMove(h-2,y-1*13+h-2,cur);
+          if(b1) {
+               Unpress(1);
+               PlaySound(sfx_beep,100);
+               RectFill(0,0,159,290,black,sprite.alphamap[dest]);
+               choice=GetToken(menuops,chr(10),sprite.y[cur]-285/13+y-1);
+               sprite.y[cur]=480;
+               if(!strcmp(choice,"Defend")) {
+                    Batt_ApplyEffect(43,idx,50,1);
+                    fighter[idx].autoaction=40;
+                    done=1;
+               }
+               else if(!strcmp(choice,"Delay")) {
+                    Batt_FlashFighter(idx,1);
+                    i=2;
+                    while(turnorder[i]==idx+1) i++;
+                    fighter[idx].actspeed=fighter[turnorder[i]-1].actspeed-500;
+                    Batt_ClearText();
+                    Batt_Text(Batt_HighlightName(idx,0)+" delays "+GetGenderPos(fighter[idx].gender)+" action.");
+                    Wait(battlespeed*10,1);
+                    Batt_FlashFighter(idx,0);
+                    fighter[idx].autoaction=41;
+                    done=1;
+               }
+               else if(!strcmp(choice,"Flee")) {
+                    Batt_FlashFighter(idx,1);
+                    Batt_ClearText();
+                    Batt_Text(Batt_HighlightName(idx,0)+" attempts to escape the battle...");
+                    Wait(battlespeed*10,1);
+                    Batt_FlashFighter(idx,0);
+                    if(Random(0,999)<fighter[idx].combatstats[37][0]+250)
+                         Batt_ApplyEffect(73,idx,0,0);
+                    else {
+                         Batt_ShakeFighter(idx,1);
+                         Batt_Text("...but cannot get away!");
+                         Wait(battlespeed*10,1);
+                         Batt_ShakeFighter(idx,0);
+                    }
+                    Wait(battlespeed*15,1);
+                    fighter[idx].autoaction=42;
+                    done=1;
+               }
+          }
+          else if(b2) {
+               Unpress(2);
+               PlaySound(sfx_cancel,100);
+               done=-1;
+          }
+     }
+     FreeImage(base);
+     return done+1;
+}
+
+void Batt_ProcessEffects(int f) {
+     int x;
+     Batt_ClearText();
+     if(!fighter[f].curhp) return;
+     if(fighter[f].conditions[39][0])             //- Regeneration
+          Batt_ApplyEffect(60,f,fighter[f].conditions[39][0],0);
+     if(fighter[f].conditions[49][0]) {           //- Mark
+          if(fighter[fighter[f].conditions[49][0]-1].curhp) {
+               Batt_FlashFighter(f,1);
+               Batt_ClearText();
+               Batt_Text(Batt_HighlightName(f,0)+" makes a follow-up attack!");
+               Wait(30,1);
+               Batt_FlashFighter(f,0);
+               Batt_AttackAnimation(fighter[f].damagetype,
+                                    sprite.x[fighter[fighter[f].conditions[49][0]-1].image]+(ImageWidth(sprite.image[fighter[fighter[f].conditions[49][0]-1].image])/2)-50,
+                                    sprite.y[fighter[fighter[f].conditions[49][0]-1].image]+(ImageHeight(sprite.image[fighter[fighter[f].conditions[49][0]-1].image])/2)-50);
+               x=Batt_CalculateDamage(f,fighter[f].conditions[49][0]-1,fighter[f].damage,fighter[f].damagetype)/5;
+               if(x<1) x=1;
+               if(fighter[f].conditions[44][0])                  //- Fighter is enchanted
+                    x+=x*fighter[f].conditions[44][0]/100;
+               Batt_DamageHP(fighter[f].conditions[49][0]-1,x,f);
+          }
+     }
+     if(f<5 && storm[0][1]) {                     //- Storm over party
+          Batt_ClearText();
+          PlaySound(sfx_weather,100);
+          Batt_Text("Destruction rains from above!");
+          Batt_AttackAnimation(15,
+                               sprite.x[fighter[f].image]+(ImageWidth(sprite.image[fighter[f].image])/2)-50,
+                               sprite.y[fighter[f].image]-25);
+          Batt_DamageHP(f,storm[0][0],20);
+     }
+     else if(f>4 && storm[1][1]) {                //- Storm over enemies
+          Batt_ClearText();
+          PlaySound(sfx_weather,100);
+          Batt_Text("Destruction rains from above!");
+          Batt_AttackAnimation(15,
+                               sprite.x[fighter[f].image]+(ImageWidth(sprite.image[fighter[f].image])/2)-50,
+                               sprite.y[fighter[f].image]-25);
+          Batt_DamageHP(f,storm[1][0],20);
+     }
+     if(GetFlag("Tutorial")==2 && fighter[0].curhp<10) {     //- Combat Tutorial Immortality
+          Batt_Text("\f2Graig\f0 uses \f4First Aid\f0 on "+Batt_HighlightName(0,1)+".");
+          Wait(30,1);
+          Batt_ApplyEffect(60,0,50,0);
+     }
+     winflag=Batt_CheckVictory();
+}
+
+int Batt_RepeatAction(int idx, int cur, int dest) {
+     int c,a,t;
+     if(!fighter[idx].autoaction)
+          return 0;
+     RectFill(0,0,179,290,black,sprite.alphamap[dest]);
+     sprite.y[cur]=480;
+     c=fighter[idx].autoaction/10;
+     a=fighter[idx].autoaction%10;
+     if(c==1) {
+          t=Batt_AutoTarget(WEAKESTENEMY);
+          Batt_Attack(a,idx,t);
+          return 1;
+     }
+     else if(c==2) {
+          if(fighter[idx].curmp<fighter[idx].ability[a].cost) {
+               fighter[idx].autoaction=0;
+               return 0;
+          }
+          if(fighter[idx].ability[a].use%10==1)
+               t==idx+1;
+          else if(fighter[idx].ability[a].use%10<4)
+               t=Batt_AutoTarget(WEAKESTALLY)+1;
+          else t=Batt_AutoTarget(WEAKESTENEMY)+1;
+          Tech_CopyAbility(idx,a,0);
+          Batt_Skill(idx,t);
+          return 1;
+     }
+     else if(c==3) {
+          if(fighter[idx].curmp<fighter[idx].spell[a].cost) {
+               fighter[idx].autoaction=0;
+               return 0;
+          }
+          if(fighter[idx].spell[a].use%10==1)
+               t==idx+1;
+          else if(fighter[idx].spell[a].use%10<4)
+               t=Batt_AutoTarget(WEAKESTALLY)+1;
+          else t=Batt_AutoTarget(WEAKESTENEMY)+1;
+          Tech_CopySpell(idx,a,0);
+          Batt_Skill(idx,t);
+          return 1;
+     }
+     else if(c==4 && a==0) {
+          Batt_ApplyEffect(43,idx,50,1);
+          fighter[idx].autoaction=40;
+          return 1;
+     }
+     else if(c==4 && a==1) {
+          Batt_FlashFighter(idx,1);
+          t=2;
+          while(turnorder[t]==idx+1) t++;
+          fighter[idx].actspeed=fighter[turnorder[t]-1].actspeed-500;
+          Batt_ClearText();
+          Batt_Text(Batt_HighlightName(idx,0)+" delays "+GetGenderPos(fighter[idx].gender)+" action.");
+          Wait(battlespeed*10,1);
+          Batt_FlashFighter(idx,0);
+          fighter[idx].autoaction=41;
+          return 1;
+     }
+     else if(c==4 && a==2) {
+          Batt_FlashFighter(idx,1);
+          Batt_ClearText();
+          Batt_Text(Batt_HighlightName(idx,0)+" attempts to escape the battle...");
+          Wait(battlespeed*10,1);
+          Batt_FlashFighter(idx,0);
+          if(Random(0,999)<fighter[idx].combatstats[37][0]+250)
+               Batt_ApplyEffect(73,idx,0,0);
+          else {
+               Batt_ShakeFighter(idx,1);
+               Batt_Text("...but cannot get away!");
+               Wait(battlespeed*10,1);
+               Batt_ShakeFighter(idx,0);
+          }
+          Wait(battlespeed*15,1);
+          fighter[idx].autoaction=42;
+          return 1;
+     }
+}
+
+void Batt_ResetDistance() {
+     battletimer=Random(battledistance,battledistance*2);
+     battletimer+=battletimer*fieldeffect[0][0]/100;
+}
+
+void Batt_ScrollText(string s, int x, int y) {
+     int i=GetSprite();
+     sprite.image[i]=NewImage(TextWidth(fontb,s),22);
+     RectFill(0,0,TextWidth(fontb,s),22,clear,sprite.image[i]);
+     PrintString(0,0,sprite.image[i],fontb,s);
+     sprite.sc[i]=1;
+     sprite.lucent[i]=0;
+     sprite.x[i]=x-(TextWidth(fontb,s)/2);
+     sprite.y[i]=y;
+     timer=0;
+     while(timer<12) {
+          sprite.y[i]=y-(timer/2);
+          Render();
+          ShowPage();
+     }
+     timer=0;
+     while(timer<12) {
+          sprite.y[i]=y-6-timer;
+          sprite.lucent[i]=timer*2;
+          Render();
+          ShowPage();
+     }
+     timer=0;
+     while(timer<12) {
+          sprite.y[i]=y-22-(timer*2);
+          sprite.lucent[i]=timer*6+24;
+          Render();
+          ShowPage();
+     }
+     sprite.lucent[i]=0;
+     FreeImage(sprite.image[i]);
+     sprite.image[i]=0;
+}
+
+int Batt_SelectAlly(int effect) {
+     int p,q,done;
+     int cur=GetSprite();
+     sprite.image[cur]=LoadImage("images\\cur_arrd.png");
+     sprite.sc[cur]=1;
+     while(!fighter[p].curhp && effect!=75)
+          p++;
+     sprite.x[cur]=sprite.x[fighter[p].image]+(ImageWidth(sprite.image[fighter[p].image])/2)-6;
+     sprite.y[cur]=sprite.y[fighter[p].image]-9;
+     while(!done) {
+          q=p;
+          Render();
+          ShowPage();
+          if(left) {
+               Unpress(7);
+               p--;
+               if(p<0) p=numchars-1;
+               while(!fighter[p].curhp && effect!=75) {
+                    p--;
+                    if(p<0) p=numchars-1;
+               }
+               sprite.x[cur]=sprite.x[fighter[p].image]+(ImageWidth(sprite.image[fighter[p].image])/2)-6;
+               sprite.y[cur]=sprite.y[fighter[p].image]-9;
+          }
+          else if(right) {
+               Unpress(8);
+               p++;
+               if(p>=numchars) p=0;
+               while(!fighter[p].curhp && effect!=75) {
+                    p++;
+                    if(p>=numchars) p=0;
+               }
+               sprite.x[cur]=sprite.x[fighter[p].image]+(ImageWidth(sprite.image[fighter[p].image])/2)-6;
+               sprite.y[cur]=sprite.y[fighter[p].image]-9;
+          }
+          if(p!=q) PlaySound(sfx_click,100);
+          else if(b1) {
+               Unpress(1);
+               PlaySound(sfx_beep,100);
+               done=p+1;
+          }
+          else if(b2) {
+               Unpress(2);
+               PlaySound(sfx_cancel,100);
+               done=-1;
+          }
+     }
+     FreeImage(sprite.image[cur]);
+     sprite.image[cur]=0;
+     if(done>0) return done;
+     else return 0;
+}
+
+int Batt_SelectEnemy() {
+     int p,q,done;
+     int cur=GetSprite();
+     sprite.image[cur]=LoadImage("images\\cur_arrd.png");
+     sprite.sc[cur]=1;
+     while(!fighter[p+5].curhp)
+          p++;
+     sprite.x[cur]=sprite.x[fighter[p+5].image]+(ImageWidth(sprite.image[fighter[p+5].image])/2)-6;
+     sprite.y[cur]=sprite.y[fighter[p+5].image]-9;
+     while(!done) {
+          q=p;
+          Render();
+          ShowPage();
+          if(left) {
+               Unpress(7);
+               p--;
+               if(p<0) p=9;
+               while(!fighter[p+5].curhp) {
+                    p--;
+                    if(p<0) p=9;
+               }
+               sprite.x[cur]=sprite.x[fighter[p+5].image]+(ImageWidth(sprite.image[fighter[p+5].image])/2)-6;
+               sprite.y[cur]=sprite.y[fighter[p+5].image]-9;
+          }
+          else if(right) {
+               Unpress(8);
+               p++;
+               if(p>9) p=0;
+               while(!fighter[p+5].curhp) {
+                    p++;
+                    if(p>9) p=0;
+               }
+               sprite.x[cur]=sprite.x[fighter[p+5].image]+(ImageWidth(sprite.image[fighter[p+5].image])/2)-6;
+               sprite.y[cur]=sprite.y[fighter[p+5].image]-9;
+          }
+          if(p!=q) PlaySound(sfx_click,100);
+          else if(b1) {
+               Unpress(1);
+               PlaySound(sfx_beep,100);
+               done=p+1;
+          }
+          else if(b2) {
+               Unpress(2);
+               PlaySound(sfx_cancel,100);
+               done=-1;
+          }
+     }
+     FreeImage(sprite.image[cur]);
+     sprite.image[cur]=0;
+     if(done>0) return done;
+     else return 0;
+}
+
+void Batt_SetTimer(int btype, int bdist) {
+     if(!btype) {
+          battleactive=0;
+          battleindex=0;
+          battletimer=0;
+          battledistance=0;
+          trigger.afterstep="";
+     }
+     else {
+          battleactive=1;
+          battleindex=btype;
+          battletimer=Random(bdist,bdist*3/2);
+          if(fieldeffect[0][0]<=500)
+               battletimer+=battletimer*fieldeffect[0][0]/100;
+          else {
+               fieldeffect[0][0]=0;
+               fieldeffect[0][1]=0;
+          }
+          battledistance=bdist;
+          trigger.afterstep="Batt_CountSteps";
+     }
+}
+
+void Batt_ShakeFighter(int f, int on) {
+     if(!on) {
+          shakefighter=0;
+          sprite.x[fighter[f].image]=fighteffx;
+     }
+     else {
+          shakefighter=f+1;
+          fighteffx=sprite.x[fighter[f].image];
+          fightefft=systemtime;
+     }
+}
+
+int Batt_Skill(int f, int t) {
+     //- NOTE: tempspell[0] MUST be filled with skill data by the calling function.
+     //  Will return 1 on successful ACTIVATION, 0 for any sort of failure.
+     int i;
+     int hit;
+     if(tempspell[0].damage==0)
+          tempspell[0].damage=fighter[f].damagetype;
+     
+     if(!t) {
+          if(fighter[f].curmp<tempspell[0].cost) {
+               PlaySound(sfx_buzz,volume);
+               return 0;
+          }
+          else if(tempspell[0].use>20)
+               PlaySound(sfx_buzz,volume);
+          else if(tempspell[0].use%10==1)
+               t=f+1;
+          else if(tempspell[0].use%10==2)
+               t=Batt_SelectAlly(tempspell[0].effect);
+          else if(tempspell[0].use%10==3)
+               t=21;
+          else if(tempspell[0].use%10==4) {
+               t=Batt_SelectEnemy();
+               if(t) t+=5;
+          }
+          else t=26;
+     }
+     else if(f>4) {
+          if(tempspell[0].use%10==3)
+               t=21;
+          else if(tempspell[0].use%10==5)
+               t=26;
+     }
+     
+     if(t>0) {
+          fighter[f].curmp-=tempspell[0].cost;
+          if(f<5) {
+               hero[f].curmp=fighter[f].curmp;
+               UI_HeroDetail(f,heroframe+f);
+          }
+          PlaySound(sfx_ability,100);
+          Batt_FlashFighter(f,1);
+          Batt_ClearText();
+          if(t==21) {
+               Batt_Text(Batt_HighlightName(f,0)+" uses \f4"+tempspell[0].name+"\f0 on all "+GetGenderPos(fighter[f].gender)+" friends!");
+               hit=Batt_AttackRoll(f,f,tempspell[0].attack,tempspell[0].accuracy);
+          }
+          else if(t==26) {
+               Batt_Text(Batt_HighlightName(f,0)+" uses \f4"+tempspell[0].name+"\f0 on all "+GetGenderPos(fighter[f].gender)+" foes!");
+               hit=Batt_AttackRoll(f,f,tempspell[0].attack,tempspell[0].accuracy);
+          }
+          else {
+               Batt_Text(Batt_HighlightName(f,0)+" uses \f4"+tempspell[0].name+"\f0 on "+Batt_HighlightName(t-1,1)+"!");
+               hit=Batt_AttackRoll(f,t-1,tempspell[0].attack,tempspell[0].accuracy);
+          }
+          if(tempspell[0].effect==65) { //- Weapon Special Attacks
+               if(tempspell[0].magnitude && hero[f].equip[0].eqtype!=tempspell[0].magnitude && hero[f].equip[1].eqtype!=tempspell[0].magnitude)
+                    hit=0;
+               else tempspell[0].power=tempspell[0].power*fighter[f].damage/100;
+          }
+          Wait(battlespeed*10,1);
+          Batt_FlashFighter(f,0);
+          if(!hit) {
+               Batt_Text("...but misses "+GetGenderPos(fighter[f].gender)+" target.");
+               PlaySound(sfx_miss,100);
+               Wait(battlespeed*40,1);
+          }
+          else if(t>20) {
+               i=tempspell[0].power;
+               if(IsAttackEffect(tempspell[0].use%10,tempspell[0].effect))
+                    i=0-i;
+               if(f<5)
+                    Batt_ApplyEffectGroup(f,tempspell[0].effect,t-21,i,tempspell[0].magnitude,tempspell[0].damage);
+               else if(t==21)
+                    Batt_ApplyEffectGroup(f,tempspell[0].effect,5,i,tempspell[0].magnitude,tempspell[0].damage);
+               else Batt_ApplyEffectGroup(f,tempspell[0].effect,0,i,tempspell[0].magnitude,tempspell[0].damage);
+          }
+          else {
+               Batt_AttackAnimation(tempspell[0].damage,
+                                    sprite.x[fighter[t-1].image]+(ImageWidth(sprite.image[fighter[t-1].image])/2)-50,
+                                    sprite.y[fighter[t-1].image]+(ImageHeight(sprite.image[fighter[t-1].image])/2)-50);
+               t=Batt_TargetRedirection(t-1,f)+1;
+               if(tempspell[0].use%10<4) {
+                    i=tempspell[0].power;
+                    i+=i*fighter[f].combatstats[tempspell[0].damage-1][0]/1000;
+                    i+=Random(0-(i/10+1),i/10+1);
+                    Batt_AddHate(0,f,i/2);
+               }
+               else {
+                    i=Batt_CalculateDamage(f,t-1,tempspell[0].power,tempspell[0].damage);
+                    Batt_AddHate(t-1,f,i/2);
+               }
+               if(IsAttackEffect(tempspell[0].use%10,tempspell[0].effect))
+                    i=0-i;
+               if(tempspell[0].effect==44)        //- Enchant effects refer to their damage type, not power.
+                    i=tempspell[0].damage;
+               else if(tempspell[0].effect==45)   //- Guard effects refer to the user for target redirection.
+                    i=f;
+               else if(tempspell[0].effect==46)   //- Block effects refer to the user for target redirection.
+                    i=f;
+               else if(tempspell[0].effect==49) { //- Mark effects actually effect the caster, not the target.
+                    i=t-1;
+                    t=f+1;
+               }
+               else if(tempspell[0].effect==74)   //- Life Steal effects need to refer back to the caster for associated healing.
+                    tempspell[0].magnitude=f;
+               else if(tempspell[0].effect==75)   //- Revive effects need to refer back to the caster for proper hate calculations.
+                    tempspell[0].magnitude=f;
+               Batt_ApplyEffect(tempspell[0].effect,t-1,i,tempspell[0].magnitude);
+               if(tempspell[0].effect==65 && fighter[t-1].conditions[48][0]) {  //- Weapon special attacks trigger damage shields.
+                    Batt_FlashFighter(t-1,1);
+                    Batt_Text(Batt_HighlightName(f,0)+" is damaged by "+Batt_HighlightName(t-1,1)+"'s damage shield!");
+                    Wait(battlespeed*10,1);
+                    Batt_FlashFighter(t-1,0);
+                    Batt_DamageHP(f,fighter[t-1].conditions[48][0],t-1);
+               }
+          }
+          return 1;
+     }
+     else return 0;
+}
+
+int Batt_SpellMenu(int idx, int cur, int dest) {
+     int h,i,q,w,x,y;
+     int done,temp,acc,def;
+     int base=NewImage(180,291);
+     for(i=0; i<10; i++) {
+          if(TextWidth(fontm,fighter[idx].spell[i].name)+20>w)
+               w=TextWidth(fontm,fighter[idx].spell[i].name)+20;
+          if(len(fighter[idx].spell[i].name)) y++;
+     }
+     x=128-w/2;
+     h=289-(y*13);
+     if(!idx && x<0)
+          x=0;
+     else if(idx==4 && x<0)
+          x=x*2;
+     RectFill(0,0,179,290,clear,base);
+     for(i=0; i<y; i++)
+          PrintString(15,i*13+h-1,base,fontm,fighter[idx].spell[i].name);
+     UI_SmallBox(0,h-5,w,y*13+7,base);
+     Batt_CreateAlpha(0,h-5,w,y*13+7,base,dest);
+     Batt_WriteTechDesc(idx,3,0);
+     sprite.x[dest]=idx*128+x;
+     sprite.x[cur]=idx*128+x+5;
+     sprite.y[cur]=h-2;
+     Unpress(1);
+     while(!done) {
+          Render();
+          ShowPage();
+          q=sprite.y[cur];
+          Batt_MenuMove(h-2,y-1*13+h-2,cur);
+          if(sprite.y[cur]!=q)
+               Batt_WriteTechDesc(idx,3,sprite.y[cur]-285/13+y-1);
+          if(b1) {
+               Unpress(1);
+               PlaySound(sfx_beep,100);
+               RectFill(0,0,159,290,black,sprite.alphamap[dest]);
+               temp=sprite.y[cur];
+               sprite.x[cur]=640; sprite.y[cur]=480;
+               Tech_CopySpell(idx,temp-285/13+y-1,0);
+               done=Batt_Skill(idx,0);
+               if(!done) {
+                    Batt_CreateAlpha(0,h-5,w,y*13+7,base,dest);
+                    sprite.x[cur]=idx*128+x+5; sprite.y[cur]=temp;
+               }
+               else fighter[idx].autoaction=temp-285/13+y+29;
+          }
+          else if(b2) {
+               Unpress(2);
+               PlaySound(sfx_cancel,100);
+               done=-1;
+          }
+     }
+     FreeImage(base);
+     return done+1;
+}
+
+int Batt_TargetRedirection(int target, int source) {
+     if(fighter[source].conditions[46][0] && target!=fighter[source].conditions[46][0]-1 && fighter[fighter[source].conditions[46][0]-1].curhp) {
+          PlaySound(sfx_miss,100);
+          target=fighter[source].conditions[46][0]-1;
+          Batt_ShakeFighter(target,1);
+          Batt_Text("...but "+Batt_HighlightName(target,1)+" intercepts the action!");
+          Wait(battlespeed*5,1);
+          Batt_ShakeFighter(target,0);
+     }
+     if(fighter[target].conditions[45][0] && target!=fighter[target].conditions[45][0]-1 && fighter[fighter[target].conditions[45][0]-1].curhp) {
+          if((target<5 && source>4) || (target>4 && source<5)) {
+               PlaySound(sfx_miss,100);
+               target=fighter[target].conditions[45][0]-1;
+               Batt_ShakeFighter(target,1);
+               Batt_Text("...but "+Batt_HighlightName(target,1)+" intercepts the action!");
+               Wait(battlespeed*5,1);
+               Batt_ShakeFighter(target,0);
+          }
+     }
+     return target;
+}
+
+void Batt_Text(string words) {
+     fightingwords+="\n"+words;
+     while(TokenCount(fightingwords,chr(10))>6)
+          fightingwords=right(fightingwords,len(fightingwords)-len(GetToken(fightingwords,chr(10),0))-1);
+     RectFill(0,0,639,96,clear,ui_tempi);
+     UI_BigBox(0,0,640,97,ui_tempi);
+     PrintString(12,-3,ui_tempi,fontm,fightingwords);
+     UI_CreateAlpha(ui_tempi,8,footframe);
+}
+
+void Batt_ToggleAuto() {
+     int i;
+     Unpress(4);
+     for(i=0; i<numchars; i++)
+          fighter[i].autoon=0;
+     autobattle=0;
+     Party_RedrawDetailFrames();
+}
+
+void Batt_WriteTechDesc(int h, int type, int i) {
+     if(type==1) {
+          tempspell[0].name=fighter[h].attack[i].name;
+          tempspell[0].desc=fighter[h].attack[i].desc;
+          tempspell[0].lore=fighter[h].attack[i].lore;
+          tempspell[0].cost=0;
+          tempspell[0].use=4;
+          tempspell[0].attack=fighter[h].attack[i].attack;
+          tempspell[0].accuracy=fighter[h].attack[i].accuracy;
+          tempspell[0].damage=fighter[h].damagetype;
+          tempspell[0].power=fighter[h].damage;
+          tempspell[0].effect=fighter[h].attack[i].effect;
+          tempspell[0].magnitude=fighter[h].attack[i].magnitude;
+     }
+     else if(type==2) {
+          tempspell[0].name=fighter[h].ability[i].name;
+          tempspell[0].desc=fighter[h].ability[i].desc;
+          tempspell[0].lore=fighter[h].ability[i].lore;
+          tempspell[0].cost=fighter[h].ability[i].cost;
+          tempspell[0].use=fighter[h].ability[i].use;
+          tempspell[0].attack=fighter[h].ability[i].attack;
+          tempspell[0].accuracy=fighter[h].ability[i].accuracy;
+          tempspell[0].damage=fighter[h].ability[i].damage;
+          tempspell[0].power=fighter[h].ability[i].power;
+          tempspell[0].effect=fighter[h].ability[i].effect;
+          tempspell[0].magnitude=fighter[h].ability[i].magnitude;
+     }
+     else if(type==3) {
+          tempspell[0].name=fighter[h].spell[i].name;
+          tempspell[0].desc=fighter[h].spell[i].desc;
+          tempspell[0].lore=fighter[h].spell[i].lore;
+          tempspell[0].cost=fighter[h].spell[i].cost;
+          tempspell[0].use=fighter[h].spell[i].use;
+          tempspell[0].attack=fighter[h].spell[i].attack;
+          tempspell[0].accuracy=fighter[h].spell[i].accuracy;
+          tempspell[0].damage=fighter[h].spell[i].damage;
+          tempspell[0].power=fighter[h].spell[i].power;
+          tempspell[0].effect=fighter[h].spell[i].effect;
+          tempspell[0].magnitude=fighter[h].spell[i].magnitude;
+     }
+     
+     tempspell[0].power=Calc_BaseDamage(h,tempspell[0].power,tempspell[0].damage);
+     if(tempspell[0].attack<6) tempspell[0].accuracy+=fighter[h].combatstats[tempspell[0].attack+23][0]/10;
+     Batt_Text("\f4"+tempspell[0].name+"\f0: "+tempspell[0].desc);
+     if(type==1) {
+          Batt_Text("Accuracy: "+str(tempspell[0].accuracy)+"% ("+GetAttackType(tempspell[0].attack)+")");
+          Batt_Text("Damage: \f3"+str(tempspell[0].power*fighter[h].attack[i].power/100)+"\f0 "+GetDamageType(tempspell[0].damage));
+          Batt_Text(" ");
+          Batt_Text("Effect: "+tempspell[0].lore);
+          if(tempspell[0].magnitude) Batt_Text("Magnitude: "+str(tempspell[0].power*tempspell[0].magnitude/100)+" "+GetDamageType(tempspell[0].effect));
+          else Batt_Text(" ");
+     }
+     else {
+          if(IsAttackEffect(tempspell[0].use%10,tempspell[0].effect))
+               tempspell[0].power=0-tempspell[0].power;
+          Batt_Text("Cost: \f4"+str(tempspell[0].cost)+"\f0 mana");
+          Batt_Text("Target: "+GetTargetString(tempspell[0].use));
+          Batt_Text("Accuracy: "+str(tempspell[0].accuracy)+"% ("+GetAttackType(tempspell[0].attack)+")");
+          Batt_Text("Effect: "+str(tempspell[0].power)+Tech_GetEffectDesc(tempspell[0].effect)+" ("+GetDamageType(tempspell[0].damage)+")");
+          if(tempspell[0].magnitude==1)
+               Batt_Text("Duration: 1 round");
+          else if(tempspell[0].effect==64 || tempspell[0].effect==65)
+               Batt_Text("Duration: Instant");
+          else if(tempspell[0].magnitude>1)
+               Batt_Text("Duration: "+str(tempspell[0].magnitude)+" rounds");
+          else Batt_Text("Duration: Instant");
+     }
+}
+
+int Foe_AdjustStat(int s, string t, int a) {
+     if(!strcmp(t,"a")) return s+a;     //- Add
+     if(!strcmp(t,"e")) return a;       //- Equal
+     if(!strcmp(t,"s")) return s-a;     //- Subtract
+     if(!strcmp(t,"p")) return s*a/100; //- Percent
+     return s;
+}
+
+void Foe_LearnAbility(int e, int a, int idx) {
+     int f=FileOpen("system\\ability.dat",FILE_READ);
+     FileSeekPos(f,idx-1*128,SEEK_SET);
+     fighter[e].ability[a].idx=idx;
+     fighter[e].ability[a].name=FileReadString(f);
+     fighter[e].ability[a].desc=FileReadString(f);
+     fighter[e].ability[a].use=FileReadQuad(f);
+     fighter[e].ability[a].attack=FileReadQuad(f);
+     fighter[e].ability[a].accuracy=FileReadQuad(f);
+     fighter[e].ability[a].damage=FileReadQuad(f);
+     fighter[e].ability[a].power=FileReadQuad(f);
+     fighter[e].ability[a].effect=FileReadQuad(f);
+     fighter[e].ability[a].magnitude=FileReadQuad(f);
+     fighter[e].ability[a].cost=FileReadQuad(f);
+     fighter[e].ability[a].lore=FileReadString(f);
+     FileClose(f);
+}
+
+void Foe_LearnAttack(int e, int a, int idx) {
+     int f=FileOpen("system\\attack.dat",FILE_READ);
+     FileSeekPos(f,FindAttackPos(idx),SEEK_SET);
+     fighter[e].attack[a].idx=idx;
+     fighter[e].attack[a].name=FileReadString(f);
+     fighter[e].attack[a].desc=FileReadString(f);
+     fighter[e].attack[a].use=FileReadQuad(f);
+     fighter[e].attack[a].attack=FileReadQuad(f);
+     fighter[e].attack[a].accuracy=FileReadQuad(f);
+     fighter[e].attack[a].damage=FileReadQuad(f);
+     fighter[e].attack[a].power=FileReadQuad(f);
+     fighter[e].attack[a].effect=FileReadQuad(f);
+     fighter[e].attack[a].magnitude=FileReadQuad(f);
+     fighter[e].attack[a].lore=FileReadString(f);
+     FileClose(f);
+}
+
+void Foe_LearnSpell(int e, int s, int idx) {
+     int f=FileOpen("system\\spell.dat",FILE_READ);
+     FileSeekPos(f,idx-1*128,SEEK_SET);
+     fighter[e].spell[s].idx=idx;
+     fighter[e].spell[s].name=FileReadString(f);
+     FileSeekPos(f,idx-1*128+17,SEEK_SET);
+     fighter[e].spell[s].desc=FileReadString(f);
+     FileSeekPos(f,idx-1*128+50,SEEK_SET);
+     fighter[e].spell[s].type=FileReadQuad(f);
+     fighter[e].spell[s].req=FileReadQuad(f);
+     fighter[e].spell[s].school=FileReadQuad(f);
+     fighter[e].spell[s].use=FileReadQuad(f);
+     fighter[e].spell[s].attack=FileReadQuad(f);
+     fighter[e].spell[s].accuracy=FileReadQuad(f);
+     fighter[e].spell[s].damage=FileReadQuad(f);
+     fighter[e].spell[s].power=FileReadQuad(f);
+     fighter[e].spell[s].effect=FileReadQuad(f);
+     fighter[e].spell[s].magnitude=FileReadQuad(f);
+     fighter[e].spell[s].cost=FileReadQuad(f);
+     fighter[e].spell[s].lore=FileReadString(f);
+     FileClose(f);
+}
+
+void Foe_ParseModifier(int enemy, string modifier) {
+     string category=left(modifier,1);
+     int idx=val(mid(modifier,1,1));
+     string type=mid(modifier,2,1);
+     int adjust=val(right(modifier,3));
+     if(!strcmp(category,"H")) {        //- Health
+          if(!idx) {
+               fighter[enemy].maxhp=Foe_AdjustStat(fighter[enemy].maxhp,type,adjust);
+               fighter[enemy].curhp=fighter[enemy].maxhp;
+               fighter[enemy].trumaxhp=fighter[enemy].maxhp;
+          }
+          else fighter[enemy].curhp=Foe_AdjustStat(fighter[enemy].curhp,type,adjust);
+     }
+     else if(!strcmp(category,"M")) {   //- Mana
+          if(!idx) {
+               fighter[enemy].maxmp=Foe_AdjustStat(fighter[enemy].maxmp,type,adjust);
+               fighter[enemy].curmp=fighter[enemy].maxmp;
+          }
+          else fighter[enemy].curmp=Foe_AdjustStat(fighter[enemy].curmp,type,adjust);
+     }
+     else if(!strcmp(category,"B"))     //- Damage Bonus
+          fighter[enemy].combatstats[idx][0]=Foe_AdjustStat(fighter[enemy].combatstats[idx][0],type,adjust*10);
+     else if(!strcmp(category,"R"))     //- Resistance
+          fighter[enemy].combatstats[idx+12][0]=Foe_AdjustStat(fighter[enemy].combatstats[idx+12][0],type,adjust*10);
+     else if(!strcmp(category,"A"))     //- Accuracy
+          fighter[enemy].combatstats[idx+24][0]=Foe_AdjustStat(fighter[enemy].combatstats[idx+24][0],type,adjust*10);
+     else if(!strcmp(category,"D"))     //- Defense
+          fighter[enemy].combatstats[idx+30][0]=Foe_AdjustStat(fighter[enemy].combatstats[idx+30][0],type,adjust*10);
+     else if(!strcmp(category,"C"))     //- Critical Chance
+          fighter[enemy].combatstats[36][0]=Foe_AdjustStat(fighter[enemy].combatstats[36][0],type,adjust*10);
+     else if(!strcmp(category,"X"))     //- Experience
+          fighter[enemy].exp=Foe_AdjustStat(fighter[enemy].exp,type,adjust);
+     else if(!strcmp(category,"T"))     //- Attack
+          Foe_LearnAttack(enemy,idx,adjust);
+     else if(!strcmp(category,"P"))     //- Power
+          Foe_LearnAbility(enemy,idx,adjust);
+     else if(!strcmp(category,"S"))     //- Ability
+          Foe_LearnSpell(enemy,idx,adjust);
+     else if(!strcmp(category,"E")) {   //- Passive Effect
+          fighter[enemy].conditions[adjust][0]=fighter[enemy].level*idx;
+          fighter[enemy].conditions[adjust][1]=9999;
+     }
+}
+
+int Foe_SelectTarget(int e, int u) {
+     int i;
+     int cur,hi,target;
+     hi=0-50;
+     u=u%10;
+     if(u==1) return e;  //- Target Self
+     else if(u==2) {     //- Target Single Ally (need to check effect type here)
+     }
+     else if(u==3) {     //- Target All Allies
+          return 21;
+     }
+     else if(u==4) {     //- Target Single Foe
+          while(!fighter[i].curhp) i++;
+          target=i;
+          if(target>=numchars-1) return target;
+          for(i=target; i<numchars; i++) {
+               if(fighter[i].curhp) {
+                    cur=Random(fighter[e].hate[i]-10,fighter[e].hate[i]+10);
+                    if(cur>hi && Random(1,100)>fighter[i].conditions[57][0]) {
+                         target=i;
+                         hi=cur;
+                    }
+               }
+          }
+          return target;
+     }
+     else if(u==5) {     //- Target All Foes
+          return 26;
+     }
+}
+
+void InitializeCombat() {
+     int i;
+     for(i=0; i<15; i++) {
+          fighter[i].attack[0].name="Basic_Attack";
+          fighter[i].attack[0].desc="A_standard_Physical_attack";
+          fighter[i].attack[0].idx=0;
+          fighter[i].attack[0].attack=1;
+          fighter[i].attack[0].accuracy=95;
+          fighter[i].attack[0].damage=0;
+          fighter[i].attack[0].power=100;
+          fighter[i].attack[0].effect=0;
+          fighter[i].attack[0].magnitude=0;
+          fighter[i].attack[0].lore="Attack_has_no_additional_effect";
+     }
+}

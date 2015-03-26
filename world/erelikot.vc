@@ -1,0 +1,621 @@
+void Start() {
+     if(GetFlag("GraigorianCloister")>1) {
+          entity.x[7]=0; entity.y[7]=0;
+          entity.visible[7]=0;
+     }
+     if(Quest_PartyOnStage("Expedition to Achiela",6)) {
+          arefairies=1;
+          EntitySpawn(21,80,"images\\chrs\\lufwizar.chr");
+          HookEntityRender(27,"ForeverWalk");
+          EntityMove(EntitySpawn(18,82,"images\\chrs\\hamthief.chr"),"U0");
+     }
+     entity.y[1]+=8; entity.y[16]+=8;
+     entity.y[17]+=8; entity.y[23]+=8;
+     Batt_SetTimer(0,0);
+     Map_Initialize("Fort Erelikoth","Main Gate","humtown.it","Human");
+     if(Quest_PartyOnStage("Expedition to Achiela",6))
+          Tutorial();
+}
+
+//-----------------\\
+//- Entrance Area -\\
+//-----------------\\
+
+void Leave() {
+     battleindex=3;
+     areaname="Erelikoth Area";
+     Map_Switch("amin.map",207,318,1);
+}
+
+void InnDoor() {
+//     GenericDoor(0,0,1);
+}
+
+void EnterInn() {
+     Warp(68,91);
+}
+
+void ExitInn() {
+     Warp(21,88);
+}
+
+void EnterFoyer() {
+     Warp(27,54);
+}
+
+void ExitFoyer() {
+     Warp(27,72);
+}
+
+void Burglar() {
+     Text("Burglar","Security on this place is so insanely tight.  And those paladins are mean.  "+
+          "There's gotta be a way to break the place though.  There's just gotta.");
+     entity.face[event.entity]=1;
+}
+
+void StairGuard() {
+     Text("Paladin","This leads up into the outer walls.  Only fortress guards are allowed up here.  "+
+          "If you want to enter the fort, you'll have to take the ferry over there.");
+     entity.face[event.entity]=2;
+}
+
+void FoyerFerry() {
+     int i,g;
+     SetPortrait(0,"\f2Ferryman");
+     if(partyfact>6) {
+          i=Prompt("This is the ferry into the fortress proper.  For devout followers of the "+
+                   "Light such as yourselves, the trip's free.  Are you heading in?","Yes","No");
+          if(i==1) {
+               Text("Ferryman","Very well.  Get on board and we'll head in.");
+               Warp(76,44);
+          }
+     }
+     else if(partyfact>3) {
+          g=10*(7-partyfact);
+          i=Prompt("This is the ferry into the fortress proper.  I charge "+str(g)+"$ "+
+                   "per person, so it'll be "+str(g*numchars)+"$.  Are you heading in?","Yes","No");
+          if(i==1 && g*numchars>partygold) 
+               TextPlus("You don't have enough money.  This isn't a charity.  Come back when "+
+                        "you can afford the fare.",1);
+          else if(i==1) {
+               PlaySound(sfx_cash,volume);
+               partygold-=g*numchars;
+               TextPlus("Very well.  Get on board and we'll head in.",1);
+               Warp(76,44);
+          }
+     }
+     else
+          Text("Ferryman","Bah.  I'm not taking you anywhere, heathen scum.  Get lost.");
+     entity.face[event.entity]=2;
+}
+
+void FoyerGirl() {
+     if(KoS()) return;
+     Text("","\f3Erelikoth\f0 is actually a fortress on an island just off the coast.  This is just "+
+          "the outer seawall.  It's where most of the Temple's armed forces are stationed.");
+}
+
+void FoyerGuy() {
+     if(KoS()) return;
+     Text("","The big ships all weigh anchor at the docks outside the western wall, but you "+
+          "can't get out there except by taking a skiff from the inner eastern harbor.");
+}
+
+//--------------------\\
+//-  Fortress Harbor -\\
+//--------------------\\
+
+void EnterFort() {
+     Warp(44,10);
+}
+
+void TrulmaesFerry() {
+     int i;
+     if(!Quest_PartyHas("Pilgrimage of Trulmaes")) {
+          Text("Ferryman","I run the ferry over to \f3Thovas Island\f3 for the pilgrims.  You'll "+
+               "need permission from the \f2chaplain\f0 here before I can take you over.");
+          return;
+     }
+/*     if(GetQuestStageLow(0)>=4) {
+          Text4("^Ferryman: I run the ferry over to",
+               "@Thovas_Island for the pilgrims.  Since",
+               "you've already finished the pilgrimage,",
+               "I'm not allowed to take you back.");
+          return;
+     }
+     i=Prompt("^Ferryman: You're on the pilgrimage,",
+              "are you?  Ready to head over to old",
+              "@Thovas_Island then?","","Yes","No",0);
+     if(!i) {
+          Text4("^Ferryman: Alright.  Let's head out.","","","");
+          MapSwitch("trulferr.map",19,33,2,0);
+     }
+     entity.face[event.entity]=1;*/
+}
+
+void DockFerry() {
+     int i,g;
+     SetPortrait(0,"\f2Ferryman");
+     if(partyfact>6) {
+          i=Prompt("This is the ferry back to the entrance.  For devout followers of the "+
+                   "Light such as yourselves, the trip's free.  Are you heading out?","Yes","No");
+          if(i==1) {
+               Text("Ferryman","Very well.  Get on board and we'll head out.");
+               Warp(27,43);
+          }
+     }
+     else {
+          g=10*(7-partyfact);
+          i=Prompt("This is the ferry back to  the entrance.  I charge "+str(g)+"$ "+
+                   "per person, so it'll be "+str(g*numchars)+"$.  Are you heading out?","Yes","No");
+          if(i==1 && g*numchars>partygold) {
+               TextPlus("You don't have enough money?  Bah.  Just give me what you've got and "+
+                        "I'll get you out of here.  Don't want any beggers cluttering our city.",1);
+               PlaySound(sfx_cash,volume);
+               partygold=0;
+               Warp(27,43);
+          }
+          else if(i==1) {
+               PlaySound(sfx_cash,volume);
+               partygold-=g*numchars;
+               TextPlus("Very well.  Get on board and we'll head out.",1);
+               Warp(27,43);
+          }
+     }
+     entity.face[event.entity]=3;
+}
+
+void Pirate() {
+     int i;
+     int cost=50*numchars;
+     SetPortrait(0,"\f2Pirate");
+     if(Quest_PartyHas("Expedition to Achiela")) {
+          Text("Pirate","Rrrr...  Motherless port authority, searching my ship.  What do they be thinking "+
+               "they're going to find?  I be reporting this to the Pirate's Guild, see if I don't.");
+          return;
+     }
+//     if(PirateShip(6)) return;
+     i=Prompt("Rrrr...  You be looking for passage across the bay to \f3Alykin\f0?  "+
+              "I'll only be charging "+str(cost)+"$ for the lot of you.  Coming aboard?","Yes","No");
+     if(i==1 && partygold<cost)
+          Text("Pirate","Rrrr...  You be trying to cheat me, lubbers?  You'll not be "+
+               "getting passage without the gold.");
+     else if(i==1) {
+          partygold-=cost;
+          PlaySound(sfx_cash,volume);
+          Text("Pirate","Thank ye kindly.  Let's shove off then.");
+          Map_Switch("alykin.map",26,42,2);
+     }
+     entity.face[event.entity]=2;
+}
+
+void DockGuy() {
+     Text("","Lousy pirate.  Think they own the seas, the whole lot of them.  Of course, they "+
+          "do, really, but it still bugs me that dogs control how we use the ocean.");
+}
+
+void Fisherman() {
+     Text("Fisherman","Up for some fishing?");
+     entity.face[event.entity]=1;
+//     FishGame(0,1);
+}
+
+//--------------------\\
+//- Central Fortress -\\
+//--------------------\\
+
+void ExitFort() {
+     Warp(62,38);
+}
+
+void EnterCity() {
+     Warp(61,148);
+}
+
+void ExitCity() {
+     Warp(36,10);
+}
+
+void Inn() {
+     if(entity.face[GetPlayer()]==2) return;
+     GenericInn("Erelikoth Arms",20);
+     entity.face[event.entity]=2;
+}
+
+void HalflingGuy() {
+     Text("","It's so weird here down south.  There's nobody except \f2Humans\f0!  In the cities "+
+          "back up north there are all kinds of races.  It's just eerie here.");
+}
+
+void HalflingGirl() {
+     Text("","My husband and I traveled here from \f3Amunash\f0 to see the temple that we "+
+          "always hear about.  It's odd not having other \f2Halflings\f0 around, though.");
+}
+
+void EnterSpell() {
+     Warp(82,91);
+}
+
+void ExitSpell() {
+     Warp(47,119);
+}
+
+void PsycheShop() {
+     if(entity.face[GetPlayer()]==2) return;
+     Text("Cleric","We don't have quite the same selection that you can get in \f3Gelaham\f0, "+
+          "but we get by.  Got some non-Divine spells even, but not much call for them.");
+//     Shop("1 3 5 6 10 11 15 16 20 41 51 83 88 0",1);
+     entity.face[event.entity]=2;
+}
+
+void EnterArmory() {
+     Warp(40,191);
+}
+
+void ExitArmory() {
+     Warp(23,119);
+}
+
+void CrusaderShop() {
+     if(entity.face[GetPlayer()]==2) return;
+     Text("Paladin","Official Temple equipment all available right here.  Best armaments in this part of the world.");
+     GenericShop_Weapon("Human",5);
+     entity.face[event.entity]=2;
+}
+
+void EnterTemple() {
+     Warp(15,191);
+}
+
+void ExitTemple() {
+     Warp(34,116);
+}
+
+void Chaplain() {
+//     if(GetDeadMembers()) {
+//          GenericRevive("Chaplain",10);
+//          return;
+//     }
+     if(Quest_PartyOnStage("Pilgrimage of Trulmaes",1)) {
+          Text("Chaplain","Ah, here for the pilgrimage? The \f4Pilgrimage of Trulmaes\f0 is not a "+
+               "trivial task, but you look like you shouldn't have too much trouble.");
+          TextPlus("\f2Trulmaes\f0 was the first paladin.  He founded the order and began training "+
+                   "others at the \f3Thovas Chapel\f0.  After \f2Trulmaes\f0's death, the High Temple declared "+
+                   "him a saint and moved the base of the Order to \f3Gelaham\f0, where it remains to this day.",1);
+          TextPlus("The cathedral has fallen into disrepair, but many paladins and other faithful "+
+                   "still make the pilgrimage there to honor the memory of \f2Trulmaes\f0.  You'll need to take "+
+                   "the ferry to \f3Thovas Island\f0.  You can find it docked in the eastern harbor.",0);
+          TextPlus("Once on \f3Thovas\f0, head north into the mountains.  Deep in the vally at the "+
+                   "heart of the mountains is the \f3Thovas Chapel\f0.  Go to the main altar of the chapel and pray.",0);
+          TextPlus("When you have done this, return to me.  The Light will let me know if you have "+
+                   "completed your tasks.  Go now, and may the Light be with you.",1);
+          Quest_Advance("Pilgrimage of Trulmaes",1,"Pray at the main altar in the \f3Thovas Chapel","Amin",233,286);
+     }
+     else if(Quest_PartyOnStage("Pilgrimage of Trulmaes",2)) {
+          Text("Chaplain","You have not yet prayed at the altar in the \f3Thovas_Chapel\f0.  Take "+
+               "the ferry from the east docks to get to the island.  Light go with you.");
+          Quest_FlashTask("Pilgrimage of Trulmaes");
+     }
+     else if(Quest_PartyOnStage("Pilgrimage of Trulmaes",3)) {
+          Text("Chaplain","Ah, you have been to the altar at \f3Thovas\f0.  Congratulations.  I "+
+               "will send word to the \f2High Priest\f0.  Return to \f3Gelaham\f0 and speak with him.");
+          Quest_Advance("Pilgrimage of Trulmaes",3,"Speak with the \f2High Pries\f0 in \f3Gelaham","Amin",354,449);
+     }
+     else if(Quest_PartyOnStage("Pilgrimage of Trulmaes",4)) {
+          Text("Chaplain","The \f2High Priest\f0 awaits you in \f3Gelaham\f0.  Hurry back to him.");
+          Quest_FlashTask("Pilgrimage of Trulmaes");
+     }
+     else 
+          Text("Chaplain","Welcome to \f3Erelikoth\f0.  I am in charge of the spiritual life of this "+
+               "outer bastion of the Light.  If you need anything, let me know.");
+}
+
+void Graig() {
+     Text("Graig","I was once stationed in a cloister for priests in a mountain cave to the east.  We left "+
+          "after this outpost began to flourish, though.  It is much nicer here, really.  The cloister always "+
+          "felt like a cave, even with the warm glow that the altar gave off whenever somebody prayed.");
+     if(GetFlag("GraigorianCloister")) {
+          TextPlus("What?  Undead have broken into the cloister from the deeper caverns?  "+
+               "That's disastrous!  The \f2Shadowkin\f0 must be invading!  I have to go back there.",1);
+          entity.obstructable[7]=0;
+          entity.speed[7]=75;
+          EntityMove(7,"X34Y125");
+          WaitForEntity(7);
+          entity.x[7]=0; entity.y[7]=0;
+          entity.visible[7]=0;
+          SetFlag("GraigorianCloister",2);
+     }
+}
+
+void EnterItem() {
+     Warp(37,175);
+}
+
+void ExitItem() {
+     Warp(26,133);
+}
+
+void ItemShop() {
+     if(entity.face[GetPlayer()]==2) return;
+     Text("","We offer standard adventuring gear for all occasions!  And all at very reasonable prices.");
+//     Shop("2 82 23 11 12 13 58 83 84 49 50 0",0);
+     entity.face[event.entity]=2;
+}
+/*
+void Vault() {
+     int i,cost;
+     if(entity.face[partychr[0]]==2) return;
+     if(partyfact<7) cost=50*(7-partyfact);
+     Vault_Open();
+     if(vaultopen<1) return;
+     if(partyfact>6)
+          Text4("I can give you access to your ~personal",
+               "~transdimensional_storage_space.  Plus,",
+               "I don't even charge people who are as",
+               "devoted to the Light as you are.");
+     else {
+          i=Prompt("I can give you access to your ~personal",
+                   "~transdimensional_storage_space.  The",
+                   "service fee is "+HighlightNumber()+str(cost)+" gold.",
+                   "Will you be accessing your vault?","Yes","No",1);
+          if(i) return;
+          if(gold<cost) {
+               Text4("I'm afraid you can't afford the service",
+                    "fee.  Please come again when you have the",
+                    "money.","");
+               return;
+          }
+          PlaySound(sfx_cash,volume);
+          gold-=cost;
+     }
+     Vault_Main(100,0-1);
+     entity.face[event.entity]=2;
+}
+*/
+void EnterHouse1() {
+     Warp(55,174);
+}
+
+void ExitHouse1() {
+     Warp(43,132);
+}
+
+void House1Guy() {
+     Text("","\f3Erelikoth\f0 is a last bastion of sorts.  It's on the outer edge of the Light-"+
+          "filled region of southern \f3Amin\f0.  Past here, it's all heathens and beasts.");
+}
+
+void EnterHouse2() {
+     Warp(61,190);
+}
+
+void ExitHouse2() {
+     Warp(42,146);
+}
+
+void House2Girl() {
+     Text("","The island south of here used to have a large city on it, but their misguided "+
+          "use of foul Will magicks attracted the demons, and they all died.  Serves them right, "+
+          "really.  Nothing should be done except through the Divine Light.");
+}
+
+void EnterHouse3() {
+     Warp(78,174);
+}
+
+void ExitHouse3() {
+     Warp(55,141);
+}
+
+void House3Guy() {
+     Text("","Fewer pilgrims have been coming through here recently, either to \f3Thovas\f0 or to "+
+          "\f3Gelaham\f0.  It's sad that more people aren't putting time into their faith.");
+}
+
+
+void Tutorial() {
+     int h=Party_GetStoryHero(1)-1;
+     int x;
+     SetExecutionPaused(2);
+
+     hero[3].level=15; hero[3].statpnt=0;
+     hero[3].next=0;
+     hero[3].chrimg="hamthief";
+     hero[3].name="Marty";
+     hero[3].class="Rogue";
+     hero[3].race="Halfling";
+     hero[3].gender=1;
+     Hero_SetBaseStatistics(3,"Halfling");
+     hero[3].stats[1]++;
+     CharGen_ChangeClass(3,2,2);
+     hero[3].stats[0]+=7;
+     hero[3].stats[1]+=5;
+     hero[3].stats[2]+=50;
+     hero[3].stats[3]+=5;
+     hero[3].stats[4]+=5;
+     hero[3].stats[5]+=1;
+     Hero_SetDerivedStats(3);
+     hero[3].curhp=hero[3].maxhp;
+     hero[3].curmp=hero[3].maxmp;
+     hero[3].exp=105000;
+     Hero_LearnAttack(3,301);
+     Hero_LearnAttack(3,310);
+     Hero_LearnAbility(3,54);
+     Hero_LearnAbility(3,23);
+     Hero_LearnAbility(3,74);
+     hero[3].trait[0].name="Sneaky";
+     hero[3].spellslots=2;
+     Hero_LearnSpell(3,84,0);
+     Hero_LearnSpell(3,110,1);
+     CraftEquipment(1,"Halfling",3,0);
+     Item_AssignTemp(3,1,0);
+     CraftEquipment(22,"Elf",3,0);
+     Item_AssignTemp(3,1,1);
+     CraftEquipment(17,"Halfling",1,0);
+     Item_AssignTemp(3,1,2);
+     CraftEquipment(28,"Human",2,0);
+     Item_AssignTemp(3,1,3);
+     CraftEquipment(31,"Halfling",1,0);
+     Item_AssignTemp(3,1,4);
+     Hero_SetDerivedStats(3);
+
+     hero[4].level=15; hero[4].statpnt=0;
+     hero[4].next=0;
+     hero[4].chrimg="lufwizar";
+     hero[4].name="Aerin";
+     hero[4].class="Wizard";
+     hero[4].race="Lukosian";
+     Hero_SetBaseStatistics(4,"Lukosian");
+     hero[4].gender=2;
+     hero[4].stats[5]++;
+     CharGen_ChangeClass(4,5,5);
+     hero[4].stats[0]+=6;
+     hero[4].stats[1]+=2;
+     hero[4].stats[3]+=15;
+     hero[4].stats[4]+=3;
+     hero[4].stats[5]+=47;
+     Hero_SetDerivedStats(4);
+     hero[4].curhp=hero[4].maxhp;
+     hero[4].curmp=hero[4].maxmp;
+     hero[4].exp=105000;
+     Hero_LearnAttack(4,601);
+     Hero_LearnAttack(4,610);
+     Hero_LearnAbility(4,116);
+     Hero_LearnAbility(4,1);
+     Hero_LearnAbility(4,84);
+     hero[4].trait[0].name="Scribe";
+     hero[4].spellslots=4;
+     Hero_LearnSpell(4,226,0);
+     Hero_LearnSpell(4,230,1);
+     Hero_LearnSpell(4,232,2);
+     Hero_LearnSpell(4,227,3);
+     CraftEquipment(14,"Lukosian",3,0);
+     Item_AssignTemp(4,1,0);
+     CraftEquipment(21,"Lukosian",0,0);
+     Item_AssignTemp(4,1,1);
+     CraftEquipment(15,"Shadowkin",3,0);
+     Item_AssignTemp(4,1,2);
+     CraftEquipment(28,"Human",1,0);
+     Item_AssignTemp(4,1,3);
+     CraftEquipment(32,"Lukosian",2,0);
+     Item_AssignTemp(4,1,4);
+     Hero_SetDerivedStats(4);
+
+     PlayerMove("X21Y86");
+     EntityStalk(hero[1].ent,-1);
+     EntityStalk(hero[2].ent,-1);
+     cameratracking=0;
+     EntityMove(hero[0].ent,"X17");
+     if(h==1) {
+          EntityMove(hero[1].ent,"Y86");
+          EntityMove(hero[2].ent,"Y87");
+          WaitForEntity(hero[2].ent);
+          SetPlayer(hero[1].ent);
+          EntityMove(hero[1].ent,"Y85X19D0");
+          EntityMove(hero[2].ent,"Y85X22Y82X21Y81");
+          WaitForEntity(hero[2].ent);
+          x=2;
+     }
+     else {
+          EntityMove(hero[1].ent,"Y85");
+          EntityMove(hero[2].ent,"Y86");
+          WaitForEntity(hero[2].ent);
+          SetPlayer(hero[2].ent);
+          EntityMove(hero[1].ent,"X22Y82X21Y81");
+          EntityMove(hero[2].ent,"Y85X19D0");
+          WaitForEntity(hero[1].ent);
+          x=1;
+     }
+     EntityMove(28,"R0");
+     WaitForEntity(28);
+     HText(h,"Well that was painless.  I thought \f4heroes\f0 saw more monsters than normal.  "+
+          "I've never made that trip without our caravan guard having to fight off at least something.");
+     ShowTextbox();
+     EntityMove(hero[0].ent,"R0");
+     PlayerMove("L0");
+     WaitForEntity(hero[0].ent);
+     HText(0,"Only the weakest of us bother spending time with caravans.  We almost got attacked "+
+          "quite a few times on the way here.  You didn't notice when the world started to warp?");
+     HText(h,"No.  Why didn't they attack us?");
+     HText(0,"They knew better.  The glow from \f3Mount Gela\f0 keeps all but the weakest monsters "+
+          "out of southern \f3Amin\f0.  Even monsters won't pick fights they know they can't win.");
+     HText(h,"Monsters have a sense of self-preservation?");
+     HText(0,"Most of them.  Some will jump you regardless.  And we could have forced the ones we saw "+
+          "on the way here to come through when we spotted them, but why bother?  Best not to warp reality more "+
+          "than is strictly necessary, I say.");
+     HText(h,"I suppose that makes sense.");
+     HText(4,"A \f2Human\f0 listening to logic?  That's amazing.");
+     ShowTextbox();
+     EntityMove(hero[0].ent,"L0");
+     PlayerMove("U0");
+     WaitForEntity(hero[0].ent);
+     HText(x,"Be nice.  You should know "+GetGenderSub(hero[h].gender)+"'s never met a \f2Lukosian\f0 before.");
+     HText(4,"So you're not only bringing a pup, you're bringing a clueless pup.  Fantastic.");
+     HText(x,"I think you'll be surprised to find "+GetGenderSub(hero[h].gender)+" learns pretty quickly.");
+     ShowTextbox();
+     EntityMove(hero[x].ent,"D0");
+     WaitForEntity(hero[x].ent);
+     TextPlus("\f2"+hero[h].name+"\f0, I'd like you to meet \f2Aerin\f0.  The scholars at \f3Esselte\f0 "+
+              "were very kind in sending her to join us on this expedition.",1);
+     HText(4,"Oh yes.  The opportunity to study whatever rift is allowing demons to enter \f3Serinor\f0 could "+
+          "advance my studies of portal and teleportation theory immensely.  I'm actually quite honored they chose me "+
+          "over \f2Liall\f0.  Of course, he's taken to studying the \f4Hero Shrine\f0 itself, anymore.");
+     TextPlus("Although I suppose it's also possible they're trying to discredit or kill me again, but I'm "+
+              "sure they've put that \f4astral gate\f0 incident behind them by now.",0);
+     HText(h,"Incident?");
+     HText(4,"I may have shunted several prominent researchers into an unreachable pocket of some untraceable "+
+          "side dimension.  It's also possible they were all rivals of mine.  But they knew I was engaged in "+
+          "brand new and potentially dangerous spell creation, so I can't exactly be held responsible.");
+     HText(h,"Oh.");
+     TextPlus("I see.",0);
+     ShowTextbox();
+     PlayerMove("L0");
+     TextPlus("\f2"+hero[0].name+"\f0?",1);
+     HText(0,"You'll be fine.  Just don't stand too close to whatever she's throwing magic at.");
+     HText(h,"That's not reassuring.");
+     ShowTextbox();
+     EntityMove(hero[x].ent,"L0");
+     PlayerMove("U0");
+     WaitForEntity(hero[x].ent);
+     HText(x,"And over here we have \f2Marty\f0.  He made a name for himself as a guide on the caravan "+
+          "routes around \f3Amin\f0.  There's nobody who knows the land around these parts better than \f2Marty\f0.");
+     ShowTextbox();
+     EntityMove(28,"D0");
+     WaitForEntity(28);
+     HText(3,"Good to meet you, \f2"+hero[h].name+"\f0.  You couldn't have picked a worse time to become a "+
+          "\f4hero\f0.");
+     HText(h,"I'm sorry?");
+     HText(3,"No, that's a good thing.  Means your career will be momentous right from the get go.");
+     HText(h,"It wasn't that long ago that I'd made peace with obscurity.");
+     HText(3,"Well, I'd get over that right quick, if I were you.  Obscurity anymore means the \f2Shadowkin\f0 "+
+          "found you early, and nobody wants that, right?");
+     ShowTextbox();
+     EntityMove(27,"U0");
+     WaitForEntity(27);
+     HText(h,"You can say that again.");
+     ShowTextbox();
+     EntityMove(hero[0].ent,"R4U0");
+     PlayerMove("D0");
+     HSetPortrait(0);
+     Text_Main("Alright, everybody.  Time to move out.",0,0,1,0,0);
+     ShowTextbox();
+     SetExecutionPaused(2);
+     WaitForEntity(hero[0].ent);
+     EntityMove(27,"D0");
+     WaitForEntity(27);
+     TextPlus("A group of freelancers managed to get the \f4Hero \f4Shrine\f0 out of the city, so we'll "+
+              "bind down at the ferry before we head in.",0);
+     HText(h,"Bind?");
+     HText(4,"By the Great Library, you're green.");
+     HText(0,"Let's go.  You can learn by doing when we get there.");
+     Quest_Advance("Expedition to Achiela",6,"Bind your soul at the \f3Achiela Ferry\f0","Amin",214,387);
+     EntityMove(hero[0].ent,"Y95");
+     EntityMove(hero[x].ent,"Y82X22Y85X21Y95");
+     EntityMove(28,"W25Y85X21Y95");
+     EntityMove(27,"W50Y82X22Y85X21Y95");
+     PlayerMove("X21Y95");
+
+     numchars+=2;
+     WaitForEntity(27);
+     Leave();
+}

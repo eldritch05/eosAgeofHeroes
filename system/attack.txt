@@ -1,0 +1,72 @@
+Rend		Causes_damage_over_time		101 1  95  0 100  0  20	Damage applied each time target acts
+Setup_Strike	Attack_again_on_next_turn	102 1  95  0 100  0  20	Damage applied on user's next action
+Twin_Strike	Attack_two_targets		110 1  90  0  65  0  65	Damage applied to random enemy target
+Stagger		Delay_target's_next_turn	111 1  90  0 100 12 100	Damage reduces target's action charge
+Counter_Attack	Attack_again_if_attacked	112 1  90  0  60  0 100	Damage applied when target attacks user
+Sunder		Lower_target's_resists		121 1  95  0  50  0  25	Damage reduces target's resistances
+Demoralize	Lower_target's_damage		122 1  95  0  50  0  25	Damage reduces target's damage_bonuses
+Hamstring	Lower_target's_speed		130 1  95  0  50  0  25	Damage reduces target's action_speed
+Pin_Down	Lower_target's_defenses		131 1  95  0  50  0  25	Damage reduces target's defenses
+Eye_Gouge	Lower_target's_accuracy		132 1  95  0  50  0  25	Damage reduces target's accuracies
+Eviscerate	High_damage_over_time		141 1  90  0 100  0 200	Extra damage if used after Rend
+Spinning_Sweep	Attack_all_targets		142 1  80  0  50  0  50	Second attack if used after Setup Strike
+Mana_Sieve	Damages_target's_mana		201 1  95  0 100  8 100 Damage applied to target's mana
+Taunting_Blow	Attack_with_high_hate		202 1  95  0 100  0 100 Damage raises target's hate for user
+Interposition	Take_target's_attacks		210 1  95  0 100 12   5 Damage sets duration of Block effect
+Sealing_Strike	Stops_target's_abilities	211 1  95  0 100  8  25 Damage creates temporary Sealed ailment
+Block		Weak_attack_deflects_damage	212 1  95  0  65  0  50 Damage creates temporary Wall effect
+_		_				221 0   0  0   0  0   0 _
+_		_				222 0   0  0   0  0   0 _
+_		_				230 0   0  0   0  0   0 _
+_		_				231 0   0  0   0  0   0 _
+_		_				232 0   0  0   0  0   0 _
+Mage_Bane	_				241 0   0  0   0  0   0 _
+Provocation	_				242 0   0  0   0  0   0 _
+Hit_and_Run	Attack_generates_less_hate	301 1  95  0 100 12  25 Damage reduces target's hate for user
+Venom_Strike	Deals_extra_poison_damage	302 1  95  0 100  9  25 Damage applied immediately to target
+Trick_Attack	Attack_grants_concealment	310 1  95  0 100  6  50 Damage creates Conceal effect for user
+Nimble_Strike	Advances_own_next_turn		311 1  95  0 100 12 100 Damage increases user's action charge
+Backstab	Concealed_dagger_attack		312 1 100  0 100  1 100 Damage increases with Conceal effects
+_		_				321 0   0  0   0  0   0 _
+_		_				322 0   0  0   0  0   0 _
+_		_				330 0   0  0   0  0   0 _
+_		_				331 0   0  0   0  0   0 _
+_		_				332 0   0  0   0  0   0 _
+_		_				341 0   0  0   0  0   0 _
+_		_				342 0   0  0   0  0   0 _
+Psychic_Strike	A_psychic_vs._Magical_attack	401 4  95  0  50  8  50 Damage applied immediately to target
+Arcane_Strike	An_arcane_vs._Magical_attack	402 4  95  0  50  7  50 Damage applied immediately to target
+_		_				410 0   0  0   0  0   0 _
+_		_				411 0   0  0   0  0   0 _
+_		_				412 0   0  0   0  0   0 _
+_		_				421 0   0  0   0  0   0 _
+_		_				422 0   0  0   0  0   0 _
+_		_				430 0   0  0   0  0   0 _
+_		_				431 0   0  0   0  0   0 _
+_		_				432 0   0  0   0  0   0 _
+_		_				441 0   0  0   0  0   0 _
+_		_				442 0   0  0   0  0   0 _
+Planar_Attack	Attack_vs._Planar_defense	501 3 100  0 100  0   0 Attack has no additional effect
+Natural_Attack	Attack_vs._Natural_defense	502 5 100  0 100  0   0 Attack has no additional effect
+Healing_Strike	Attack_heals_weakest_ally	510 1  95  0 100 12  50 Damage heals most damaged ally
+Divine_Smite	Attack_deals_Light_damage       511 3  95  5 100  0   0 Attack has no additional effect
+Primal_Focus	Improves_next_ally's_attack	512 5  95  0 100 12  20 Damage increases next ally's damage
+_		_				521 0   0  0   0  0   0 _
+_		_				522 0   0  0   0  0   0 _
+_		_				530 0   0  0   0  0   0 _
+_		_				531 0   0  0   0  0   0 _
+_		_				532 0   0  0   0  0   0 _
+_		_				541 0   0  0   0  0   0 _
+_		_				542 0   0  0   0  0   0 _
+Enflamed_Weapon	Attack_deals_fire_damage	601 1  95  0  25  3 100 Damage applied immediately to target
+Shadowed_Weapon	Attack_deals_dark_damage	602 1  95  0  25  6 100 Damage applied immediately to target
+Arcane_Burst	Deals_arcane_damage_to_all	610 4  90  7 100  7  25 Damage applied immediately to all foes
+Ice_Cage	Chance_to_freeze_target		611 2  95  4 100  4  60 Damage sets chance to stun target
+Night_Terror	Causes_fear_in_target		612 3  95  6 100  8  50 Damage creates temporary Fear ailment
+_		_				621 0   0  0   0  0   0 _
+_		_				622 0   0  0   0  0   0 _
+_		_				630 0   0  0   0  0   0 _
+_		_				631 0   0  0   0  0   0 _
+_		_				632 0   0  0   0  0   0 _
+_		_				641 0   0  0   0  0   0 _
+_		_				642 0   0  0   0  0   0 _
