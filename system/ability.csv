@@ -1,0 +1,117 @@
+Name|Description|Type|Use|Attack|Accuracy|Damage|Power|Effect|Duration|Cost|Flavor Text
+Activate Wand|Use the power of a wand|3|11|6|100|0|100|64|14|10|Also grants the Wand weapon proficiency
+Adamant Bulwark|Guard all allies|3|13|6|100|12|100|45|1|25|Protects your allies from harm
+Alliance|Increase faction with locals|1|13|6|100|12|100|101|250|100|Increases local faction by one stage
+Apocalypse|Create a hugely damaging storm|2|5|5|80|3|40|67|5|50|Summons fire and destruction from above
+Armor of Faith|Increase all allies' resists|2|13|6|100|5|20|23|5|50|The purity of your faith can deflect swords
+Assassinate|Chance for instant concealed kill|4|4|1|40|0|100|102|0|40|One strike from the shadows is all it takes
+Atonement|Remove all foes' hate for an ally|1|0|0|0|0|100|103|0|0| 
+Avatar of Death|Chance for instant kill|2|0|0|0|0|0|88|0|0| 
+Awareness|Greater speed with critical immunity|1|11|4|100|8|20|104|5|12|Increased awareness gives you an extra edge
+Become Flame|Gain fire immunity and power|2|0|0|0|0|100|105|0|0| 
+Become Ice|Gain frost immunity and power|2|0|0|0|0|100|105|0|0| 
+Berserk|Lower defenses, raise damage|1|1|1|100|8|80|55|3|10|A berserk rage wreaks uncontrollable havok
+Blade Dance|Multiple attacks, multiple targets|4|0|0|0|0|4|106|0|0| 
+Brew Potion|Create potions|3|0|0|0|0|1|107|0|0|Also grants the Potion skill proficiency
+Cannibalize|Exchange health for mana|1|1|1|100|9|25|108|0|0|You fuel your abilities with your lifeblood
+Cave In|Crush all foes with large rocks|4|0|0|0|0|0|60|0|0| 
+Chameleon|Long-lasting concealment|2|0|0|0|0|0|57|0|0| 
+Commune|Receive visions from beyond|1|0|0|0|0|1|110|0|0| 
+Convert|Turns one item into another|3|0|0|0|0|1|111|0|0| 
+Counterspell|Negate target's next spell|2|4|4|95|7|100|51|1|2|Completely seal away your foe's magic
+Cutpurse|Take target's gold|4|4|5|50|1|100|70|0|1|Swipe a foe's cash without having to kill it
+Death's Touch|Chance for instant kill|1|0|0|0|0|0|88|0|0| 
+Deepest Dark|Blinds all foes|1|0|0|0|0|0|53|0|0| 
+Deepest Fears|Terrifies all foes|2|0|0|0|0|0|56|0|0| 
+Defender Gambit|Powerful maul attack|3|0|0|0|0|0|65|0|0|Also grants the Maul weapon proficiency
+Diamond Shield|Increase own resists for a round|3|0|0|0|0|0|43|0|0| 
+Disarm Trap|Detect and disarm traps|4|0|0|0|0|0|69|0|0| 
+Disenchant|Destroy item to gain mana and gold|3|0|0|0|0|1|112|0|0| 
+Dragon Breath|Deal primal damage to all foes|1|0|0|0|0|0|60|0|0| 
+Dragon Claw|A powerful unarmed attack|3|4|1|95|0|225|65|13|15|Also grants the Unarmed weapon proficiency
+Draw Attention|Conceal all allies|4|0|0|0|0|0|57|0|0| 
+Elemental Vortex|High damage to all foes|2|0|0|0|0|0|60|0|0| 
+Elven Archery|A powerful bow attack|3|4|1|120|0|175|65|11|15|Also grants the Bow weapon proficiency
+Elven Step|Avoid hazardous terrain|1|0|0|0|0|100|113|0|0| 
+Enchant|Create trinkets|3|0|0|0|0|1|114|0|0|Also grants the Trinket skill proficiency
+Enchant Weapon|Increase ally's base damage|3|12|4|100|7|50|44|3|25|Empower an ally's weapon to deal arcane damage
+Endless Health|Begin regenerating|1|11|1|100|8|12|39|10|20|Tap a deep reserve of determination to heal
+Endure|Increase own physical resists|1|11|6|100|8|15|43|5|15|Also grants a stronger armor proficiency
+Escape|Remove party from combat|4|11|5|100|12|100|73|0|2|Sometimes it's just better to avoid the fight
+Eternal Insight|Vastly increase own effectiveness|1|0|0|0|0|0|42|0|0| 
+Evasion|Increase own evasion for a round|4|11|1|100|1|50|41|1|10|A good dodge often surpasses good armor
+First Aid|Restore an ally's health|3|2|6|100|5|25|60|0|3|A small, mana-efficient healing ability
+Focus|Increase damage on next attack|4|11|6|100|8|100|42|1|12|Gathering focus leads to powerful action
+Force the Fight|Prevents either side from fleeing|4|0|0|0|0|0|115|0|0| 
+Frenzy|Attack target repeatedly|4|0|0|0|0|2|116|0|0| 
+Furious Assault|A devastating axe attack|3|0|0|0|0|0|65|0|0|Also grants the Axe weapon proficiency
+Grand Theft|Always take target's item and gold|4|0|0|0|0|0|72|0|0| 
+Guard|Take all hits for an ally|4|0|0|0|0|0|45|0|0| 
+Guarded Riposte|Counter any attacks taken|4|0|0|0|0|0|50|0|0| 
+Heroic Psalm|Bolster allies and enfeeble foes|1|0|0|0|0|0|117|0|0| 
+Hide|Reduce hate, become concealed|4|11|1|100|6|50|57|1|5|Slip away and avoid your foes for a turn
+Inner Compass|Sense layout of surroundings|1|21|6|100|8|100|118|250|8|Your keen senses assure you are never lost
+Intervention|Revive and restore all allies|2|0|0|0|0|100|119|0|0| 
+Invisibility|Conceal an ally|2|12|4|100|7|100|57|2|20|A powerful and durable concealment power
+Invoke Plague|Poison, blind, and weaken a foe|2|0|0|0|0|0|120|0|0| 
+Killing Blow|High damage, chance for instant kill|4|0|0|0|0|0|88|0|0| 
+Last Stand|Become stronger when wounded|4|11|6|100|12|100|121|3|20|Your wounds serve only to make you stronger
+Lead the Charge|Entire party attacks target|4|0|0|0|0|110|122|0|0| 
+Linked Portal|Travel to a teleport beacon|2|0|0|0|0|1|123|0|0| 
+Lion of Battle|Cause fear in all foes|4|0|0|0|0|0|56|0|0| 
+Lorekeeper|Increase lore XP gain|1|11|5|100|8|50|85|0|10|No bit of lore escapes your notice
+Martyr's Gift|Transfer mana to an ally|1|2|3|100|5|25|61|0|30|You give up your spiritual strength for an ally
+Master's Cleave|A powerful katana attack|3|4|1|95|0|200|65|12|15|Also grants the Katana weapon proficiency
+Meditation|Focus to restore own mana|1|0|0|0|0|0|61|0|0|Also increases mana gained per level by 2
+Night Blade|Immense damage when concealed|4|0|0|0|0|0|89|0|0| 
+Paralyze|Stun target|2|0|0|0|0|0|52|0|0| 
+Parting Blow|Devastate the enemy that kills you|4|0|0|0|0|0|59|0|0| 
+Phantom Steed|Increase overland travel speed|2|23|6|100|12|50|81|200|15|Ghostly mounts speed your passage
+Pick Lock|Open a locked object|4|21|5|100|12|50|68|0|10|You can pop open nearly all locks
+Plunder|Increase item drop rate|1|5|6|100|12|25|84|0|5|None will stand between you and your loot
+Primal Ward|Protect an ally from harm|2|0|0|0|0|0|47|0|0| 
+Primal Wrath|Deals massive unresistable damage|2|0|0|0|0|0|60|0|0| 
+Prize Fight|Increase gold drop rate|1|11|6|100|12|50|83|0|5|Reap extra spoils from victory in battle
+Quick Learner|Increase XP gain from combat|1|0|0|0|0|0|86|0|0| 
+Radiant Burst|Future attacks deal light damage|2|0|0|0|0|100|124|0|0| 
+Rain of Steel|Attack on every enemy's turn|4|0|0|0|0|20|125|0|0| 
+Ranger's Volley|Make multiple bow attacks|3|0|0|0|0|0|65|0|0|Also grants the Bow weapon proficiency
+Read Robe|Activate the power of your robe|3|0|0|0|0|0|64|15|5|Also grants the Robe armor proficiency
+Reaping Strikes|Attack again if target is slain|4|0|0|0|0|125|126|0|0| 
+Reckless Strike|Lower accuracy, higher damage|4|4|1|50|0|300|65|0|10|Though inaccurate, this is a powerful blow
+Remove Ailment|Remove ally's negative effects|2|2|5|75|12|1|82|0|10|You try to remove an ailment from an ally
+Retribution|Wrap an ally in a damage shield|2|12|3|100|5|10|48|10|2|The Light strikes at those who would harm you
+Revive|Return life to a fallen ally|2|0|0|0|0|0|75|0|0| 
+Sacrifice|Sacrifice self to restore party|1|0|0|0|0|100|127|0|0| 
+Seek Foes|Increase encounter rate|4|21|1|100|12|100|109|250|2|Provoke monsters to attack more frequently
+Shadow Dance|Multiple targets, multiple backstabs|3|0|0|0|0|0|89|0|0| 
+Shadow Jaunt|Reduce hate, become concealed|1|0|0|0|0|25|128|0|0| 
+Sharpshooter|Guarantee next attack hits|1|0|0|0|0|0|40|0|0| 
+Shield Bash|A stunning shield attack|3|0|0|0|0|0|65|0|0|Also grants a stronger shield proficiency
+Siphon Soul|Drain mana from target|2|4|3|90|6|25|76|0|5|You drain the spiritual essence of your enemy
+Slaying Strike|Deals extra damage to hurt foes|4|0|0|0|0|300|129|0|0| 
+Smite|Strong attack vs. undead targets|1|0|0|0|0|200|130|0|0| 
+Sneak|Reduce encounter rate|4|0|0|0|0|0|80|0|0| 
+Soulburn|Drain health and mana from target|2|0|0|0|0|0|131|0|0| 
+Steal|Take target's item|4|0|0|0|0|0|71|0|0| 
+Stream of Life|Target begins regenerating|2|0|0|0|0|0|39|0|0| 
+Summon Ancestor|Create a spirit pet|2|0|0|0|0|0|66|0|0| 
+Summon Element|Create an elemental pet|2|0|0|0|0|0|66|0|0| 
+Summon Skeleton|Create an undead pet|2|0|0|0|0|0|66|0|0| 
+Swindle|Reduce costs in shops|1|0|0|0|0|0|132|0|0| 
+Tail Sweep|Unarmed attack delays all foes|4|0|0|0|0|0|63|0|0|Also grants proficiency with unarmed attacks
+Taunt|Attract target's attention|4|4|6|100|8|50|62|0|1|A reliable way to focus attacks on you
+Tinker|Create gadgets|3|0|0|0|0|1|133|0|0|Also grants the Gadget skill proficiency
+Tornado|Sharp winds weaken all foes|2|0|0|0|0|0|60|0|0| 
+Transformation|Become a frenzied dragon|2|0|0|0|0|0|55|0|0| 
+True Strike|Increase ally's critical rate|4|12|4|100|8|20|36|10|5|Your insights guide your ally's strikes
+Tsunami|Deals massive damage to all foes|2|0|0|0|0|0|60|0|0| 
+Twin Fangs|A powerful attack with two weapons|3|0|0|0|0|0|54|0|0| Also grants the Dual Wield skill proficiency
+Ultrablast|Deal massive psychic damage to all foes|1|0|0|0|0|0|60|0|0| 
+Underfoot|Increases own evasion|1|0|0|0|0|0|41|0|0| 
+Unstoppable|Increase own max health|1|11|1|100|0|50|47|3|15|Also increases health gained per level by 2
+Vengeance|Become stronger for every slain ally|4|0|0|0|0|75|134|0|0| 
+Vital Blow|Weak strike with high critical rate|4|0|0|0|0|50|135|0|0| 
+Wild Step|Avoid hazardous terrain|1|0|0|0|0|100|113|0|0| 
+Winged Leap|Leave battle, attack twice|4|0|0|0|0|125|136|0|0| 
+Wolf's Ward|Use the power of a robe|3|11|6|100|12|100|64|15|10|Also grants the Robe armor proficiency

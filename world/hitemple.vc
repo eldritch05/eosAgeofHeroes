@@ -432,7 +432,7 @@ void Tutorial() {
      HText(0,"Building temples, spreading the faith, and outfitting crusaders.");
      TextPlus("Oh.",1);
      TextPlus("That's me now, isn't it?",0);
-     Text("Graig","Yes.  You'll only get stock equipment now, I'm afraid.  You'll want to comission your own "+
+     Text("Graig","Yes.  You'll only get stock equipment now, I'm afraid.  You'll want to commission your own "+
           "\f4custom-\f4forged gear\f0 at some point, but this will get you started.  So what would you like?");
      HText(0,"I get to pick?");
      Text("Graig","They're your weapons.  Remember, you're a \f4"+hero[0].class+"\f0 now, so choose accordingly.");

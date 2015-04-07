@@ -1,0 +1,74 @@
+Name|Description|Index|Attack|Accuracy|Damage|Power|Damage2|Power2|Secondary Effect Description
+Basic Attack|Cause damage|0|1|95|0|100|0|0|Attack has no additional effect 
+Rend|Cause damage over time|101|1|95|0|100|0|20|Damage applied each time target acts
+Setup Strike|Attack again on next turn|102|1|95|0|100|0|20|Damage applied on user's next action
+Counter Attack|Attack again if attacked|112|1|90|0|60|0|100|Damage applied when target attacks user
+Stagger|Delay target's next turn|111|1|90|0|100|12|100|Damage reduces target's action charge 
+Twin Strike|Attack two targets|110|1|90|0|65|0|65|Damage applied to random enemy target
+Sunder|Lower target's resists|121|1|95|0|50|0|25|Damage reduces target's resistances  
+Demoralize|Lower target's damage|122|1|95|0|50|0|25|Damage reduces target's damage bonuses  
+Hamstring|Lower target's speed|130|1|95|0|50|0|25|Damage reduces target's action speed  
+Pin Down|Lower target's evasion|131|1|95|0|50|0|25|Damage reduces target's evasion  
+Eye Gouge|Lower target's accuracy|132|1|95|0|50|0|25|Damage reduces target's accuracies  
+Eviscerate|High damage over time|141|1|90|0|100|0|50|Damage applied each time target acts
+Spinning Sweep|Attack all targets|142|1|80|0|50|0|50|Damage applied immediately to all foes
+Mana Sieve|Damage target's mana|201|1|95|0|100|8|100|Damage applied to target's mana 
+Taunting Blow|Attack with high hate|202|1|95|0|100|0|100|Damage raises target's hate for user
+Interposition|Take target's attacks|210|1|95|0|100|12|5|Damage sets duration of Block boon
+Sealing Strike|Stop target's abilities|211|1|95|0|100|8|25|Damage creates Sealed ailment 
+Block|Weak attack deflects damage|212|1|95|0|65|0|50|Damage creates Wall boon 
+Bolster|Raise own max health|221|0|0|0|0|0|0|Damage creates Vitae boon
+Inspire|Attack with an ally|222|0|0|0|0|0|0|Damage effects ally's damage
+Adamant Strike|Raise own evasion|230|0|0|0|0|0|0|Damage increases user's evasion
+Turn the Tide|Grant self regeneration|231|0|0|0|0|0|0|Damage creates Regeneration boon
+Eye for an Eye|Reflect foes' attacks|232|0|0|0|0|0|0|Damage creates Reflect boon
+Mage Bane|Absorb target's mana|241|1|95|0|100|8|100|Damage absorbed from target's mana
+All Odds|Taunt all opponents|242|1|95|0|100|0|100|Damage raises all foes' hate for user
+Hit and Run|Attack generates less hate|301|1|95|0|100|12|25|Damage reduces target's hate for user
+Venom Strike|Deals extra poison damage|302|1|95|0|100|9|25|Damage applied immediately to target 
+Trick Attack|Attack grants concealment|310|1|95|0|100|6|50|Damage creates Conceal boon
+Nimble Strike|Advances own next turn|311|1|95|0|100|12|100|Damage increases user's action charge 
+Backstab|Concealed dagger attack|312|1|100|0|100|1|100|Damage increases with Conceal effects 
+Piercing Strike|Ignore target's resistances|321|1|95|0|100|12|500|Damage reduces target's resists for this attack
+Sure Strike|Ignore target's evasion|322|6|100|0|100|0|0|Attack has no additional effect 
+Mug|Attack with steal chance|330|1|95|0|80|12|50|Damage acts as theft success rate
+Power Attack|Raises own damage|331|0|0|0|0|0|0|Damage increases own damage bonuses
+Rapid Attack|Raises own speed|332|0|0|0|0|0|0|Damage increases own speed
+Concussive Blow|Greatly reduce hate|341|1|95|0|100|0|100|Damage reduces target's hate for user
+Poison Needle|Deal lingering poison damage|342|1|95|0|100|9|25|Damage applied each time target acts
+Psychic Strike|A psychic vs. magic attack|401|4|95|0|50|8|50|Damage applied immediately to target 
+Arcane Strike|An arcane vs. magic attack|402|4|95|0|50|7|50|Damage applied immediately to target 
+Sonic Strike|A sonic vs. natural attack|410|5|95|0|50|10|50|Damage applied immediately to target 
+Dazing Strike|Confuse a foe|411|0|0|0|0|0|0|Damage creates Confuse ailment
+Precision|High critical chance|412|0|0|0|0|0|0|Damage increases crit chance for this attack
+Enrich|Increase spoils from foe|421|0|0|0|0|0|0|Damage increases target's dropped spoils
+Study|Increase experience from foe|422|0|0|0|0|0|0|Damage increases target's granted experience
+Expose|Increase ally's critical chance|430|0|0|0|0|0|0|Damage increases one ally's critical chance
+Enrage|Drive target berserk|431|0|0|0|0|0|0|Damage creates Berserk ailment
+Purify|Remove ailment  from self|432|0|0|0|0|0|0|Damage acts as cleanse chance
+Misdirection|Attack's hate goes to ally|441|0|0|0|0|0|0|Damage increases foe's hate for an ally
+Arcane Feedback|Grant damage shield to ally|442|0|0|0|0|0|0|Damage creates Reflect boon for an ally
+Planar Attack|Attack target's planar defense|501|3|100|0|100|0|0|Attack has no additional effect 
+Natural Attack|Attack target's natural defense|502|5|100|0|100|0|0|Attack has no additional effect 
+Healing Strike|Heal weakest ally|510|1|95|0|100|12|50|Damage heals most damaged ally 
+Divine Smite|A light vs. planar attack|511|3|95|5|100|0|0|Attack has no additional effect 
+Primal Focus|Improve next ally's attack|512|5|95|0|100|12|20|Damage increases next ally's damage 
+Embolden|Increase allies' resistances|521|0|0|0|0|0|0|Damage increases all allies' resistances
+Empower|Increase allies' damage|522|0|0|0|0|0|0|Damage increases all allies' damage bonuses
+Hasten|Increase allies' speed|530|0|0|0|0|0|0|Damage increases all allies' speed
+Guardian Strike|Increase allies' evasion|531|0|0|0|0|0|0|Damage increases all allies' evasion
+Guiding Strike|Increase allies' accuracy|532|0|0|0|0|0|0|Damage increases all allies' accuracy
+Divine Wrath|Punish foes with light|541|0|0|0|0|0|0|Damage applied immediately to all foes
+Primal Might|Bolster allies' effectiveness|542|5|95|0|100|12|10|Damage increases all allies' effective level
+Flame Weapon|A fire vs. elemental attack|601|2|95|0|25|3|100|Damage applied immediately to target 
+Shadow Weapon|A dark vs. planar attack|602|3|95|0|25|6|100|Damage applied immediately to target 
+Arcane Burst|Deal arcane damage to all|610|4|90|7|100|7|25|Damage applied immediately to all foes
+Ice Cage|Chance to freeze target|611|2|95|4|100|4|60|Damage acts as chance to stun target
+Night Terror|Cause fear in target|612|3|95|6|100|8|50|Damage creates Fear ailment 
+Blade of Wind|A sharp vs. elemental attack|621|2|95|0|25|1|100|Damage applied immediately to target 
+Envenom|A poison vs. natural attack|622|5|95|0|25|9|100|Damage applied immediately to target 
+Arcane Might|An arcane vs. magic attack|630|4|95|7|150|0|0|Attack has no additional effect 
+Tremor|Deal blunt damage to all|631|2|95|2|100|2|25|Damage applied immediately to all foes
+Thunderclap|Deal sonic damage to all|632|5|95|10|100|10|25|Damage applied immediately to all foes
+Eruption|Set all foes on fire|641|0|0|0|0|0|0|Damage applied each time all foes act
+Nightfall|Blind all foes|642|0|0|0|0|0|0|Damage creates Blind ailment on all foes

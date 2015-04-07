@@ -317,7 +317,7 @@ string GetContinentName(string c) {
      if(!strcmp(c,"Glacier"))
           return "The Glacier";
      if(!strcmp(c,"Dragon"))
-          return "Draconic Atoll";
+          return "Draconic Cay";
 }
 
 string GetDamageType(int d) {

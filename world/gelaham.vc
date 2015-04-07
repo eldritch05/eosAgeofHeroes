@@ -552,9 +552,8 @@ void NewGame() {
      hero[0].level=1; hero[0].next=1000;
      hero[0].race="Human";
      Hero_SetBaseStatistics(0,"Human");
-     hero[0].stats[0]++;
      CharGen_ChangeClass(0,0,0);
-     hero[0].statpnt=3;
+     hero[0].statpnt=5;
      WaitForEntity(graigchr);
      Text("Graig","What?  You haven't even thought about what you'd like to do as a \f4hero\f0?");
      HSetPortrait(0);
